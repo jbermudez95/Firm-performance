@@ -1,8 +1,8 @@
 /*
 Name:			context_graphs.do
 Description: 	This do file uses secondary datasets to make the figures number 
-				1, 2, and 4 that are included in the Appendix of the paper "Firm
-				performance and tax incentives: Evidence from Honduras".
+1, 2, and 4 that are included in the Appendix of the paper "Firm
+performance and tax incentives: Evidence from Honduras".
 Date:			November, 2021
 Modified:		November, 2021
 Author:			Jose Carlo Bermúdez
