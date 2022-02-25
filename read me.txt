@@ -1,0 +1,40 @@
+Instrucciones para replicar resultados del paper "Firm performance and tax incentives: 
+Evidence from Honduras". Es importante tener en cuenta que debido a la confidencialidad
+de los datos administrativos empleados para el presente trabajo, ésta solo puede ser 
+disponible a través de una petición formal mediante oficio al Ministro Director del 
+Servicio de Administración de Rentas.
+
+  Para replicar los gráficos 3, 5, 6, A2 y A3 así como para replicar las tablas
+   2, 3, 4 y A3 debe emplear el do file llamado "descriptives.do".
+
+  Para replicar las tablas 5, 6, 7, 8, 9, 10, 11, 12, 13 y 14 debe emplear el do file llamado
+   "estimates.do".
+
+  Para replicar los gráficos 1, 2 y 4 debe emplear el do file llamado "context_graphs.do".
+
+1. Previo a emplear cualquiera de los do files, debe asegurarse de que el do file contenga la 3
+dirección donde se encuentran los archivos en su computador. Para ello debe introducir el directorio
+en el espacio llamado global path "". 
+
+2. Los do files se alimentan de la base de datos llamada "final_dataset.dta" así como del do file
+llamado "setup.do". Este último transforme la base de datos de manera que prepara cada una de las 
+variables necesarias para las estimaciones, incluyendo el cálculo de la productividad total de los
+factores a nivel de cada empresa mediante el método de  Ackerberg et al. (2015). Serciorese que el
+do file "setup.do" también contenga el directorio de su computador puesto que utilizará "final_dataset.dta"
+para construir las variables.
+
+3. El correcto funcionamiento de los do file está en función de que usted haya instalado una serie de
+paquetes que no vienen instalados por default en stata. Dichos comandos están en los primeros renglones
+de "setup.do" y son: 
+ssc install winsor
+ssc install acfest
+ssc install eststo
+ssc install estout
+ssc install reghdfe
+ssc install ftools
+
+Notar que "ssc install" es la linea de codigo empleada para instalar el paquete.
+
+4. Una vez que "setup.do" haya corrido correctamente, se habrán generado todas las variables necesarias
+para los análisis. A ese punto, bastará con correr el resto de cada do file para reproducir los resultados
+que figuran dentro del paper.
