@@ -17,8 +17,8 @@ set more off
 set seed 2000
 
 * Antes de correr este do file debe cambiar los directorios
-global path ""		// cambiar directorio
-global out ""		// cambiar directorio
+global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		// cambiar directorio
+global out "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"		// cambiar directorio
 
 run "$path\setup.do" 	// Run the do file that prepare all variables for descriptive statistics
 
@@ -228,11 +228,22 @@ g lcredit = log(credit)
 forval val = 1/3 {
 preserve
 	keep if final_industry == `val'
+	pwcorr final_log_productivity_y lcredit, sig star(.05)
+	mat A = r(sig)
+	loc r_y  : di %5.2f r(rho)
+	loc sig_y: di %5.4f A[2,1]
+	pwcorr final_log_productivity_va lcredit, sig star(.05)
+	mat B = r(sig)
+	loc r_va  : di %5.2f r(rho)
+	loc sig_va: di %5.4f B[2,1]
 	twoway scatter final_log_productivity_y lcredit, mcolor(blue%70) msize(medsmall)   ||  ///
 		   scatter final_log_productivity_va lcredit, mcolor(navy%60) msize(medsmall)  ||  ///
 		   lfit final_log_productivity_y lcredit, sort lcolor(blue) lwidth(medthick)   ||  ///
 		   lfit final_log_productivity_va lcredit, sort lcolor(navy) lwidth(medthick)  ||, ///
 		   $details ytitle("Log(productivity)") xtitle("Total tax credits") ///
+		   text(6 -25 "Rho = `r_y'(`sig_y')", color(blue))         ///
+		   text(5 -25 "Rho = `r_va'(`sig_va')", color(navy))       ///
+		   ylabel(-8(2)6) xlabel(-30(5)-5) ///
 		   legend(row(2) order(1 "TFP on sales" 2 "TFP on value added" 3 "Lfit TFP on sales" 4 "Lfit TFP on value added")) 
 	graph_scatter   
 restore
