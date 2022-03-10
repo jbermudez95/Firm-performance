@@ -230,10 +230,10 @@ forv val = 1/3 {
 	eststo model_va_`val': qui acfest va, state(k a) proxy(m) free(l) nbs(200) va
 	predict tfp_va_`val', omega
 	tempfile tfp_`val'
-	save "tfp_`val'", replace
+	save `tfp_`val'', replace
 	restore
 	
-	merge m:1 id year using "tfp_`val'", keepusing(tfp_y_`val' tfp_va_`val')
+	merge m:1 id year using `tfp_`val'', keepusing(tfp_y_`val' tfp_va_`val')
 	replace final_log_productivity_y  = tfp_y_`val'  if final_industry == `val'
 	replace final_log_productivity_va = tfp_va_`val' if final_industry == `val'
 	drop _merge tfp_y_`val' tfp_va_`val' 

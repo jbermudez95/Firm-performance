@@ -25,6 +25,8 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for estimati
 
 global details "booktabs f se(2) b(3) nonumbers star staraux"
 global options "booktabs se(2) b(3) star staraux nomtitles"
+global graphop "grid(none) legend(region(lcolor(none))) graphr(color(white))"
+global controls "final_log_age mnc final_log_firm_size final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
 *************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
@@ -141,7 +143,17 @@ esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_
 	   "Exonerated $\times$ Capital intensity" final_labor_int_exo "Exonerated $\times$ Labor intensity" 				  ///
 	   final_export_share_exo "Exonerated $\times$ Export share" final_import_share_exo 								  ///
 	   "Exonerated $\times$ Import share") 
-
+	   
+coefplot (eq_final_gpm_1, label(GPM Firms Traits) mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_1, label(NPM Firms Traits) mcolor(orange%60) ciopts(lcolor(orange%60)))        ///
+         (eq_final_gpm_2, label(GPM Costs Structure) mcolor(red%70) ciopts(lcolor(red%70))) (eq_final_npm_2, label(NPM Costs Structure) mcolor(green%60) ciopts(lcolor(green%60)))      ///
+		 (eq_final_gpm_3, label(GPM Use of Inputs) mcolor(cyan%70) ciopts(lcolor(cyan%70))) (eq_final_npm_3, label(NPM Use of Inputs) mcolor(navy%60) ciopts(lcolor(navy%60))), ///
+         drop(_cons cit_exonerated) xline(0, lpattern(-) lwidth(tiny) lcolor(gray)) xlabel(-0.5(0.25)0.6) $graphop    ///
+		 coeflabels(final_log_age_exo = "Age" 1.mnc_exo = "MNC" final_log_firm_size_exo = "Firm size"    ///
+		 final_log_input_costs_exo = "Input costs" final_log_financial_costs_exo = "Financial costs"     ///
+		 final_capital_int_exo = "Capital intensity" final_labor_int_exo = "Labor intensity"  		     ///
+	     final_export_share_exo = "Export share" final_import_share_exo = "Import share")    
+graph export "$out\mec_exonerated.pdf", replace        
+ 
 * Estimates for EXPORT ORIENTED exonerated firms (Table 9)
 g final_export_oriented = 0
 replace final_export_oriented = 1 if final_regime == 1
@@ -177,6 +189,16 @@ esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_
 	   final_capital_int_export "Export-oriented $\times$ Capital intensity" final_labor_int_export 					  ///
 	   "Export-oriented $\times$ Labor intensity" final_export_share_export "Export-oriented $\times$ Export share" 	  ///
 	   final_import_share_export "Export-oriented $\times$ Import share")
+	   
+coefplot (eq_final_gpm_1, label(GPM Firms Traits) mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_1, label(NPM Firms Traits) mcolor(orange%60) ciopts(lcolor(orange%60)))        ///
+         (eq_final_gpm_2, label(GPM Costs Structure) mcolor(red%70) ciopts(lcolor(red%70))) (eq_final_npm_2, label(NPM Costs Structure) mcolor(green%60) ciopts(lcolor(green%60)))      ///
+		 (eq_final_gpm_3, label(GPM Use of Inputs) mcolor(cyan%70) ciopts(lcolor(cyan%70))) (eq_final_npm_3, label(NPM Use of Inputs) mcolor(navy%60) ciopts(lcolor(navy%60))), ///
+         drop(_cons final_export_oriented) xline(0, lpattern(-) lwidth(tiny) lcolor(gray)) xlabel(-0.5(0.25)0.6) $graphop    ///
+		 coeflabels(final_log_age_export = "Age" 1.mnc_export = "MNC" final_log_firm_size_export = "Firm size"    ///
+		 final_log_input_costs_export = "Input costs" final_log_financial_costs_export = "Financial costs"       ///
+		 final_capital_int_export = "Capital intensity" final_labor_int_export = "Labor intensity"  		     ///
+	     final_export_share_export = "Export share" final_import_share_export = "Import share") 
+graph export "$out\mec_export.pdf", replace 
 
 * Estimates for NON-EXPORT ORIENTED exonerated firms (Table 10)
 g final_nexport_oriented = 0
@@ -213,6 +235,16 @@ esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_
 	   final_capital_int_noexp "Non-export-oriented $\times$ Capital intensity" final_labor_int_noexp 							 ///
 	   "Non-export-oriented $\times$ Labor intensity" final_export_share_noexp "Non-export-oriented $\times$ Export share" 		 ///
 	   final_import_share_noexp "Non-export-oriented $\times$ Import share") 
+	   
+coefplot (eq_final_gpm_1, label(GPM Firms Traits) mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_1, label(NPM Firms Traits) mcolor(orange%60) ciopts(lcolor(orange%60)))        ///
+         (eq_final_gpm_2, label(GPM Costs Structure) mcolor(red%70) ciopts(lcolor(red%70))) (eq_final_npm_2, label(NPM Costs Structure) mcolor(green%60) ciopts(lcolor(green%60)))      ///
+		 (eq_final_gpm_3, label(GPM Use of Inputs) mcolor(cyan%70) ciopts(lcolor(cyan%70))) (eq_final_npm_3, label(NPM Use of Inputs) mcolor(navy%60) ciopts(lcolor(navy%60))), ///
+         drop(_cons final_nexport_oriented) xline(0, lpattern(-) lwidth(tiny) lcolor(gray)) xlabel(-0.5(0.25)0.6) $graphop    ///
+		 coeflabels(final_log_age_noexp = "Age" 1.mnc_noexp = "MNC" final_log_firm_size_noexp = "Firm size"    ///
+		 final_log_input_costs_noexp = "Input costs" final_log_financial_costs_noexp = "Financial costs"       ///
+		 final_capital_int_noexp = "Capital intensity" final_labor_int_noexp = "Labor intensity"  		     ///
+	     final_export_share_noexp = "Export share" final_import_share_noexp = "Import share") 
+graph export "$out\mec_nexport.pdf", replace 
 	   
 	   
 *************************************************************************
