@@ -209,7 +209,7 @@ twoway line d1 x1, lc(blue) 	 lw(thick)  ||   ///
 graph export "$out/tfp_measures.pdf", replace
 restore
 
-* Correlation between tax credits and productivity
+* Correlation between tax credits and productivity (Figure 6)
 program graph_scatter 
 	if final_industry == 1 {
 		graph export "$out\scatter_primary.pdf", replace
