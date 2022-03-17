@@ -297,7 +297,7 @@ foreach var of varlist final_gpm final_npm 									///
 	eststo eqt4_`var': qui reghdfe `var' i.final_regime, a(codigo province year) cluster(id) residuals(rest_6_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
-	estadd loc sector_fe   "\xmark": eqt4_`var'
+	estadd loc sector_fe   "\cmark": eqt4_`var'
 	estadd loc province_fe "\cmark": eqt4_`var'
 	estadd loc year_fe     "\cmark": eqt4_`var'
 }
