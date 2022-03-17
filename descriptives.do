@@ -39,8 +39,8 @@ estpost ttest final_npm, by(cit_exonerated) unequal quietly
 est store npm_diff1
 esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1.tex", replace ///
 	   mtitles("\textbf{Non-Exonerated}" "\textbf{Exonerated}" "\textbf{Mean Diff}") ///
-	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2)) t(pattern(0 0 1) par fmt(2))") ///
-	   collabels("Mean" "SD" "Diff" "t-test") ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
+	   collabels("Mean" "SD" "Diff") ///
 	   label tex f alignment(r) compress nonumbers noobs nonotes 
 restore
 
@@ -56,7 +56,7 @@ est store epm_ex1
 estpost ttest final_epm, by(cit_exonerated) unequal quietly
 est store epm_diff1
 esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1.tex", append ///
-	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2)) t(pattern(0 0 1) par fmt(2))") ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 restore
 
@@ -69,14 +69,66 @@ eststo: qui estpost ttest $vars, by(cit_exonerated) unequal
 est store diff1
 esttab nonex1 ex1 diff1 using "$out\tab1.tex", append ///
 	   nomtitles collabels(none) ///
-	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2)) t(pattern(0 0 1) par fmt(2))") ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   label tex f alignment(r) compress nonumbers
+	   
+********************* Table between export and non-export oriented exonerated firms
+preserve  																		
+qui summ final_npm, d
+keep if final_npm > r(p1)		
+qui summ final_npm if final_regime == 1, d
+estpost summ final_npm if final_regime == 1, detail quietly
+est store npm_nonex1
+qui summ final_npm if final_regime == 2, d
+estpost summ final_npm final_epm if final_regime == 2, detail quietly
+est store npm_ex1
+estpost ttest final_npm, by(final_regime) unequal quietly
+est store npm_diff1
+esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1a.tex", replace ///
+	   mtitles("\textbf{Export Oriented}" "\textbf{Non-Export Oriented}" "\textbf{Mean Diff}") ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
+	   collabels("Mean" "SD" "Diff") ///
+	   label tex f alignment(r) compress nonumbers noobs nonotes 
+restore
+
+preserve																		
+qui summ final_epm, d
+keep if final_epm > r(p5)		
+qui summ final_epm if final_regime == 1, d
+estpost summ final_epm if final_regime == 1, detail quietly
+est store epm_nonex1
+qui summ final_epm if final_regime == 2, d
+estpost summ final_epm final_epm if final_regime == 2, detail quietly
+est store epm_ex1
+estpost ttest final_epm, by(final_regime) unequal quietly
+est store epm_diff1
+esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1a.tex", append ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
+restore
+
+global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age ihss_n_workers mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+eststo: qui estpost summ $vars if final_regime == 1, detail
+est store nonex1
+eststo: qui estpost summ $vars if final_regime == 2, detail
+est store ex1
+eststo: qui estpost ttest $vars, by(final_regime) unequal
+est store diff1
+esttab nonex1 ex1 diff1 using "$out\tab1a.tex", append ///
+	   nomtitles collabels(none) ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
+	   label tex f alignment(r) compress nonumbers   
+	   
 	   
 * Sample distribution by special regime and industry (Table 3)
 preserve
 keep if cit_exonerated == 1
-tab cit_regime final_industry, row nofreq
-estpost tab cit_regime final_industry, nototal
+gen final_aux_regime = cit_regime
+replace final_aux_regime = 3 if (cit_regime == 7 | cit_regime == 9) 
+label def final_aux_regime 0 "None" 1 "ZIP" 2 "ZOLI" 3 "Tourism" 4 "RIT" 5 "Others" 14 "ZADE" 23 "Renewable Energy" 
+label val final_aux_regime final_aux_regime
+tab final_aux_regime final_industry, row nofreq
+estpost tab final_aux_regime final_industry, nototal
 esttab using "$out\tab2.tex", cell(colpct(fmt(1))) unstack label ///
 	   tex f alignment(r) noobs nonumber collabels("") compress replace 
 restore
