@@ -271,6 +271,10 @@ foreach var of varlist final_gpm final_npm 									///
 	estadd loc sector_fe   "\xmark": eq3_`var'
 	estadd loc province_fe "\xmark": eq3_`var'
 	estadd loc year_fe     "\cmark": eq3_`var'
+	eststo eq4_`var': qui reghdfe `var' cit_exonerated, a(codigo province year) cluster(id) residuals(res_6_`var')
+	estadd loc sector_fe   "\cmark": eq4_`var'
+	estadd loc province_fe "\cmark": eq4_`var'
+	estadd loc year_fe     "\cmark": eq4_`var'
 	
 	eststo eqt1_`var': qui reghdfe `var' i.final_regime, a(province year) cluster(id) residuals(rest_6_`var')
 	qui test 1.final_regime == 2.final_regime
@@ -290,6 +294,12 @@ foreach var of varlist final_gpm final_npm 									///
 	estadd loc sector_fe   "\xmark": eqt3_`var'
 	estadd loc province_fe "\xmark": eqt3_`var'
 	estadd loc year_fe     "\cmark": eqt3_`var'
+	eststo eqt4_`var': qui reghdfe `var' i.final_regime, a(codigo province year) cluster(id) residuals(rest_6_`var')
+	qui test 1.final_regime == 2.final_regime
+	estadd scalar test1 = r(p)
+	estadd loc sector_fe   "\xmark": eqt4_`var'
+	estadd loc province_fe "\cmark": eqt4_`var'
+	estadd loc year_fe     "\cmark": eqt4_`var'
 }
 
 * Testing for different controls (Table 11)
