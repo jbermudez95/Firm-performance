@@ -73,7 +73,8 @@ esttab nonex1 ex1 diff1 using "$out\tab1.tex", append ///
 	   label tex f alignment(r) compress nonumbers
 	   
 ********************* Table between export and non-export oriented exonerated firms
-preserve  																		
+preserve  	
+drop if final_regime == 0																	
 qui summ final_npm, d
 keep if final_npm > r(p1)		
 qui summ final_npm if final_regime == 1, d
@@ -91,7 +92,8 @@ esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1a.tex", replace ///
 	   label tex f alignment(r) compress nonumbers noobs nonotes 
 restore
 
-preserve																		
+preserve	
+drop if final_regime == 0																	
 qui summ final_epm, d
 keep if final_epm > r(p5)		
 qui summ final_epm if final_regime == 1, d
@@ -107,6 +109,8 @@ esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1a.tex", append ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 restore
 
+preserve
+drop if final_regime == 0
 global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age ihss_n_workers mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 eststo: qui estpost summ $vars if final_regime == 1, detail
 est store nonex1
@@ -118,7 +122,7 @@ esttab nonex1 ex1 diff1 using "$out\tab1a.tex", append ///
 	   nomtitles collabels(none) ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   label tex f alignment(r) compress nonumbers   
-	   
+restore	   
 	   
 * Sample distribution by special regime and industry (Table 3)
 preserve
