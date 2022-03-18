@@ -18,8 +18,8 @@ set matsize 2000
 set seed 2000
 
 * Antes de correr este do file debe cambiar los directorios
-global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		// cambiar directorio
-global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"		// cambiar directorio
+global path "C:\Users\Owner\OneDrive - SAR\Firm performance and tax incentives"		// cambiar directorio
+global out  "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"		// cambiar directorio
 
 run "$path\setup.do" 	// Run the do file that prepare all variables for estimations
 
@@ -271,7 +271,7 @@ foreach var of varlist final_gpm final_npm 									///
 	estadd loc sector_fe   "\xmark": eq3_`var'
 	estadd loc province_fe "\xmark": eq3_`var'
 	estadd loc year_fe     "\cmark": eq3_`var'
-	eststo eq4_`var': qui reghdfe `var' cit_exonerated, a(codigo province year) cluster(id) residuals(res_6_`var')
+	eststo eq4_`var': qui reghdfe `var' cit_exonerated, a(codigo province year) cluster(id) residuals(res_9_`var')
 	estadd loc sector_fe   "\cmark": eq4_`var'
 	estadd loc province_fe "\cmark": eq4_`var'
 	estadd loc year_fe     "\cmark": eq4_`var'
@@ -294,7 +294,7 @@ foreach var of varlist final_gpm final_npm 									///
 	estadd loc sector_fe   "\xmark": eqt3_`var'
 	estadd loc province_fe "\xmark": eqt3_`var'
 	estadd loc year_fe     "\cmark": eqt3_`var'
-	eststo eqt4_`var': qui reghdfe `var' i.final_regime, a(codigo province year) cluster(id) residuals(rest_6_`var')
+	eststo eqt4_`var': qui reghdfe `var' i.final_regime, a(codigo province year) cluster(id) residuals(rest_9_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
 	estadd loc sector_fe   "\cmark": eqt4_`var'
