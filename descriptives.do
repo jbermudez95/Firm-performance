@@ -248,7 +248,7 @@ twoway line d1 x1, lc(blue) 	  lw(thick)  		   	   		||   ///
 	   line d2 x2, lc(navy) 	  lw(thick)                		||   ///
 	   line d3 x3, lc(midblue%80) lw(thick) lpattern(longdash)  || , ///
 	   $details legend(row(1) order(1 "Primary sector" 2 "Manufacturing" 3 "Services")) ///
-	   ytitle("Density") xtitle("TFP on value added") 
+	   ytitle("Density") xtitle("TFP on sales") 
 graph export "$out/tfp_sales_sectors.pdf", replace
 restore
 
