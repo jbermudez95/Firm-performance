@@ -26,6 +26,7 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for estimati
 global details "booktabs f se(2) b(3) nonumbers star staraux"
 global options "booktabs se(2) b(3) star staraux nomtitles"
 global graphop "grid(none) legend(region(lcolor(none))) graphr(color(white))"
+global controls "final_log_age mnc final_log_firm_size final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
 *************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
