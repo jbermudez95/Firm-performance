@@ -18,8 +18,8 @@ set matsize 2000
 set seed 2000
 
 * Antes de correr este do file debe cambiar los directorios
-global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		// cambiar directorio
-global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"						// cambiar directorio
+global path "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"		// cambiar directorio
+global out "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"						// cambiar directorio
 
 /* Paquetes necesarios para las estimaciones
 ssc install winsor
