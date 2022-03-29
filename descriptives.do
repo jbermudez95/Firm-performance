@@ -25,7 +25,42 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for descript
 *************************************************************************
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
+
+global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age ihss_n_workers mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+
 * Summary statistics for pooled sample (Table 2)
+preserve  																		
+qui summ final_npm, d
+keep if final_npm > r(p1)		
+qui summ final_npm, d
+estpost summ final_npm, detail quietly
+est store npm_
+esttab npm_ using "$out\tab1_junta.tex", replace ///
+	   mtitles("\textbf{Pooled Sample}") ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
+	   collabels("Mean" "SD") ///
+	   label tex f alignment(r) compress nonumbers noobs nonotes 
+restore
+
+preserve																		
+qui summ final_epm, d
+keep if final_epm > r(p5)		
+qui summ final_epm, d
+estpost summ final_epm, detail quietly
+est store epm_
+esttab epm_ using "$out\tab1_junta.tex", append ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
+restore
+
+eststo: qui estpost summ $vars, detail
+est store nonex1
+esttab nonex1 ex1 diff1 using "$out\tab1_junta.tex", append ///
+	   nomtitles collabels(none) ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
+	   label tex f alignment(r) compress nonumbers
+
+********************* Table between exonerated and non-exonerated firms
 preserve  																		
 qui summ final_npm, d
 keep if final_npm > r(p1)		
@@ -33,11 +68,11 @@ qui summ final_npm if cit_exonerated == 0, d
 estpost summ final_npm if cit_exonerated == 0, detail quietly
 est store npm_nonex1
 qui summ final_npm if cit_exonerated == 1, d
-estpost summ final_npm final_epm if cit_exonerated == 1, detail quietly
+estpost summ final_npm if cit_exonerated == 1, detail quietly
 est store npm_ex1
 estpost ttest final_npm, by(cit_exonerated) unequal quietly
 est store npm_diff1
-esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1.tex", replace ///
+esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1_junta.tex", append ///
 	   mtitles("\textbf{Non-Exonerated}" "\textbf{Exonerated}" "\textbf{Mean Diff}") ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   collabels("Mean" "SD" "Diff") ///
@@ -51,23 +86,22 @@ qui summ final_epm if cit_exonerated == 0, d
 estpost summ final_epm if cit_exonerated == 0, detail quietly
 est store epm_nonex1
 qui summ final_epm if cit_exonerated == 1, d
-estpost summ final_epm final_epm if cit_exonerated == 1, detail quietly
+estpost summ final_epm if cit_exonerated == 1, detail quietly
 est store epm_ex1
 estpost ttest final_epm, by(cit_exonerated) unequal quietly
 est store epm_diff1
-esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1.tex", append ///
+esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1_junta.tex", append ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 restore
 
-global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age ihss_n_workers mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 eststo: qui estpost summ $vars if cit_exonerated == 0, detail
 est store nonex1
 eststo: qui estpost summ $vars if cit_exonerated == 1, detail
 est store ex1
 eststo: qui estpost ttest $vars, by(cit_exonerated) unequal
 est store diff1
-esttab nonex1 ex1 diff1 using "$out\tab1.tex", append ///
+esttab nonex1 ex1 diff1 using "$out\tab1_junta.tex", append ///
 	   nomtitles collabels(none) ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   label tex f alignment(r) compress nonumbers
@@ -81,11 +115,11 @@ qui summ final_npm if final_regime == 1, d
 estpost summ final_npm if final_regime == 1, detail quietly
 est store npm_nonex1
 qui summ final_npm if final_regime == 2, d
-estpost summ final_npm final_epm if final_regime == 2, detail quietly
+estpost summ final_npm if final_regime == 2, detail quietly
 est store npm_ex1
 estpost ttest final_npm, by(final_regime) unequal quietly
 est store npm_diff1
-esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1a.tex", replace ///
+esttab npm_nonex1 npm_ex1 npm_diff1 using "$out\tab1_junta.tex", append ///
 	   mtitles("\textbf{Export Oriented}" "\textbf{Non-Export Oriented}" "\textbf{Mean Diff}") ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   collabels("Mean" "SD" "Diff") ///
@@ -100,28 +134,27 @@ qui summ final_epm if final_regime == 1, d
 estpost summ final_epm if final_regime == 1, detail quietly
 est store epm_nonex1
 qui summ final_epm if final_regime == 2, d
-estpost summ final_epm final_epm if final_regime == 2, detail quietly
+estpost summ final_epm if final_regime == 2, detail quietly
 est store epm_ex1
 estpost ttest final_epm, by(final_regime) unequal quietly
 est store epm_diff1
-esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1a.tex", append ///
+esttab epm_nonex1 epm_ex1 epm_diff1 using "$out\tab1_junta.tex", append ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 restore
 
 preserve
 drop if final_regime == 0
-global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age ihss_n_workers mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 eststo: qui estpost summ $vars if final_regime == 1, detail
 est store nonex1
 eststo: qui estpost summ $vars if final_regime == 2, detail
 est store ex1
 eststo: qui estpost ttest $vars, by(final_regime) unequal
 est store diff1
-esttab nonex1 ex1 diff1 using "$out\tab1a.tex", append ///
+esttab nonex1 ex1 diff1 using "$out\tab1_junta.tex", append ///
 	   nomtitles collabels(none) ///
 	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2)) b(star pattern(0 0 1) fmt(2))") ///
-	   label tex f alignment(r) compress nonumbers   
+	   label tex f alignment(r) compress nonumbers type
 restore	   
 	   
 * Sample distribution by special regime and industry (Table 3)
@@ -134,7 +167,7 @@ label val final_aux_regime final_aux_regime
 tab final_aux_regime final_industry, row nofreq
 estpost tab final_aux_regime final_industry, nototal
 esttab using "$out\tab2.tex", cell(colpct(fmt(1))) unstack label ///
-	   tex f alignment(r) noobs nonumber collabels("") compress replace 
+	   tex f alignment(r) noobs nonumber collabels("") compress replace  
 restore
 
 *Correlation matrix between explanatory variables (Table 4)
