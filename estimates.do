@@ -312,7 +312,7 @@ esttab eq4_final_gpm eq1_final_gpm eq2_final_gpm eq3_final_gpm eq4_final_npm eq1
 
 esttab eqt4_final_gpm eqt1_final_gpm eqt2_final_gpm eqt3_final_gpm eqt4_final_npm eqt1_final_npm eqt2_final_npm eqt3_final_npm using "$out\reg_robustness1.tex", ///
 	   append sfmt(%9.3fc %9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) $options   									 	             ///
-	   mgroups("\textsc{Gross Profit Margins}" "\textsc{Net Profit Margins}", pattern(1 0 0 1 0 0) 				 	 						 ///
+	   mgroups("\textsc{Gross Profit Margins}" "\textsc{Net Profit Margins}", pattern(1 0 0 0 1 0 0 0) 				 	 						 ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(1.final_regime 2.final_regime)    		 		 ///
 	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
 	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)")
