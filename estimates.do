@@ -306,7 +306,7 @@ foreach var of varlist final_gpm final_npm 									///
 * Testing for different controls (Table 11)
 esttab eq4_final_gpm eq1_final_gpm eq2_final_gpm eq3_final_gpm eq4_final_npm eq1_final_npm eq2_final_npm eq3_final_npm using "$out\reg_robustness1.tex", /// 
 	   replace sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) coeflabels(cit_exonerated "Exonerated") $options	 ///
-	   mgroups("\textsc{Gross Profit Margins}" "\textsc{Net Profit Margins}", pattern(1 0 0 1 0 0) 				 	         ///
+	   mgroups("\textsc{Gross Profit Margins}" "\textsc{Net Profit Margins}", pattern(1 0 0 0 1 0 0 0) 				 	         ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) drop(_cons) 			 		         ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?")
 
@@ -323,7 +323,7 @@ esttab eq4_final_epm eq1_final_epm eq2_final_epm eq3_final_epm ///
        eq4_final_roa eq1_final_roa eq2_final_roa eq3_final_roa ///
 	   eq4_final_roce eq1_final_roce eq2_final_roce eq3_final_roce using "$out\reg_robustness2.tex", ///
 	   replace sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) coeflabels(cit_exonerated "Exonerated") $options ///
-	   mgroups("\textsc{EPM}" "\textsc{ROA}" "\textsc{ROCE}", pattern(1 0 0 1 0 0 1 0 0) 							     ///
+	   mgroups("\textsc{EPM}" "\textsc{ROA}" "\textsc{ROCE}", pattern(1 0 0 0 1 0 0 0 1 0 0 0) 							     ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) drop(_cons) 					     ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?")
 
@@ -331,7 +331,7 @@ esttab eqt4_final_epm eqt1_final_epm eqt2_final_epm eqt3_final_epm ///
        eqt4_final_roa eqt1_final_roa eqt2_final_roa eqt3_final_roa ///
 	   eqt4_final_roce eqt1_final_roce eqt2_final_roce eqt3_final_roce using "$out\reg_robustness2.tex", ///
 	   append sfmt(%9.3fc %9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) $options 									 					 ///
-	   mgroups("\textsc{EPM}" "\textsc{ROA}" "\textsc{ROCE}", pattern(1 0 0 1 0 0 1 0 0)  						    						 ///
+	   mgroups("\textsc{EPM}" "\textsc{ROA}" "\textsc{ROCE}", pattern(1 0 0 0 1 0 0 0 1 0 0 0)  						    						 ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(1.final_regime 2.final_regime)           			 ///
 	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
 	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)")
@@ -343,16 +343,16 @@ esttab eq4_final_eta eq1_final_eta eq2_final_eta eq3_final_eta 					   ///
 	   eq4_final_turnover eq1_final_turnover eq2_final_turnover eq3_final_turnover ///
 	   eq4_final_liquidity eq1_final_liquidity eq2_final_liquidity eq3_final_liquidity using "$out\reg_robustness3.tex", replace $options  ///
 	   sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) coeflabels(cit_exonerated "Exonerated") 			         ///
-	   mgroups("\textsc{ETA}" "\textsc{GFSAL}" "\textsc{Turnover}" "\textsc{Liquidity}", pattern(1 0 0 1 0 0 1 0 0 1 0 0)    ///
+	   mgroups("\textsc{ETA}" "\textsc{GFSAL}" "\textsc{Turnover}" "\textsc{Liquidity}", pattern(1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0)    ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) drop(_cons) 					         ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?")
 
 esttab eqt4_final_eta eqt1_final_eta eqt2_final_eta eqt3_final_eta 					   ///
        eqt4_final_gfsal eqt1_final_gfsal eqt2_final_gfsal eqt3_final_gfsal             ///
 	   eqt4_final_turnover eqt1_final_turnover eqt2_final_turnover eqt3_final_turnover ///
-	   eqt1_final_liquidity eqt2_final_liquidity eqt3_final_liquidity using "$out\reg_robustness3.tex", append $options		///
+	   eqt4_final_liquidity eqt1_final_liquidity eqt2_final_liquidity eqt3_final_liquidity using "$out\reg_robustness3.tex", append $options		///
 	   sfmt(%9.3fc %9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn)   									 		        ///
-	   mgroups("\textsc{ETA}" "\textsc{GFSAL}" "\textsc{Turnover}" "\textsc{Liquidity}", pattern(1 0 0 1 0 0 1 0 0 1 0 0)  	///
+	   mgroups("\textsc{ETA}" "\textsc{GFSAL}" "\textsc{Turnover}" "\textsc{Liquidity}", pattern(1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0)  	///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(1.final_regime 2.final_regime)    ///
 	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)")				///
 	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") 
@@ -363,7 +363,7 @@ esttab eq4_final_lproductivity eq1_final_lproductivity eq2_final_lproductivity e
 	   eq4_final_tfp_y eq1_final_tfp_y eq2_final_tfp_y eq3_final_tfp_y   							         ///
 	   eq4_final_tfp_va eq1_final_tfp_va eq2_final_tfp_va eq3_final_tfp_va using "$out\reg_robustness4.tex", ///
 	   replace sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) coeflabels(cit_exonerated "Exonerated") $options		   ///
-	   mgroups("\textsc{Labor Productivity}" "\textsc{TFP on Sales}" "\textsc{TFP on Value Added}", pattern(1 0 0 1 0 0 1 0 0)     ///
+	   mgroups("\textsc{Labor Productivity}" "\textsc{TFP on Sales}" "\textsc{TFP on Value Added}", pattern(1 0 0 0 1 0 0 0 1 0 0 0)     ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) drop(_cons) 					 			   ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?")
 
@@ -371,7 +371,7 @@ esttab eqt4_final_lproductivity eqt1_final_lproductivity eqt2_final_lproductivit
 	   eqt4_final_tfp_y eqt1_final_tfp_y eqt2_final_tfp_y eqt3_final_tfp_y   							         ///
 	   eqt4_final_tfp_va eqt1_final_tfp_va eqt2_final_tfp_va eqt3_final_tfp_va using "$out\reg_robustness4.tex", ///
 	   append sfmt(%9.3fc %9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) $options  									 	      ///
-	   mgroups("\textsc{Labor Productivity}" "\textsc{TFP on Sales}" "\textsc{TFP on Value Added}", pattern(1 0 0 1 0 0 1 0 0)        ///
+	   mgroups("\textsc{Labor Productivity}" "\textsc{TFP on Sales}" "\textsc{TFP on Value Added}", pattern(1 0 0 0 1 0 0 0 1 0 0 0)        ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(1.final_regime 2.final_regime)  		      ///
 	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
 	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)")
