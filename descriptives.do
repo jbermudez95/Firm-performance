@@ -171,7 +171,7 @@ esttab using "$out\tab2.tex", cell(colpct(fmt(1))) unstack label ///
 restore
 
 *Correlation matrix between explanatory variables (Table 4)
-global controls "final_log_age final_log_firm_size mnc final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global controls "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 qui correlate $controls
 estpost correlate $controls, matrix listwise
 est store corr_matrix
@@ -184,7 +184,7 @@ esttab corr_matrix using "$out\corr_matrix.tex", replace b(3) unstack ///
 
 global details "ylabel(, nogrid) legend(region(lcolor(none))) graphr(color(white))"
 
-* Firm size by industry and exoneration categories (Figure 3)
+/* Firm size by industry and exoneration categories (Figure 3)
 program graph_bar 
 	if final_industry == 1 {
 		graph export "$out\bar_primary.pdf", replace
@@ -210,7 +210,7 @@ forval val = 1/3 {
 		   graph_bar   
 	restore
 }
-
+*/
 * CDF plots and KS tests for different measures of profitability (Figure 5)
 loc z "npm epm roa roce"
 foreach k of local z {

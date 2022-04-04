@@ -13,9 +13,6 @@ Contact: 		jbermudez@sar.gob.hn
 clear all
 clear matrix
 set more off
-set varabbrev off
-set matsize 2000
-set seed 2000
 
 * Antes de correr este do file debe cambiar los directorios
 global path "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"		// cambiar directorio
@@ -109,6 +106,7 @@ g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
 g final_fixed_assets    	 = cit_fixed_assets - cit_fixed_assets_depr
 g final_net_labor_costs 	 = cit_labor_ded - cit_labor_non_ded
 g final_value_added    		 = final_sales - final_input_costs
+g final_salary               = 
 g final_labor_productivity   = final_sales / ihss_n_workers
 
 g final_age        = year - date_start
