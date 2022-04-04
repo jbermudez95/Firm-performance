@@ -53,10 +53,10 @@ foreach var of varlist final_gpm final_npm {
 }
 
 esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_baseline2.tex", ///
-	   replace booktabs se(2) b(3) nonumbers star staraux    												///
-	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) ///
-	   mgroups("\textsc{Primary}" "\textsc{Manufacturing}" "\textsc{Services}", pattern(1 0 1 0 1 0) 		///
-	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(cit_exonerated)	///
+	   replace booktabs se(2) b(3) nonumbers star staraux    														///
+	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) 		///
+	   mgroups("\textsc{Primary}" "\textsc{Manufacturing}" "\textsc{Services}", pattern(1 0 1 0 1 0) 				///
+	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(cit_exonerated)	        ///
 	   scalars("N Observations" "r2 R-Squared" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")	///
 	   coeflabels(cit_exonerated "Exonerated")
 
@@ -65,12 +65,12 @@ esttab eqt_final_gpm_1 eqt_final_npm_1 eqt_final_gpm_2 eqt_final_npm_2 eqt_final
 	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") alignment(D{.}{.}{-1}) page(dcolumn) 		 											 ///
 	   mgroups("\textsc{Primary}" "\textsc{Manufacturing}" "\textsc{Services}", pattern(1 0 1 0 1 0) 		  		 						 ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(1.final_regime 2.final_regime)					 ///
-	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")			 ///
+	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")	 ///
 	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") sfmt(%9.3fc %9.3fc %9.3fc)
 
 
 *************************************************************************
-*******                 ANALYSIS OF MECHANISMS                    ******* 
+*******                 ANALYSIS OF COVARIATES                    ******* 
 *************************************************************************
 
 *This section produces tables 8, 9, and 10 of the Appendix.
@@ -87,6 +87,12 @@ global iteration3 "final_capital_int_exo final_labor_int_exo final_export_share_
 
 eststo drop *
 foreach var of varlist final_gpm final_npm {
+		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls iteration1 iteration2 iteration3, a(codigo year province) cluster(id) residuals(res_3_`var'_0)
+		estadd loc sector_fe   "\cmark": eq_`var'_0
+		estadd loc province_fe "\cmark": eq_`var'_0
+		estadd loc year_fe     "\cmark": eq_`var'_0
+		estadd loc controls    "\cmark": eq_`var'_0
+		
 	forval j = 1/3 {
 		eststo eq_`var'_`j': qui reghdfe `var' cit_exonerated $controls ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_3_`var'_`j')
 		estadd loc sector_fe   "\cmark": eq_`var'_`j'
@@ -96,29 +102,28 @@ foreach var of varlist final_gpm final_npm {
 	}
 }
 
-esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms1.tex", ///
-	   replace booktabs se(2) b(3) nonumbers star staraux       														  ///
-	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) 			  ///
-	   mgroups("\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}", pattern(1 0 1 0 1 0) 		  ///
-	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) drop(cit_exonerated  0.mnc_exo) 	  ///
+esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms1.tex", ///
+	   replace booktabs se(2) b(3) nonumbers star staraux drop(cit_exonerated  0.mnc_exo $controls)						  ///
+	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn)   ///
+	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",  	      ///
+	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 		 	  ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?") 	  ///
 	   coeflabels(final_log_age_exo "Exonerated $\times$ Age" 1.mnc_exo "Exonerated $\times$ MNC" final_log_firm_size_exo ///
 	   "Exonerated $\times$ Firm size" _cons "Constant" final_log_input_costs_exo "Exonerated $\times$ Input costs" 	  ///
 	   final_log_financial_costs_exo "Exonerated $\times$ Financial costs" final_capital_int_exo 						  ///
 	   "Exonerated $\times$ Capital intensity" final_labor_int_exo "Exonerated $\times$ Labor intensity" 				  ///
-	   final_export_share_exo "Exonerated $\times$ Export share" final_import_share_exo 								  ///
-	   "Exonerated $\times$ Import share") 
+	   final_export_share_exo "Exonerated $\times$ Export share" final_import_share_exo "Exonerated $\times$ Import share") 
 	   
 coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_1, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
          (eq_final_gpm_2, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_2, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
 		 (eq_final_gpm_3, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_3, nokey mcolor(orange%60) ciopts(lcolor(orange%60))), ///
-         drop(_cons cit_exonerated) xline(0, lpattern(-) lwidth(tiny) lcolor(gray)) xlabel(-0.65(0.25)0.6) $graphop  ///
+         drop(_cons cit_exonerated) xline(0, lpattern(-) lwidth(tiny) lcolor(gray)) xlabel(-0.65(0.25)0.6) $graphop   ///
 		 coeflabels(final_log_age_exo = "Age" 1.mnc_exo = "MNC" final_log_firm_size_exo = "Firm size"                 ///
 		 final_log_input_costs_exo = "Input costs" final_log_financial_costs_exo = "Financial costs"     			  ///
 		 final_capital_int_exo = "Capital intensity" final_labor_int_exo = "Labor intensity"  		     			  ///
 	     final_export_share_exo = "Export share" final_import_share_exo = "Import share", wrap(9) labsize(small))     ///
-		 groups(final_log_age_exo 1.mnc_exo final_log_firm_size_exo = "{bf:Firms traits}"                  ///
-		 final_log_input_costs_exo final_log_financial_costs_exo = "{bf:Costs structure}"                 ///
+		 groups(final_log_age_exo 1.mnc_exo final_log_firm_size_exo = "{bf:Firms traits}"                             ///
+		 final_log_input_costs_exo final_log_financial_costs_exo = "{bf:Costs structure}"                             ///
 		 final_capital_int_exo final_labor_int_exo final_export_share_exo final_import_share_exo = "{bf:Use of inputs}", ///
 		 gap(1) labsize(small)) legend(row(1)) title("{bf:All exonerated firms}", position(12) size(small)) name(g1)        
  
@@ -137,6 +142,12 @@ global iteration3 "final_capital_int_export final_labor_int_export final_export_
 
 eststo drop *
 foreach var of varlist final_gpm final_npm {
+		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls iteration1 iteration2 iteration3, a(codigo year province) cluster(id) residuals(res_4_`var'_0)
+		estadd loc sector_fe   "\cmark": eq_`var'_0
+		estadd loc province_fe "\cmark": eq_`var'_0
+		estadd loc year_fe     "\cmark": eq_`var'_0
+		estadd loc controls    "\cmark": eq_`var'_0
+		
 	forval j = 1/3 {
 		eststo eq_`var'_`j': qui reghdfe `var' final_export_oriented $controls ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_4_`var'_`j')
 		estadd loc sector_fe   "\cmark": eq_`var'_`j'
@@ -146,18 +157,18 @@ foreach var of varlist final_gpm final_npm {
 	}
 }
 
-esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms2.tex", ///
-	   replace booktabs se(2) b(3) nonumbers star staraux drop(final_export_oriented  0.mnc_export)				    	  ///
-	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) 			  ///
-	   mgroups("\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}", pattern(1 0 1 0 1 0) 		  ///
-	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 								      ///
-	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?") 	  ///
+esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms2.tex", ///
+	   replace booktabs se(2) b(3) nonumbers star staraux drop(final_export_oriented  0.mnc_export $controls)			  ///
+	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn)   ///
+	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",         ///
+	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 			  ///
 	   coeflabels(final_log_age_export "Export-oriented $\times$ Age" 1.mnc_export "Export-oriented $\times$ MNC" 		  ///
 	   final_log_firm_size_export "Export-oriented $\times$ Firm size" _cons "Constant" final_log_input_costs_export 	  ///
 	   "Export-oriented $\times$ Input costs" final_log_financial_costs_export "Export-oriented $\times$ Financial costs" ///
 	   final_capital_int_export "Export-oriented $\times$ Capital intensity" final_labor_int_export 					  ///
 	   "Export-oriented $\times$ Labor intensity" final_export_share_export "Export-oriented $\times$ Export share" 	  ///
-	   final_import_share_export "Export-oriented $\times$ Import share")
+	   final_import_share_export "Export-oriented $\times$ Import share")												  ///
+	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
 	   
 coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_1, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
          (eq_final_gpm_2, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_2, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
@@ -180,6 +191,12 @@ global iteration3 "final_capital_int_noexp final_labor_int_noexp final_export_sh
 
 eststo drop *
 foreach var of varlist final_gpm final_npm {
+		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls iteration1 iteration2 iteration3, a(codigo year province) cluster(id) residuals(res_5_`var'_0)
+		estadd loc sector_fe   "\cmark": eq_`var'_0
+		estadd loc province_fe "\cmark": eq_`var'_0
+		estadd loc year_fe     "\cmark": eq_`var'_0
+		estadd loc controls    "\cmark": eq_`var'_0
+	
 	forval j = 1/3 {
 		eststo eq_`var'_`j': qui reghdfe `var' final_nexport_oriented $controls ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_5_`var'_`j')
 		estadd loc sector_fe   "\cmark": eq_`var'_`j'
@@ -189,18 +206,18 @@ foreach var of varlist final_gpm final_npm {
 	}
 }
 
-esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms3.tex", /// 
-	   replace booktabs se(2) b(3) nonumbers star staraux drop(final_nexport_oriented  0.mnc_noexp)					    		 ///
-	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) 					 ///
-	   mgroups("\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}", pattern(1 0 1 0 1 0) 				 ///
-	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 							     			 ///
-	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?") 			 ///
+esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms3.tex", /// 
+	   replace booktabs se(2) b(3) nonumbers star staraux drop(final_nexport_oriented  0.mnc_noexp $controls)		    		 ///
+	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) 		 ///
+	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",  				 ///
+	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 					 ///
 	   coeflabels(final_log_age_noexp "Non-export-oriented $\times$ Age" 1.mnc_noexp "Non-export-oriented $\times$ MNC" 		 ///
 	   final_log_firm_size_noexp "Non-export-oriented $\times$ Firm size" _cons "Constant" final_log_input_costs_noexp 			 ///
 	   "Non-export-oriented $\times$ Input costs" final_log_financial_costs_noexp "Non-export-oriented $\times$ Financial costs" ///
 	   final_capital_int_noexp "Non-export-oriented $\times$ Capital intensity" final_labor_int_noexp 							 ///
 	   "Non-export-oriented $\times$ Labor intensity" final_export_share_noexp "Non-export-oriented $\times$ Export share" 		 ///
-	   final_import_share_noexp "Non-export-oriented $\times$ Import share") 
+	   final_import_share_noexp "Non-export-oriented $\times$ Import share") 													 ///
+	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?") 
 	   
 coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_1, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
          (eq_final_gpm_2, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_2, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
@@ -210,10 +227,11 @@ coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_fin
 
 graph combine g1 g2 g3, col(3) imargin(small) commonscheme graphr(color(white))
 graph export "$out\mechanisms.pdf", replace
-		 
-		 
+
+graph drop _all		 
+
 *************************************************************************
-*******                     ROBUSTNESS TESTS                      ******* 
+**	  ROBUSTNESS TESTS AND ALTERNATIVE MEASURES OF FIRM PERFORMANCE	   ** 
 *************************************************************************
 
 rename final_log_labor_productivity final_lproductivity
