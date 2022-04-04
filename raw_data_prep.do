@@ -246,14 +246,8 @@ egen sales_exmp_purch  = rowtotal(ventasexoneradasoce15 ventasexoneradasoce18 ve
 egen sales_fyduca      = rowtotal(transfbienesfyduca15 transfbienesfyduca18 transfserviciosfyduca15 transfserviciosfyduca18), missing
 egen sales_exports     = rowtotal(ventas_exentas_expor_12 ventas_exentas_expor_15 ventas_exentas_expor_18 ///
 								  ventas_exentas_exp_fuera_ca_12 ventas_exentas_exp_fuera_ca_15 ventas_exentas_exp_fuera_ca_18), missing
-egen sales_imports     = rowtotal(importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18 importacionesexentas12 ///
-								  importacionesexentas15 importacionesexentas18), missing
-egen sales_total       = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fyduca sales_exports), missing
-egen sales_purch       = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
-								  comprasexoneradasoce15 comprasexoneradasoce18 importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18 ///
-								  importacionesexentas12 importacionesexentas15 importacionesexentas18 adquisifyducagravadas15 adquisifyducagravadas18 ///
-								  adquisifyducaexeexo15 adquisifyducaexeexo18), missing
-
+egen sales_imports     = rowtotal(importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18  ///
+								  importacionesexentas12 importacionesexentas15 importacionesexentas18), missing
 keep rtn year sales_*
 
 ** 1.3 MERGE BETWEEN CORPORATE AND SALES TAX RECORDS
@@ -434,6 +428,14 @@ drop _merge
 merge m:m rtn year using "`custom_records'"
 duplicates drop
 drop _merge
+
+g final_exports     		 = max(sales_exports, custom_export)
+g final_imports     		 = max(sales_imports, custom_import)
+
+egen sales_total       = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fyduca final_exports), missing
+egen sales_purch       = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
+								  comprasexoneradasoce15 comprasexoneradasoce18 adquisifyducagravadas15 adquisifyducagravadas18 ///
+								  adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
 
 
 

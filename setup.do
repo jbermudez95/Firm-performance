@@ -5,7 +5,7 @@ Description: 	This do file uses the panel data "final_dataset" built from data_p
 				and tax incentives: evidence from Honduras". It also generates table A3
 				for TFP estimations that are inlcuded in the online appendix of the paper.
 Date:			November, 2021
-Modified:		November, 2021
+Modified:		April, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -90,7 +90,7 @@ foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_
 					   cit_total_costs_ded cit_total_costs_non_ded cit_total_costs cit_caused_tax cit_total_credits_r     ///
 					   cit_total_credits_an cit_total_credits_as sales_exempted sales_taxed sales_exmp_purch sales_fyduca ///
 					   sales_exports sales_imports sales_total sales_purch custom_import custom_export 					  ///
-					   cit_current_liabilities cit_total_credits_r cit_total_credits_an cit_total_credits_as {
+					   cit_current_liabilities {
 							replace `var' = `var' / `mill'
 							replace `var' = 0 if `var' < 0
 							replace `var' = ((`var' / `ipc2017') * 100) if year == 2017
@@ -99,8 +99,11 @@ foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_
 }
 
 g final_sales       		 = max(cit_total_sales, sales_total)
-g final_exports     		 = max(sales_exports, custom_export)
-g final_imports     		 = max(sales_imports, custom_import)
+g cit_max = 1 if max(cit_total_sales, sales_total) == cit_total_sales
+g sales_max = 1 if max(cit_total_sales, sales_total) == sales_total
+
+
+
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
 g final_fixed_assets    	 = cit_fixed_assets - cit_fixed_assets_depr
