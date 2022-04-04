@@ -72,14 +72,6 @@ replace final_industry = 3 if (codigoseccion == "G" | codigoseccion == "I")
 label def final_industry 1 "Primary" 2 "Manufacturing" 3 "Services"
 label val final_industry final_industry
 
-* Firm size classification following the WBES
-g final_firm_size = 0
-replace final_firm_size = 1 if ihss_n_workers < 20
-replace final_firm_size = 2 if ihss_n_workers >= 20 & ihss_n_workers < 100
-replace final_firm_size = 3 if ihss_n_workers >= 100
-label def final_firm_size 1 "Small" 2 "Medium" 3 "Large"
-label val final_firm_size final_firm_size
-
 
 
 *************************************************************************
@@ -126,7 +118,7 @@ g final_log_age					 = log(final_age)
 g final_log_sales				 = log(1 + final_sales)
 g final_log_input_costs 		 = log(1 + final_input_costs)
 g final_log_financial_costs 	 = log(1 + final_financial_costs)
-g final_log_firm_size   		 = log(ihss_n_workers)
+g final_log_employment   		 = log(ihss_n_workers)
 g final_log_total_assets		 = log(1 + cit_total_assets)
 g final_log_fixed_assets		 = log(1 + final_fixed_assets)
 g final_log_value_added     	 = log(1 + final_value_added)
@@ -203,10 +195,6 @@ replace final_liquidity1 = 0 if missing(final_liquidity1)
 winsor final_liquidity1, gen(final_liquidity) p(0.01)
 drop final_liquidity1
 
-g final_log_gpm             = log(1 + final_gpm)
-g final_log_npm             = log(1 + final_npm)
-g final_ihs_gpm             = asinh(final_gpm)
-g final_ihs_npm             = asinh(final_npm)
 
 * Estimation of Total Factor Productivity at the firm level by industry employing 
 * the method developed by Ackerberg et al. (2015). Variables most to be renamed 
@@ -216,7 +204,7 @@ g y  = final_log_sales
 g va = final_log_value_added
 g k  = final_log_total_assets
 g a  = final_log_age
-g l  = final_log_firm_size
+g l  = final_log_employment
 g m  = final_log_input_costs
 
 g final_log_productivity_y  = 0
@@ -269,9 +257,8 @@ label var final_turnover 			   "Turnover"
 label var final_liquidity 			   "Liquidity"
 label var final_age 				   "Age"
 label var final_log_age 			   "Age" 
-label var final_firm_size 			   "Firm size"
-label var final_log_firm_size 		   "Firm size"
-label var ihss_n_workers			   "Firm size"
+label var final_log_employment 		   "Employment"
+label var ihss_n_workers			   "Employment"
 label var final_input_costs 		   "Input costs"
 label var final_log_input_costs 	   "Input costs" 
 label var final_financial_costs 	   "Financial costs"
@@ -286,7 +273,3 @@ label var final_log_fixed_assets	   "Fixed assets"
 label var final_log_productivity_y     "TFP on sales"
 label var final_log_productivity_va    "TFP on value added"
 label var final_log_labor_productivity "Labor productivity"
-label var final_log_gpm                "Log(GPM)"
-label var final_log_npm                "Log(NPM)"
-label var final_ihs_gpm                "IHS(GPM)"
-label var final_ihs_npm                "IHS(NPM)"
