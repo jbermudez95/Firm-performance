@@ -36,12 +36,12 @@ global controls "final_log_age mnc final_log_firm_size final_log_input_costs fin
 
 eststo drop *
 foreach var of varlist final_gpm final_log_gpm final_ihs_gpm final_npm final_log_npm final_ihs_npm {
-	eststo eq_`var': qui reghdfe `var' cit_exonerated, a(codigo year province) cluster(id) residuals(res_1_`var')
+	eststo eq_`var': qui reghdfe `var' cit_exonerated $controls, a(codigo year province) cluster(id) residuals(res_1_`var')
 	estadd loc sector_fe   "\cmark": eq_`var'
 	estadd loc province_fe "\cmark": eq_`var'
 	estadd loc year_fe     "\cmark": eq_`var'
 	
-	eststo eqt_`var': qui reghdfe `var' i.final_regime, a(codigo year province) cluster(id) residuals(rest_1_`var')
+	eststo eqt_`var': qui reghdfe `var' i.final_regime $controls, a(codigo year province) cluster(id) residuals(rest_1_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
 	estadd loc sector_fe   "\cmark": eqt_`var'
@@ -75,16 +75,18 @@ esttab eqt_final_npm eqt_final_log_npm eqt_final_ihs_npm using "$out\reg_baselin
 eststo drop *
 foreach var of varlist final_gpm final_npm {
 	forval j = 1/3 {
-	
-		eststo eq_`var'_`j': qui reghdfe `var' cit_exonerated if final_industry == `j', a(year province) cluster(id) residuals(res_2_`var'_`j')
+	    preserve
+		keep if final_industry == `j' 
+		eststo eq_`var'_`j': qui reghdfe `var' cit_exonerated $controls, a(year province) cluster(id) residuals(res_2_`var'_`j')
 		estadd loc province_fe "\cmark": eq_`var'_`j'
 		estadd loc year_fe     "\cmark": eq_`var'_`j'
 		
-		eststo eqt_`var'_`j': qui reghdfe `var' i.final_regime if final_industry == `j', a(year province) cluster(id) residuals(rest_2_`var'_`j')
+		eststo eqt_`var'_`j': qui reghdfe `var' i.final_regime  $controls, a(year province) cluster(id) residuals(rest_2_`var'_`j')
 		qui test 1.final_regime == 2.final_regime
 		estadd scalar test1 = r(p)
 		estadd loc province_fe "\cmark": eqt_`var'_`j'
 		estadd loc year_fe     "\cmark": eqt_`var'_`j'
+		restore 
 	}
 }
 
@@ -124,7 +126,7 @@ global iteration3 "final_capital_int_exo final_labor_int_exo final_export_share_
 eststo drop *
 foreach var of varlist final_gpm final_npm {
 	forval j = 1/3 {
-		eststo eq_`var'_`j': qui reghdfe `var' cit_exonerated ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_3_`var'_`j')
+		eststo eq_`var'_`j': qui reghdfe `var' cit_exonerated $controls ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_3_`var'_`j')
 		estadd loc sector_fe   "\cmark": eq_`var'_`j'
 		estadd loc province_fe "\cmark": eq_`var'_`j'
 		estadd loc year_fe     "\cmark": eq_`var'_`j'
@@ -173,7 +175,7 @@ global iteration3 "final_capital_int_export final_labor_int_export final_export_
 eststo drop *
 foreach var of varlist final_gpm final_npm {
 	forval j = 1/3 {
-		eststo eq_`var'_`j': qui reghdfe `var' final_export_oriented ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_4_`var'_`j')
+		eststo eq_`var'_`j': qui reghdfe `var' final_export_oriented $controls ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_4_`var'_`j')
 		estadd loc sector_fe   "\cmark": eq_`var'_`j'
 		estadd loc province_fe "\cmark": eq_`var'_`j'
 		estadd loc year_fe     "\cmark": eq_`var'_`j'
@@ -215,7 +217,7 @@ global iteration3 "final_capital_int_noexp final_labor_int_noexp final_export_sh
 eststo drop *
 foreach var of varlist final_gpm final_npm {
 	forval j = 1/3 {
-		eststo eq_`var'_`j': qui reghdfe `var' final_nexport_oriented ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_5_`var'_`j')
+		eststo eq_`var'_`j': qui reghdfe `var' final_nexport_oriented $controls ${iteration`j'}, a(codigo year province) cluster(id) residuals(res_5_`var'_`j')
 		estadd loc sector_fe   "\cmark": eq_`var'_`j'
 		estadd loc province_fe "\cmark": eq_`var'_`j'
 		estadd loc year_fe     "\cmark": eq_`var'_`j'
@@ -260,42 +262,42 @@ foreach var of varlist final_gpm final_npm 									///
 					   final_eta final_gfsal final_turnover final_liquidity ///
 					   final_lproductivity final_tfp_y final_tfp_va {
 
-	eststo eq1_`var': qui reghdfe `var' cit_exonerated, a(province year) cluster(id) residuals(res_6_`var')
+	eststo eq1_`var': qui reghdfe `var' cit_exonerated $controls, a(province year) cluster(id) residuals(res_6_`var')
 	estadd loc sector_fe   "\xmark": eq1_`var'
 	estadd loc province_fe "\cmark": eq1_`var'
 	estadd loc year_fe     "\cmark": eq1_`var'
-	eststo eq2_`var': qui reghdfe `var' cit_exonerated, a(codigo year) cluster(id) residuals(res_7_`var')
+	eststo eq2_`var': qui reghdfe `var' cit_exonerated $controls, a(codigo year) cluster(id) residuals(res_7_`var')
 	estadd loc sector_fe   "\cmark": eq2_`var'
 	estadd loc province_fe "\xmark": eq2_`var'
 	estadd loc year_fe     "\cmark": eq2_`var'
-	eststo eq3_`var': qui reghdfe `var' cit_exonerated, a(year) cluster(id) residuals(res_8_`var')
+	eststo eq3_`var': qui reghdfe `var' cit_exonerated $controls, a(year) cluster(id) residuals(res_8_`var')
 	estadd loc sector_fe   "\xmark": eq3_`var'
 	estadd loc province_fe "\xmark": eq3_`var'
 	estadd loc year_fe     "\cmark": eq3_`var'
-	eststo eq4_`var': qui reghdfe `var' cit_exonerated, a(codigo province year) cluster(id) residuals(res_9_`var')
+	eststo eq4_`var': qui reghdfe `var' cit_exonerated $controls, a(codigo province year) cluster(id) residuals(res_9_`var')
 	estadd loc sector_fe   "\cmark": eq4_`var'
 	estadd loc province_fe "\cmark": eq4_`var'
 	estadd loc year_fe     "\cmark": eq4_`var'
 	
-	eststo eqt1_`var': qui reghdfe `var' i.final_regime, a(province year) cluster(id) residuals(rest_6_`var')
+	eststo eqt1_`var': qui reghdfe `var' i.final_regime $controls, a(province year) cluster(id) residuals(rest_6_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
 	estadd loc sector_fe   "\xmark": eqt1_`var'
 	estadd loc province_fe "\cmark": eqt1_`var'
 	estadd loc year_fe     "\cmark": eqt1_`var'
-	eststo eqt2_`var': qui reghdfe `var' i.final_regime, a(codigo year) cluster(id) residuals(rest_7_`var')
+	eststo eqt2_`var': qui reghdfe `var' i.final_regime $controls, a(codigo year) cluster(id) residuals(rest_7_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
 	estadd loc sector_fe   "\cmark": eqt2_`var'
 	estadd loc province_fe "\xmark": eqt2_`var'
 	estadd loc year_fe     "\cmark": eqt2_`var'
-	eststo eqt3_`var': qui reghdfe `var' i.final_regime, a(year) cluster(id) residuals(rest_8_`var')
+	eststo eqt3_`var': qui reghdfe `var' i.final_regime $controls, a(year) cluster(id) residuals(rest_8_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
 	estadd loc sector_fe   "\xmark": eqt3_`var'
 	estadd loc province_fe "\xmark": eqt3_`var'
 	estadd loc year_fe     "\cmark": eqt3_`var'
-	eststo eqt4_`var': qui reghdfe `var' i.final_regime, a(codigo province year) cluster(id) residuals(rest_9_`var')
+	eststo eqt4_`var': qui reghdfe `var' i.final_regime $controls, a(codigo province year) cluster(id) residuals(rest_9_`var')
 	qui test 1.final_regime == 2.final_regime
 	estadd scalar test1 = r(p)
 	estadd loc sector_fe   "\cmark": eqt4_`var'
