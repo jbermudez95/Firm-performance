@@ -5,7 +5,7 @@ Description: 	This do file uses the panel data "final_dataset" built from data_p
 				9, 10, 11, 12, 13, and 14 included in the Appendix of the paper the paper 
 				"Firm performance and tax incentives: evidence from Honduras". 
 Date:			November, 2021
-Modified:		January, 2021
+Modified:		April, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -32,45 +32,8 @@ global controls "final_log_age mnc final_log_firm_size final_log_input_costs fin
 *******                 BASELINE ESTIMATES                        ******* 
 *************************************************************************
 
-* This section produces tables 5, 6, and 7 of the Appendix.
-
-eststo drop *
-foreach var of varlist final_gpm final_log_gpm final_ihs_gpm final_npm final_log_npm final_ihs_npm {
-	eststo eq_`var': qui reghdfe `var' cit_exonerated $controls, a(codigo year province) cluster(id) residuals(res_1_`var')
-	estadd loc sector_fe   "\cmark": eq_`var'
-	estadd loc province_fe "\cmark": eq_`var'
-	estadd loc year_fe     "\cmark": eq_`var'
-	
-	eststo eqt_`var': qui reghdfe `var' i.final_regime $controls, a(codigo year province) cluster(id) residuals(rest_1_`var')
-	qui test 1.final_regime == 2.final_regime
-	estadd scalar test1 = r(p)
-	estadd loc sector_fe   "\cmark": eqt_`var'
-	estadd loc province_fe "\cmark": eqt_`var'
-	estadd loc year_fe     "\cmark": eqt_`var'
-}
-
-* Table 5
-esttab eq_final_gpm eq_final_log_gpm eq_final_ihs_gpm using "$out\reg_baseline.tex", replace $details     ///
-	   keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated")    ///
-	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
-	   mtitles("Levels" "Log(GPM)" "IHS(GPM)")  sfmt(%9.3fc %9.3fc)
-
-esttab eq_final_npm eq_final_log_npm eq_final_ihs_npm using "$out\reg_baseline.tex", append $details    ///
-	   keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated")  ///
-	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
-	   mtitles("Levels" "Log(NPM)" "IHS(NPM)") sfmt(%9.3fc %9.3fc)
-
-* Table 6
-esttab eqt_final_gpm eqt_final_log_gpm eqt_final_ihs_gpm using "$out\reg_baseline1.tex", replace $details   ///
-	   keep(1.final_regime 2.final_regime)  mtitles("Levels" "Log(GPM)" "IHS(GPM)") ///
-	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
-	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") sfmt(%9.3fc %9.3fc %9.3fc)
-
-esttab eqt_final_npm eqt_final_log_npm eqt_final_ihs_npm using "$out\reg_baseline1.tex", append $details    ///
-	   keep(1.final_regime 2.final_regime)  mtitles("Levels" "Log(NPM)" "IHS(NPM)") ///
-	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?") ///
-	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") sfmt(%9.3fc %9.3fc %9.3fc)
-	   
+* This section produces table 7 of the Appendix.
+ 
 * Table 7
 eststo drop *
 foreach var of varlist final_gpm final_npm {
@@ -80,12 +43,14 @@ foreach var of varlist final_gpm final_npm {
 		eststo eq_`var'_`j': qui reghdfe `var' cit_exonerated $controls, a(year province) cluster(id) residuals(res_2_`var'_`j')
 		estadd loc province_fe "\cmark": eq_`var'_`j'
 		estadd loc year_fe     "\cmark": eq_`var'_`j'
+		estadd loc controls    "\cmark": eq_`var'_`j'
 		
-		eststo eqt_`var'_`j': qui reghdfe `var' i.final_regime  $controls, a(year province) cluster(id) residuals(rest_2_`var'_`j')
+		eststo eqt_`var'_`j': qui reghdfe `var' i.final_regime $controls, a(year province) cluster(id) residuals(rest_2_`var'_`j')
 		qui test 1.final_regime == 2.final_regime
 		estadd scalar test1 = r(p)
 		estadd loc province_fe "\cmark": eqt_`var'_`j'
 		estadd loc year_fe     "\cmark": eqt_`var'_`j'
+		estadd loc controls    "\cmark": eqt_`var'_`j'
 		restore 
 	}
 }
@@ -94,8 +59,8 @@ esttab eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_
 	   replace booktabs se(2) b(3) nonumbers star staraux    												///
 	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn) ///
 	   mgroups("\textsc{Primary}" "\textsc{Manufacturing}" "\textsc{Services}", pattern(1 0 1 0 1 0) 		///
-	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) drop(_cons)			///
-	   scalars("N Observations" "r2 R-Squared" "province_fe Province FE?" "year_fe Year FE?")        		///
+	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(cit_exonerated)	///
+	   scalars("N Observations" "r2 R-Squared" "province_fe Province FE?" "year_fe Year FE?" "Controls?")	///
 	   coeflabels(cit_exonerated "Exonerated")
 
 esttab eqt_final_gpm_1 eqt_final_npm_1 eqt_final_gpm_2 eqt_final_npm_2 eqt_final_gpm_3 eqt_final_npm_3 using "$out\reg_baseline2.tex",       ///
@@ -103,7 +68,7 @@ esttab eqt_final_gpm_1 eqt_final_npm_1 eqt_final_gpm_2 eqt_final_npm_2 eqt_final
 	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM") alignment(D{.}{.}{-1}) page(dcolumn) 		 											 ///
 	   mgroups("\textsc{Primary}" "\textsc{Manufacturing}" "\textsc{Services}", pattern(1 0 1 0 1 0) 		  		 						 ///
 	   prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) keep(1.final_regime 2.final_regime)					 ///
-	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "province_fe Province FE?" "year_fe Year FE?") 						 ///
+	   scalars("N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "province_fe Province FE?" "year_fe Year FE?" "Controls?")			 ///
 	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") sfmt(%9.3fc %9.3fc %9.3fc)
 
 
@@ -255,7 +220,7 @@ rename final_log_labor_productivity final_lproductivity
 rename final_log_productivity_y     final_tfp_y
 rename final_log_productivity_va	final_tfp_va
 
-* This section produces tables 11, 12, 13, and 14 of the Appendix.
+* This section produces tables 6, 12, 13, and 14 of the Appendix.
 eststo drop *
 foreach var of varlist final_gpm final_npm 									///
 					   final_epm final_roa final_roce                       ///

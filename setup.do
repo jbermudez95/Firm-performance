@@ -80,6 +80,8 @@ replace final_firm_size = 3 if ihss_n_workers >= 100
 label def final_firm_size 1 "Small" 2 "Medium" 3 "Large"
 label val final_firm_size final_firm_size
 
+
+
 *************************************************************************
 *******               BUILDING VARIABLES OF INTEREST              ******* 
 *************************************************************************
