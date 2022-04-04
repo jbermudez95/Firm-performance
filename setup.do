@@ -98,12 +98,7 @@ foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_
 							replace `var' = 0 if missing(`var')									 
 }
 
-g final_sales       		 = max(cit_total_sales, sales_total)
-g cit_max = 1 if max(cit_total_sales, sales_total) == cit_total_sales
-g sales_max = 1 if max(cit_total_sales, sales_total) == sales_total
-
-
-
+g final_sales       		 = cond(cit_total_sales != sales_total, max(cit_total_sales, sales_total), sales_total) 
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
 g final_fixed_assets    	 = cit_fixed_assets - cit_fixed_assets_depr
