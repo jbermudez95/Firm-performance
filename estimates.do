@@ -76,12 +76,12 @@ esttab eqt_final_gpm_1 eqt_final_npm_1 eqt_final_gpm_2 eqt_final_npm_2 eqt_final
 *This section produces tables 8, 9, and 10 of the Appendix.
 
 * Estimates for all exonerated firms (Table 8)
-loc z "final_log_age mnc final_log_firm_size final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+loc z "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 foreach k of loc z {
 	g `k'_exo = `k' * cit_exonerated  
 }
 
-global iteration1 "final_log_age_exo i.mnc_exo final_log_firm_size_exo"
+global iteration1 "final_log_age_exo i.mnc_exo final_log_total_assets_exo"
 global iteration2 "final_log_input_costs_exo final_log_financial_costs_exo"
 global iteration3 "final_capital_int_exo final_labor_int_exo final_export_share_exo final_import_share_exo"
 
@@ -108,7 +108,7 @@ esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_
 	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",  	      ///
 	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 		 	  ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?") 	  ///
-	   coeflabels(final_log_age_exo "Exonerated $\times$ Age" 1.mnc_exo "Exonerated $\times$ MNC" final_log_firm_size_exo ///
+	   coeflabels(final_log_age_exo "Exonerated $\times$ Age" 1.mnc_exo "Exonerated $\times$ MNC" final_log_total_assets_exo ///
 	   "Exonerated $\times$ Firm size" _cons "Constant" final_log_input_costs_exo "Exonerated $\times$ Input costs" 	  ///
 	   final_log_financial_costs_exo "Exonerated $\times$ Financial costs" final_capital_int_exo 						  ///
 	   "Exonerated $\times$ Capital intensity" final_labor_int_exo "Exonerated $\times$ Labor intensity" 				  ///
@@ -118,11 +118,11 @@ coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_fin
          (eq_final_gpm_2, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_2, nokey mcolor(orange%60) ciopts(lcolor(orange%60)))  ///
 		 (eq_final_gpm_3, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_final_npm_3, nokey mcolor(orange%60) ciopts(lcolor(orange%60))), ///
          drop(_cons cit_exonerated) xline(0, lpattern(-) lwidth(tiny) lcolor(gray)) xlabel(-0.65(0.25)0.6) $graphop   ///
-		 coeflabels(final_log_age_exo = "Age" 1.mnc_exo = "MNC" final_log_firm_size_exo = "Firm size"                 ///
+		 coeflabels(final_log_age_exo = "Age" 1.mnc_exo = "MNC" final_log_total_assets_exo = "Firm size"                 ///
 		 final_log_input_costs_exo = "Input costs" final_log_financial_costs_exo = "Financial costs"     			  ///
 		 final_capital_int_exo = "Capital intensity" final_labor_int_exo = "Labor intensity"  		     			  ///
 	     final_export_share_exo = "Export share" final_import_share_exo = "Import share", wrap(9) labsize(small))     ///
-		 groups(final_log_age_exo 1.mnc_exo final_log_firm_size_exo = "{bf:Firms traits}"                             ///
+		 groups(final_log_age_exo 1.mnc_exo final_log_total_assets_exo = "{bf:Firms traits}"                             ///
 		 final_log_input_costs_exo final_log_financial_costs_exo = "{bf:Costs structure}"                             ///
 		 final_capital_int_exo final_labor_int_exo final_export_share_exo final_import_share_exo = "{bf:Use of inputs}", ///
 		 gap(1) labsize(small)) legend(row(1)) title("{bf:All exonerated firms}", position(12) size(small)) name(g1)        
@@ -131,12 +131,12 @@ coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_fin
 g final_export_oriented = 0
 replace final_export_oriented = 1 if final_regime == 1
 
-loc z "final_log_age mnc final_log_firm_size final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+loc z "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 foreach k of loc z {
 	g `k'_export = `k' * final_export_oriented
 }
 
-global iteration1 "final_log_age_export i.mnc_export final_log_firm_size_export"
+global iteration1 "final_log_age_export i.mnc_export final_log_total_assets_export"
 global iteration2 "final_log_input_costs_export final_log_financial_costs_export"
 global iteration3 "final_capital_int_export final_labor_int_export final_export_share_export final_import_share_export"
 
@@ -163,7 +163,7 @@ esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_
 	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",         ///
 	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 			  ///
 	   coeflabels(final_log_age_export "Export-oriented $\times$ Age" 1.mnc_export "Export-oriented $\times$ MNC" 		  ///
-	   final_log_firm_size_export "Export-oriented $\times$ Firm size" _cons "Constant" final_log_input_costs_export 	  ///
+	   final_log_total_assets_export "Export-oriented $\times$ Firm size" _cons "Constant" final_log_input_costs_export 	  ///
 	   "Export-oriented $\times$ Input costs" final_log_financial_costs_export "Export-oriented $\times$ Financial costs" ///
 	   final_capital_int_export "Export-oriented $\times$ Capital intensity" final_labor_int_export 					  ///
 	   "Export-oriented $\times$ Labor intensity" final_export_share_export "Export-oriented $\times$ Export share" 	  ///
@@ -180,12 +180,12 @@ coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_fin
 g final_nexport_oriented = 0
 replace final_nexport_oriented = 1 if final_regime == 2
 
-loc z "final_log_age mnc final_log_firm_size final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+loc z "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 foreach k of loc z {
 	g `k'_noexp = `k' * final_nexport_oriented
 }
 
-global iteration1 "final_log_age_noexp i.mnc_noexp final_log_firm_size_noexp"
+global iteration1 "final_log_age_noexp i.mnc_noexp final_log_total_assets_noexp"
 global iteration2 "final_log_input_costs_noexp final_log_financial_costs_noexp"
 global iteration3 "final_capital_int_noexp final_labor_int_noexp final_export_share_noexp final_import_share_noexp"
 
@@ -212,7 +212,7 @@ esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_
 	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",  				 ///
 	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 					 ///
 	   coeflabels(final_log_age_noexp "Non-export-oriented $\times$ Age" 1.mnc_noexp "Non-export-oriented $\times$ MNC" 		 ///
-	   final_log_firm_size_noexp "Non-export-oriented $\times$ Firm size" _cons "Constant" final_log_input_costs_noexp 			 ///
+	   final_log_total_assets_noexp "Non-export-oriented $\times$ Firm size" _cons "Constant" final_log_input_costs_noexp 			 ///
 	   "Non-export-oriented $\times$ Input costs" final_log_financial_costs_noexp "Non-export-oriented $\times$ Financial costs" ///
 	   final_capital_int_noexp "Non-export-oriented $\times$ Capital intensity" final_labor_int_noexp 							 ///
 	   "Non-export-oriented $\times$ Labor intensity" final_export_share_noexp "Non-export-oriented $\times$ Export share" 		 ///
