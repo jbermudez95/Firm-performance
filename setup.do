@@ -106,7 +106,7 @@ g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
 g final_fixed_assets    	 = cit_fixed_assets - cit_fixed_assets_depr
 g final_net_labor_costs 	 = cit_labor_ded - cit_labor_non_ded
 g final_value_added    		 = final_sales - final_input_costs
-g final_salary               = 
+g final_salary               = final_net_labor_costs / ihss_n_workers
 g final_labor_productivity   = final_sales / ihss_n_workers
 
 g final_age        = year - date_start
@@ -120,6 +120,7 @@ g final_log_employment   		 = log(ihss_n_workers)
 g final_log_total_assets		 = log(1 + cit_total_assets)
 g final_log_fixed_assets		 = log(1 + final_fixed_assets)
 g final_log_value_added     	 = log(1 + final_value_added)
+g final_log_salary               = log(1 + final_salary)
 g final_log_labor_productivity   = log(final_labor_productivity)
 
 replace final_sales = final_exports if (final_sales == 0 & final_exports > 0)
@@ -271,3 +272,5 @@ label var final_log_fixed_assets	   "Fixed assets"
 label var final_log_productivity_y     "TFP on sales"
 label var final_log_productivity_va    "TFP on value added"
 label var final_log_labor_productivity "Labor productivity"
+label var final_salary 				   "Salary"
+label var final_log_salary			   "Salary"
