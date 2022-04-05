@@ -248,7 +248,6 @@ egen sales_exports     = rowtotal(ventas_exentas_expor_12 ventas_exentas_expor_1
 								  ventas_exentas_exp_fuera_ca_12 ventas_exentas_exp_fuera_ca_15 ventas_exentas_exp_fuera_ca_18), missing
 egen sales_imports     = rowtotal(importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18  ///
 								  importacionesexentas12 importacionesexentas15 importacionesexentas18), missing
-keep rtn year sales_*
 
 ** 1.3 MERGE BETWEEN CORPORATE AND SALES TAX RECORDS
 merge 1:m rtn year using "`cit_records'"
@@ -473,8 +472,8 @@ egen id = group(rtn)
 drop rtn
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* mnc date_start
-order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* mnc date_start
+keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start
+order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start
 mvencode _all, mv(0) override
 compress
 
