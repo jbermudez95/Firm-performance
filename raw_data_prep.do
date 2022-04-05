@@ -439,6 +439,7 @@ egen sales_purch       = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasn
 
 
 * Impute economic activities for final panel dataset and only keep corporations
+drop tipo_ot
 merge m:1 rtn using "$input\Datos_Generales_AE_02_2022.dta", ///
 	  keepusing(codigo clase codigoseccion seccion tipo_ot departamento municipio)
 keep if _merge == 3
