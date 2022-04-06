@@ -14,11 +14,11 @@ clear all
 clear matrix
 set more off
 
-* Antes de correr este do file debe cambiar los directorios
-global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		// cambiar directorio
-global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"						// cambiar directorio
+* Directories
+global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		// change to the directory of user 
+global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"						// change to the directory of user 
 
-/* Paquetes necesarios para las estimaciones
+/* Packages required for estimations
 ssc install winsor
 ssc install acfest
 ssc install eststo
