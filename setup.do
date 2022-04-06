@@ -15,8 +15,8 @@ clear matrix
 set more off
 
 * Antes de correr este do file debe cambiar los directorios
-global path "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"		// cambiar directorio
-global out "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"						// cambiar directorio
+global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		// cambiar directorio
+global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"						// cambiar directorio
 
 /* Paquetes necesarios para las estimaciones
 ssc install winsor
@@ -102,9 +102,10 @@ g final_sales       		 = cond(cit_total_sales != sales_total, max(cit_total_sale
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
 g final_fixed_assets    	 = cit_fixed_assets - cit_fixed_assets_depr
+g final_total_labor_costs    = cit_labor_ded + cit_labor_non_ded
 g final_net_labor_costs 	 = cit_labor_ded - cit_labor_non_ded
 g final_value_added    		 = final_sales - final_input_costs
-g final_salary               = final_net_labor_costs / ihss_n_workers
+g final_salary               = final_total_labor_costs / ihss_n_workers
 g final_labor_productivity   = final_sales / ihss_n_workers
 
 g final_age        = year - date_start
@@ -120,6 +121,7 @@ g final_log_fixed_assets		 = log(1 + final_fixed_assets)
 g final_log_value_added     	 = log(1 + final_value_added)
 g final_log_salary               = log(1 + final_salary)
 g final_log_labor_productivity   = log(final_labor_productivity)
+
 
 replace final_sales = final_exports if (final_sales == 0 & final_exports > 0)
 g final_export_share        = final_exports / final_sales
