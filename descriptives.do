@@ -64,7 +64,7 @@ estpost ttest final_npm, by(final_regime) unequal quietly
 est store npm_diff2
 restore
 
-esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$out\tab1_junta.tex", replace ///
+esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$out\tab1.tex", replace ///
 	   mtitles("Pooled" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
@@ -100,7 +100,7 @@ estpost ttest final_epm, by(final_regime) unequal quietly
 est store epm_diff2
 restore
 
-esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_junta.tex", append ///
+esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1.tex", append ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 	   
@@ -125,7 +125,7 @@ eststo: qui estpost ttest $vars, by(final_regime) unequal
 est store diff2
 restore	
 
-esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1_junta.tex", append ///
+esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1.tex", append ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers	   
 
