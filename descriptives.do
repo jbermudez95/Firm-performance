@@ -32,9 +32,9 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for descript
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
 
-global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc cit_total_assets final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
-* ---------------------------------------------------------------------
+* Summary statistics (Table 2)
 eststo drop *		
 preserve															
 qui summ final_npm, d	
@@ -105,13 +105,30 @@ restore
 esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_junta.tex", append ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
-
+	   
 eststo: qui estpost summ $vars, detail
+est store pooled  
+eststo: qui estpost summ $vars if cit_exonerated == 0, detail
 est store nonex1
-esttab nonex1 ex1 diff1 using "$out\tab1_junta.tex", append ///
-	   nomtitles collabels(none) ///
-	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
-	   label tex f alignment(r) compress nonumbers
+eststo: qui estpost summ $vars if cit_exonerated == 1, detail
+est store ex1
+eststo: qui estpost ttest $vars, by(cit_exonerated) unequal
+est store diff1
+
+preserve
+drop if final_regime == 0
+eststo: qui estpost summ $vars if final_regime == 1, detail
+est store exor1
+eststo: qui estpost summ $vars if final_regime == 2, detail
+est store nexor1
+eststo: qui estpost ttest $vars, by(final_regime) unequal
+est store diff2
+restore	
+
+esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1_junta.tex", append ///
+	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers	   
+
 
 * ---------------------------------------------------------------------
 
