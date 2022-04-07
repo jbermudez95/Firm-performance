@@ -22,8 +22,7 @@ if "`c(username)'" == "Owner" {
 else if "`c(username)'" == "jbermudez" {
 	global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
-}
-	
+}	
 
 run "$path\setup.do" 	// Run the do file that prepare all variables for estimations
 
