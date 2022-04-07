@@ -22,7 +22,7 @@ if "`c(username)'" == "Owner" {
 	global out  "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		
+	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
 }
 
