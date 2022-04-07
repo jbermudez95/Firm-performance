@@ -32,8 +32,6 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for descript
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
 
-global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc cit_total_assets final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
-
 * Summary statistics (Table 2)
 eststo drop *		
 preserve															
@@ -105,6 +103,8 @@ restore
 esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_junta.tex", append ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
+	   
+global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc cit_total_assets final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 	   
 eststo: qui estpost summ $vars, detail
 est store pooled  
