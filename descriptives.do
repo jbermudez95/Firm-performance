@@ -35,34 +35,33 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for descript
 global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
 * ---------------------------------------------------------------------
-eststo drop *																	
-qui summ final_npm, d		
-qui summ     final_npm if final_npm > r(p1), d
-estpost summ final_npm if final_npm > r(p1), detail quietly
+eststo drop *		
+preserve															
+qui summ final_npm, d	
+keep if final_npm > r(p1)	
+qui summ     final_npm, d
+estpost summ final_npm, detail quietly
 est store npm_
-qui summ final_npm, d
-qui summ 	 final_npm if cit_exonerated == 0 & final_npm > r(p1), d
-estpost summ final_npm if cit_exonerated == 0 & final_npm > r(p1), detail quietly
+qui summ 	 final_npm if cit_exonerated == 0, d
+estpost summ final_npm if cit_exonerated == 0, detail quietly
 est store npm_nonex1
-qui summ final_npm, d
-qui summ 	 final_npm if cit_exonerated == 1 & final_npm > r(p1), d
-estpost summ final_npm if cit_exonerated == 1 & final_npm > r(p1), detail quietly
+qui summ 	 final_npm if cit_exonerated == 1, d
+estpost summ final_npm if cit_exonerated == 1, detail quietly
 est store npm_ex1
-qui summ final_npm, d
-estpost ttest final_npm if final_npm > r(p1), by(cit_exonerated) unequal quietly
+estpost ttest final_npm if, by(cit_exonerated) unequal quietly
 est store npm_diff1
+restore
 
 preserve
 drop if final_regime == 0
 qui summ final_npm, d
-qui summ 	 final_npm if final_regime == 1 & final_npm > r(p1), d
-estpost summ final_npm if final_regime == 1 & final_npm > r(p1), detail quietly
+keep if final_npm > r(p1)
+qui summ 	 final_npm if final_regime == 1, d
+estpost summ final_npm if final_regime == 1, detail quietly
 est store npm_exor1
-qui summ final_npm, d
-qui summ 	 final_npm if final_regime == 2 & final_npm > r(p1), d
-estpost summ final_npm if final_regime == 2 & final_npm > r(p1), detail quietly
+qui summ 	 final_npm if final_regime == 2, d
+estpost summ final_npm if final_regime == 2, detail quietly
 est store npm_nexor1
-qui summ final_npm, d
 estpost ttest final_npm, by(final_regime) unequal quietly
 est store npm_diff2
 restore
