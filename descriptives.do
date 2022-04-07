@@ -16,9 +16,15 @@ clear matrix
 set more off
 set seed 2000
 
-* Antes de correr este do file debe cambiar los directorios
-global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		// cambiar directorio
-global out "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"		// cambiar directorio
+* Insert personal directories
+if "`c(username)'" == "Owner" {
+	global path "C:\Users\Owner\Desktop\firm-performance-github"		
+	global out  "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
+}
+else if "`c(username)'" == "jbermudez" {
+	global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		
+	global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
+}
 
 run "$path\setup.do" 	// Run the do file that prepare all variables for descriptive statistics
 
