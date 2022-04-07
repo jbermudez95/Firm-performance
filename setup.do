@@ -104,6 +104,7 @@ foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_
 							replace `var' = 0 if missing(`var')									 
 }
 
+g final_credits				 = cit_total_credits_r + cit_total_credits_an + cit_total_credits_as
 g final_sales       		 = cond(cit_total_sales != sales_total, max(cit_total_sales, sales_total), sales_total) 
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
@@ -117,6 +118,7 @@ g final_labor_productivity   = final_sales / ihss_n_workers
 g final_age        = year - date_start
 replace final_age  = 1 if final_age <= 0
 
+g final_log_credits				 = log(final_credits)
 g final_log_age					 = log(final_age)
 g final_log_sales				 = log(1 + final_sales)
 g final_log_input_costs 		 = log(1 + final_input_costs)

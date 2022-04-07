@@ -157,33 +157,6 @@ esttab corr_matrix using "$out\corr_matrix.tex", replace b(3) unstack ///
 
 global details "ylabel(, nogrid) legend(region(lcolor(none))) graphr(color(white))"
 
-/* Firm size by industry and exoneration categories (Figure 3)
-program graph_bar 
-	if final_industry == 1 {
-		graph export "$out\bar_primary.pdf", replace
-	} 
-	else if final_industry == 2 {
-		graph export "$out\bar_manufacturing.pdf", replace
-	}
-	else {
-		graph export "$out\bar_services.pdf", replace
-	}
-end
-
-forval val = 1/3 {
-	preserve
-	keep if final_industry == `val'
-	collapse (count) id (mean) final_industry, by(cit_exonerated final_firm_size)
-	reshape wide id, i(final_firm_size) j(cit_exonerated)
-	label var id0 "Non-Exonerated"
-	label var id1 "Exonerated"
-	graph bar id0 id1, over(final_firm_size) $details blabel(total, color(blue)) ///
-		   legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
-		   ytitle("Number of firms") bar(1, color(navy)) bar(2, color(midblue%80))
-		   graph_bar   
-	restore
-}
-*/
 * CDF plots and KS tests for different measures of profitability (Figure 5)
 loc z "npm epm roa roce"
 foreach k of local z {
@@ -284,24 +257,21 @@ program graph_scatter
 	}
 end
 
-egen credit = rowtotal( cit_total_credits_r cit_total_credits_an cit_total_credits_as), missing
-g lcredit = log(credit)
-
 forval val = 1/3 {
 preserve
 	keep if final_industry == `val'
-	pwcorr final_log_productivity_y lcredit, sig star(.05)
+	pwcorr final_log_productivity_y final_log_credits, sig star(.05)
 	mat A = r(sig)
 	loc r_y  : di %5.2f r(rho)
 	loc sig_y: di %5.4f A[2,1]
-	pwcorr final_log_productivity_va lcredit, sig star(.05)
+	pwcorr final_log_productivity_va final_log_credits, sig star(.05)
 	mat B = r(sig)
 	loc r_va  : di %5.2f r(rho)
 	loc sig_va: di %5.4f B[2,1]
-	twoway scatter final_log_productivity_y lcredit, mcolor(blue%70) msize(medsmall)   ||  ///
-		   scatter final_log_productivity_va lcredit, mcolor(navy%60) msize(medsmall)  ||  ///
-		   lfit final_log_productivity_y lcredit, sort lcolor(blue) lwidth(medthick)   ||  ///
-		   lfit final_log_productivity_va lcredit, sort lcolor(navy) lwidth(medthick)  ||, ///
+	twoway scatter final_log_productivity_y final_log_credits, mcolor(blue%70) msize(medsmall)   ||  ///
+		   scatter final_log_productivity_va final_log_credits, mcolor(navy%60) msize(medsmall)  ||  ///
+		   lfit final_log_productivity_y final_log_credits, sort lcolor(blue) lwidth(medthick)   ||  ///
+		   lfit final_log_productivity_va final_log_credits, sort lcolor(navy) lwidth(medthick)  ||, ///
 		   $details ytitle("Log(productivity)") xtitle("Total tax credits") ///
 		   text(6 -25 "Rho = `r_y'(`sig_y')", color(blue))         ///
 		   text(5 -25 "Rho = `r_va'(`sig_va')", color(navy))       ///
