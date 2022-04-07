@@ -67,7 +67,7 @@ est store npm_diff2
 restore
 
 esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$out\tab1_junta.tex", replace ///
-	   mtitles("Pooled Sample" "Non-Exonerated (1)" "Exonerated (2)" "Mean Diff" ///
+	   mtitles("Pooled" "Non-Exonerated (1)" "Exonerated (2)" "Mean Diff" ///
 	   "Export-Oriented (3)" "Non Export-Oriented (4)" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   collabels("Mean" "SD" "(1)-(2)") label tex f alignment(r) compress nonumbers noobs nonotes 
