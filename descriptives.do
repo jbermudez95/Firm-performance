@@ -48,7 +48,7 @@ est store npm_nonex1
 qui summ 	 final_npm if cit_exonerated == 1, d
 estpost summ final_npm if cit_exonerated == 1, detail quietly
 est store npm_ex1
-estpost ttest final_npm if, by(cit_exonerated) unequal quietly
+estpost ttest final_npm, by(cit_exonerated) unequal quietly
 est store npm_diff1
 restore
 
@@ -67,21 +67,44 @@ est store npm_diff2
 restore
 
 esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$out\tab1_junta.tex", replace ///
-	   mtitles("Pooled" "Non-Exonerated (1)" "Exonerated (2)" "Mean Diff" ///
-	   "Export-Oriented (3)" "Non Export-Oriented (4)" "Mean Diff") ///
+	   mtitles("Pooled" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   collabels("Mean" "SD" "(1)-(2)") label tex f alignment(r) compress nonumbers noobs nonotes 
-
-preserve																		
-qui summ final_epm, d
-keep if final_epm > r(p5)		
-qui summ final_epm, d
+	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
+	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes 
+	   
+preserve															
+qui summ final_epm, d	
+keep if final_epm > r(p5)	
+qui summ     final_epm, d
 estpost summ final_epm, detail quietly
 est store epm_
-esttab epm_ using "$out\tab1_junta.tex", append ///
-	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
-	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
+qui summ 	 final_epm if cit_exonerated == 0, d
+estpost summ final_epm if cit_exonerated == 0, detail quietly
+est store epm_nonex1
+qui summ 	 final_epm if cit_exonerated == 1, d
+estpost summ final_epm if cit_exonerated == 1, detail quietly
+est store epm_ex1
+estpost ttest final_epm, by(cit_exonerated) unequal quietly
+est store epm_diff1
 restore
+
+preserve
+drop if final_regime == 0
+qui summ final_epm, d
+keep if final_epm > r(p5)
+qui summ 	 final_epm if final_regime == 1, d
+estpost summ final_epm if final_regime == 1, detail quietly
+est store epm_exor1
+qui summ 	 final_epm if final_regime == 2, d
+estpost summ final_epm if final_regime == 2, detail quietly
+est store epm_nexor1
+estpost ttest final_epm, by(final_regime) unequal quietly
+est store epm_diff2
+restore
+
+esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_junta.tex", append ///
+	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 
 eststo: qui estpost summ $vars, detail
 est store nonex1
