@@ -6,7 +6,7 @@ Description: 	This do file uses the panel data "final_dataset" built from data_p
 				evidence from Honduras". Also this do file generates figures A2, A3, and A4 that 
 				are then included in the online appendix of the paper.
 Date:			November, 2021
-Modified:		March, 2022
+Modified:		April, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
