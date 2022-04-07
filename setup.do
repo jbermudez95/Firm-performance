@@ -15,8 +15,14 @@ clear matrix
 set more off
 
 * Directories
-global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		// change to the directory of user 
-global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"						// change to the directory of user 
+if "`c(username)'" == "Owner" {
+	global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		
+	global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
+}
+else if "`c(username)'" == "jbermudez" {
+	global path "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"		
+	global out "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
+} 
 
 /* Packages required for estimations
 ssc install winsor
