@@ -34,6 +34,65 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for descript
 
 global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
+* ---------------------------------------------------------------------
+eststo drop *																	
+qui summ final_npm, d		
+qui summ     final_npm if final_npm > r(p1), d
+estpost summ final_npm if final_npm > r(p1), detail quietly
+est store npm_
+qui summ final_npm, d
+qui summ 	 final_npm if cit_exonerated == 0 & final_npm > r(p1), d
+estpost summ final_npm if cit_exonerated == 0 & final_npm > r(p1), detail quietly
+est store npm_nonex1
+qui summ final_npm, d
+qui summ 	 final_npm if cit_exonerated == 1 & final_npm > r(p1), d
+estpost summ final_npm if cit_exonerated == 1 & final_npm > r(p1), detail quietly
+est store npm_ex1
+qui summ final_npm, d
+estpost ttest final_npm if final_npm > r(p1), by(cit_exonerated) unequal quietly
+est store npm_diff1
+
+preserve
+drop if final_regime == 0
+qui summ final_npm, d
+qui summ 	 final_npm if final_regime == 1 & final_npm > r(p1), d
+estpost summ final_npm if final_regime == 1 & final_npm > r(p1), detail quietly
+est store npm_exor1
+qui summ final_npm, d
+qui summ 	 final_npm if final_regime == 2 & final_npm > r(p1), d
+estpost summ final_npm if final_regime == 2 & final_npm > r(p1), detail quietly
+est store npm_nexor1
+qui summ final_npm, d
+estpost ttest final_npm, by(final_regime) unequal quietly
+est store npm_diff2
+restore
+
+esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$out\tab1_junta.tex", replace ///
+	   mtitles("\textbf{Pooled Sample}" "\textbf{Non-Exonerated (1)}" "\textbf{Exonerated (2)}" "\textbf{Mean Diff}" ///
+	   "\textbf{Export-Oriented (1)}" "\textbf{Non Export-Oriented (2)}" "\textbf{Mean Diff}") 
+	   cells("mean(pattern(1 1 1 0) fmt(2)) sd(pattern(1 1 1 0) fmt(2)) b(star pattern(0 0 0 1) fmt(2))") ///
+	   collabels("Mean" "SD" "(1)-(2)") label tex f alignment(r) compress nonumbers noobs nonotes 
+
+preserve																		
+qui summ final_epm, d
+keep if final_epm > r(p5)		
+qui summ final_epm, d
+estpost summ final_epm, detail quietly
+est store epm_
+esttab epm_ using "$out\tab1_junta.tex", append ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
+restore
+
+eststo: qui estpost summ $vars, detail
+est store nonex1
+esttab nonex1 ex1 diff1 using "$out\tab1_junta.tex", append ///
+	   nomtitles collabels(none) ///
+	   cells("mean(pattern(1 1 0) fmt(2)) sd(pattern(1 1 0) fmt(2))") ///
+	   label tex f alignment(r) compress nonumbers
+
+* ---------------------------------------------------------------------
+
 * Summary statistics for pooled sample (Table 2)
 preserve  																		
 qui summ final_npm, d
