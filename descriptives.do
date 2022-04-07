@@ -32,7 +32,7 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for descript
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
 
-global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age ihss_n_workers mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
 * Summary statistics for pooled sample (Table 2)
 preserve  																		
