@@ -108,7 +108,7 @@ g final_credits				 = cit_total_credits_r + cit_total_credits_an + cit_total_cre
 g final_sales       		 = cond(cit_total_sales != sales_total, max(cit_total_sales, sales_total), sales_total) 
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
-g final_fixed_assets    	 = cit_fixed_assets - cit_fixed_assets_depr
+g final_net_fixed_assets     = cit_fixed_assets - cit_fixed_assets_depr
 g final_total_labor_costs    = cit_labor_ded + cit_labor_non_ded
 g final_net_labor_costs 	 = cit_labor_ded - cit_labor_non_ded
 g final_value_added    		 = final_sales - final_input_costs
@@ -125,7 +125,7 @@ g final_log_input_costs 		 = log(1 + final_input_costs)
 g final_log_financial_costs 	 = log(1 + final_financial_costs)
 g final_log_employment   		 = log(ihss_n_workers)
 g final_log_total_assets		 = log(1 + cit_total_assets)
-g final_log_fixed_assets		 = log(1 + final_fixed_assets)
+g final_log_net_fixed_assets	 = log(1 + final_net_fixed_assets)
 g final_log_value_added     	 = log(1 + final_value_added)
 g final_log_salary               = log(1 + final_salary)
 g final_log_labor_productivity   = log(final_labor_productivity)
@@ -139,7 +139,7 @@ replace sales_purch = final_imports if (sales_purch == 0 & final_imports > 0)
 g final_import_share		= final_imports / sales_purch
 replace final_import_share  = 1 if final_import_share > 1
 
-g final_capital_inte = final_fixed_assets / final_sales
+g final_capital_inte = final_net_fixed_assets / final_sales
 winsor final_capital_inte, gen(final_capital_int) p(0.07)
 drop final_capital_inte
 
@@ -175,7 +175,7 @@ replace final_roa = -1 if final_roa < -1
 replace final_roa = 1 if final_roa > 1
 drop final_roa_pmargin
 
-g final_roce_pmargin       = (cit_turnover - cit_deductions) / final_fixed_assets
+g final_roce_pmargin       = (cit_turnover - cit_deductions) / final_net_fixed_assets
 replace final_roce_pmargin = 0 if missing(final_roce_pmargin)
 winsor  final_roce_pmargin, gen(final_roce) p(0.01)
 replace final_roce = -1 if final_roce < -1
@@ -201,6 +201,8 @@ g final_liquidity1 = cit_current_assets / cit_current_liabilities
 replace final_liquidity1 = 0 if missing(final_liquidity1)
 winsor final_liquidity1, gen(final_liquidity) p(0.01)
 drop final_liquidity1
+
+egen final_fixasset_quint = xtile(cit_fixed_assets), nq(5) by(year)
 
 
 * Estimation of Total Factor Productivity at the firm level by industry employing 
@@ -279,7 +281,8 @@ label var final_import_share 		   "Import share"
 label var final_log_sales			   "Sales (logs)"
 label var cit_total_assets             "Total assets (Lempiras 1M)"
 label var final_log_total_assets	   "Total assets (logs)"
-label var final_log_fixed_assets	   "Fixed assets (logs)"
+label var final_log_net_fixed_assets   "Net fixed assets (logs)"
+label var cit_fixed_assets			   "Fixed assets (Lempiras 1M)"
 label var final_log_productivity_y     "TFP on sales (logs)"
 label var final_log_productivity_va    "TFP on value added (logs)"
 label var final_log_labor_productivity "Labor productivity (logs)"
@@ -287,3 +290,4 @@ label var final_salary 				   "Salary"
 label var final_log_salary			   "Salary (logs)"
 lable var final_log_credits			   "Tax credits (logs)"
 label var cit_exonerated 			   "Exonerated"
+label var final_fixasset_quint		   "Fixed assets quintile (firms size)"
