@@ -29,7 +29,7 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for estimati
 global details "booktabs f se(2) b(3) nonumbers star staraux"
 global options "booktabs se(2) b(3) star staraux nomtitles"
 global graphop "grid(none) legend(region(lcolor(none))) graphr(color(white))"
-global controls "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global controls "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
 *************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
@@ -93,7 +93,7 @@ global iteration3 "final_capital_int_exo final_labor_int_exo final_export_share_
 
 eststo drop *
 foreach var of varlist final_gpm final_npm {
-		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls iteration1 iteration2 iteration3, a(codigo year province) cluster(id) residuals(res_3_`var'_0)
+		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls $iteration1 $iteration2 $iteration3, a(codigo year province) cluster(id) residuals(res_3_`var'_0)
 		estadd loc sector_fe   "\cmark": eq_`var'_0
 		estadd loc province_fe "\cmark": eq_`var'_0
 		estadd loc year_fe     "\cmark": eq_`var'_0
@@ -148,7 +148,7 @@ global iteration3 "final_capital_int_export final_labor_int_export final_export_
 
 eststo drop *
 foreach var of varlist final_gpm final_npm {
-		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls iteration1 iteration2 iteration3, a(codigo year province) cluster(id) residuals(res_4_`var'_0)
+		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls $iteration1 $iteration2 $iteration3, a(codigo year province) cluster(id) residuals(res_4_`var'_0)
 		estadd loc sector_fe   "\cmark": eq_`var'_0
 		estadd loc province_fe "\cmark": eq_`var'_0
 		estadd loc year_fe     "\cmark": eq_`var'_0
@@ -197,7 +197,7 @@ global iteration3 "final_capital_int_noexp final_labor_int_noexp final_export_sh
 
 eststo drop *
 foreach var of varlist final_gpm final_npm {
-		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls iteration1 iteration2 iteration3, a(codigo year province) cluster(id) residuals(res_5_`var'_0)
+		eststo eq_`var'_0: qui reghdfe `var' cit_exonerated $controls $iteration1 $iteration2 $iteration3, a(codigo year province) cluster(id) residuals(res_5_`var'_0)
 		estadd loc sector_fe   "\cmark": eq_`var'_0
 		estadd loc province_fe "\cmark": eq_`var'_0
 		estadd loc year_fe     "\cmark": eq_`var'_0
