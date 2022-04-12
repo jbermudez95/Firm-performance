@@ -29,7 +29,7 @@ run "$path\setup.do" 	// Run the do file that prepare all variables for estimati
 global details "booktabs f se(2) b(3) nonumbers star staraux"
 global options "booktabs se(2) b(3) star staraux nomtitles"
 global graphop "grid(none) legend(region(lcolor(none))) graphr(color(white))"
-global controls "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global controls "final_log_age mnc i.final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
 *************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
@@ -82,12 +82,12 @@ esttab eqt_final_gpm_1 eqt_final_npm_1 eqt_final_gpm_2 eqt_final_npm_2 eqt_final
 *This section produces tables 8, 9, and 10 of the Appendix.
 
 * Estimates for all exonerated firms (Table 8)
-loc z "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+loc z "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 foreach k of loc z {
 	g `k'_exo = `k' * cit_exonerated  
 }
 
-global iteration1 "final_log_age_exo i.mnc_exo final_log_total_assets_exo"
+global iteration1 "final_log_age_exo i.mnc_exo i.final_fixasset_quint_exo"
 global iteration2 "final_log_input_costs_exo final_log_financial_costs_exo"
 global iteration3 "final_capital_int_exo final_labor_int_exo final_export_share_exo final_import_share_exo"
 
@@ -137,12 +137,12 @@ coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_fin
 g final_export_oriented = 0
 replace final_export_oriented = 1 if final_regime == 1
 
-loc z "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+loc z "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 foreach k of loc z {
 	g `k'_export = `k' * final_export_oriented
 }
 
-global iteration1 "final_log_age_export i.mnc_export final_log_total_assets_export"
+global iteration1 "final_log_age_export i.mnc_export i.final_fixasset_quint_export"
 global iteration2 "final_log_input_costs_export final_log_financial_costs_export"
 global iteration3 "final_capital_int_export final_labor_int_export final_export_share_export final_import_share_export"
 
@@ -186,12 +186,12 @@ coefplot (eq_final_gpm_1, nokey mcolor(blue%70) ciopts(lcolor(blue%70))) (eq_fin
 g final_nexport_oriented = 0
 replace final_nexport_oriented = 1 if final_regime == 2
 
-loc z "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+loc z "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 foreach k of loc z {
 	g `k'_noexp = `k' * final_nexport_oriented
 }
 
-global iteration1 "final_log_age_noexp i.mnc_noexp final_log_total_assets_noexp"
+global iteration1 "final_log_age_noexp i.mnc_noexp i.final_fixasset_quint_noexp"
 global iteration2 "final_log_input_costs_noexp final_log_financial_costs_noexp"
 global iteration3 "final_capital_int_noexp final_labor_int_noexp final_export_share_noexp final_import_share_noexp"
 
