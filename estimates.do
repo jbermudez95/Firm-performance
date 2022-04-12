@@ -109,13 +109,15 @@ foreach var of varlist final_gpm final_npm {
 }
 
 esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms1.tex", ///
-	   replace booktabs se(2) b(3) nonumbers star staraux drop(cit_exonerated  0.mnc_exo 0.final_fixasset_quint_exo $controls)	///
+	   replace booktabs se(2) b(3) nonumbers star staraux drop(cit_exonerated  0.mnc_exo 1.final_fixasset_quint_exo $controls)	///
 	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn)   ///
 	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",  	      ///
 	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 		 	  ///
 	   scalars("N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?") 	  ///
-	   coeflabels(final_log_age_exo "Exonerated $\times$ Age" 1.mnc_exo "Exonerated $\times$ MNC" final_log_total_assets_exo ///
-	   "Exonerated $\times$ Firm size" _cons "Constant" final_log_input_costs_exo "Exonerated $\times$ Input costs" 	  ///
+	   coeflabels(final_log_age_exo "Exonerated $\times$ Age" 1.mnc_exo "Exonerated $\times$ MNC" 2.final_fixasset_quint_exo ///
+	   "Exonerated $\times$ 2 Quintile Fixed Assets" 3.final_fixasset_quint_exo "Exonerated $\times$ 3 Quintile Fixed Assets" ///
+	   4.final_fixasset_quint_exo "Exonerated $\times$ 4 Quintile Fixed Assets" 5.final_fixasset_quint_exo "Exonerated $\times$ 5 Quintile Fixed Assets" ///
+	   _cons "Constant" final_log_input_costs_exo "Exonerated $\times$ Input costs" 	  ///
 	   final_log_financial_costs_exo "Exonerated $\times$ Financial costs" final_capital_int_exo 						  ///
 	   "Exonerated $\times$ Capital intensity" final_labor_int_exo "Exonerated $\times$ Labor intensity" 				  ///
 	   final_export_share_exo "Exonerated $\times$ Export share" final_import_share_exo "Exonerated $\times$ Import share") 
