@@ -20,7 +20,7 @@ if "`c(username)'" == "Owner" {
 	global out  "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Firm performance and tax incentives"		
+	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
 }	
 
@@ -109,7 +109,7 @@ foreach var of varlist final_gpm final_npm {
 }
 
 esttab eq_final_gpm_0 eq_final_npm_0 eq_final_gpm_1 eq_final_npm_1 eq_final_gpm_2 eq_final_npm_2 eq_final_gpm_3 eq_final_npm_3 using "$out\reg_mechanisms1.tex", ///
-	   replace booktabs se(2) b(3) nonumbers star staraux drop(cit_exonerated  0.mnc_exo $controls)						  ///
+	   replace booktabs se(2) b(3) nonumbers star staraux drop(cit_exonerated  0.mnc_exo 0.final_fixasset_quint_exo $controls)	///
 	   mtitle("GPM" "NPM" "GPM" "NPM" "GPM" "NPM" "GPM" "NPM") sfmt(%9.3fc %9.3fc) alignment(D{.}{.}{-1}) page(dcolumn)   ///
 	   mgroups("\textsc{Covariates}" "\textsc{Firms Traits}" "\textsc{Costs Structure}" "\textsc{Use of Inputs}",  	      ///
 	   pattern(1 0 1 0 1 0 1 0) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) 		 	  ///
