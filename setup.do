@@ -255,7 +255,7 @@ esttab model_va_1 model_va_2 model_va_3 using "$out\tfp_estimates.tex", booktabs
 	   sfmt(%9.3fc) se(2) star staraux nonumbers b(a3)	
 
 * Defining labels for all variables
-order id first
+order id, first
 label var mnc  						   "Multinational (MNC)"
 label var final_gpm   				   "Gross profit margin (GPM)"
 label var final_npm 				   "Net profit margin (NPM)"
