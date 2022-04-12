@@ -144,7 +144,7 @@ esttab using "$out\tab2.tex", cell(colpct(fmt(1))) unstack label ///
 restore
 
 *Correlation matrix between explanatory variables (Table 4)
-global controls "final_log_age mnc final_log_total_assets final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global controls "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 qui correlate $controls
 estpost correlate $controls, matrix listwise
 est store corr_matrix
