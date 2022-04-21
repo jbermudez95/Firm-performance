@@ -418,11 +418,21 @@ restore
 **********************************************************************************
 **********        SIXTH PART: NUMBER OF PARTNERS AND MANAGER GENDER      *********
 **********************************************************************************
+* Gender and age of the manager
+preserve 
+import delimited "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio\base_rnp.csv", stringcols(2)
+keep nombre id fecnac genero
+tempfile civil_records
+save "`civil_records'"
+restore
+
 preserve
-import delimited "$input\Socios.csv", stringcols(1 3) replace
-keep if 
-sort rtn rtn_relacionado
+import delimited "$input\Socios.csv", stringcols(1 3) clear
+keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
 order rtn rtn_relacionado, first
+drop fecha_desde fecha_hasta
+sort rtn_relacionado
+drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1] & )
 restore
 
 
