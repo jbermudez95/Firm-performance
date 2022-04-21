@@ -299,7 +299,7 @@ restore
 
 *Count for the total number of employees for each firm in 2017
 preserve 
-use "$path\ihss_2017.dta"
+use "$path\ihss_2017.dta", replace 
 merge m:1 NUMERO_PATRONAL using "$path\rtn_patrono.dta"
 keep if _merge == 3
 drop _merge
@@ -340,7 +340,7 @@ save "`ihss_tax_id'"
 **********                  FOURTH PART: IDENTIFYING MNC                 *********
 **********************************************************************************
 preserve
-use "$input\Base_precios_2014_2020.dta" 
+use "$input\Base_precios_2014_2020.dta", replace 
 drop if periodo ==202001
 drop if ptstiporelaciónid==18   // no relationship
 keep if tipodedeclaración=="ORIGINAL" 
@@ -416,7 +416,20 @@ restore
 
 
 **********************************************************************************
-**********                 SIXTH PART: FINAL PANEL DATASET               *********
+**********        SIXTH PART: NUMBER OF PARTNERS AND MANAGER GENDER      *********
+**********************************************************************************
+preserve
+import delimited "$input\Socios.csv", stringcols(1 3) replace
+keep if 
+sort rtn rtn_relacionado
+order rtn rtn_relacionado, first
+restore
+
+
+
+
+**********************************************************************************
+**********               SEVENTH PART: FINAL PANEL DATASET               *********
 **********************************************************************************
 
 * Constructing final panel dataset
