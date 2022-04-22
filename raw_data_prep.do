@@ -451,7 +451,7 @@ drop dum fecha_desde desde min
 keep if tag == 0
 
 gen id = substr(rtn_relacionado, 1, 13)
-merge 1:1 id using "`civil_records'", keepusing(nombre fecnac genero)
+merge m:1 id using "`civil_records'", keepusing(nombre fecnac genero)
 restore
 
 
