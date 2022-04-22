@@ -547,8 +547,8 @@ egen id = group(rtn)
 drop rtn
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start
-order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start
+keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start 
+order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start
 mvencode _all, mv(0) override
 compress
 
