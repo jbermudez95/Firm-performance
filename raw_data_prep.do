@@ -427,6 +427,8 @@ sort rtn rtn_relacionado
 drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1])
 egen x = group(rtn_relacionado)
 collapse (count) partner_number = x, by(rtn)
+tempfile partner_number
+save "`partner_number'"
 restore
 
 * Gender and age of the manager
@@ -476,11 +478,12 @@ drop _merge
 merge m:1 id using "`buscar_genero'", keepusing(nombre_relacionado genero_merge)
 drop if _merge == 2
 
-g manager_gender = genero if _merge == 1
-replace manager_gender = genero_merge if _merge == 3
-keep rtn manager_gender
+g manager = genero if _merge == 1
+replace manager = genero_merge if _merge == 3
+encode manager, gen(partner_manager)
+keep rtn partner_manager
 tempfile partner_manager
-save "`gender'"
+save "`partner_manager'"
 restore
 
 
