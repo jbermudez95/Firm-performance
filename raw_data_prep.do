@@ -426,16 +426,33 @@ tempfile civil_records
 save "`civil_records'"
 restore
 
-preserve
+*preserve
 import delimited "$input\Socios.csv", stringcols(1 3) clear
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
 order rtn rtn_relacionado, first
-drop fecha_desde fecha_hasta
-sort rtn_relacionado
-drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1] & )
+sort rtn rtn_relacionado
+drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1])
+gen dum = (fecha_hasta != "")
+drop if (dum == 1)
+drop fecha_hasta dum
+gen relacion = 1
+replace relacion = 2 if tipo_relacion == "ADMINISTRADOR ¿NICO"
+sort rtn relacion
+gen dum = (rtn == rtn[_n-1] & relacion != relacion[_n-1])
+drop if dum == 1
+drop dum relacion
+gen desde = substr(fecha_desde,1,4)
+destring desde, replace
+egen min = min(desde), by(rtn)
+duplicates tag rtn, gen(tag)
+gen dum = cond(rtn == rtn[_n-1] & min == desde & tag > 0 & desde != desde[_n-1], 1, 0) 
+drop if dum == 1
+drop dum tag fecha_desde desde min
+keep if tag == 0
+
+gen id = substr(rtn_relacionado, 1, 13)
+mereg 1:1 id using "`civil_records'", keepusing(nombre fecnac genero)
 restore
-
-
 
 
 **********************************************************************************
