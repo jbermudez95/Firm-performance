@@ -420,7 +420,7 @@ restore
 **********************************************************************************
 * Gender and age of the manager
 preserve 
-import delimited "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio\base_rnp.csv", stringcols(2)
+import delimited "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio\base_rnp.csv", stringcols(2) clear
 keep nombre id fecnac genero
 tempfile civil_records
 save "`civil_records'"
@@ -452,6 +452,8 @@ keep if tag == 0
 
 gen id = substr(rtn_relacionado, 1, 13)
 merge m:1 id using "`civil_records'", keepusing(nombre fecnac genero)
+drop if _merge == 2
+drop _merge
 restore
 
 
@@ -468,11 +470,11 @@ merge m:m rtn year using "`custom_records'"
 duplicates drop
 drop _merge
 
-g final_exports     		 = max(sales_exports, custom_export)
-g final_imports     		 = max(sales_imports, custom_import)
+g final_exports = max(sales_exports, custom_export)
+g final_imports = max(sales_imports, custom_import)
 
-egen sales_total       = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fyduca final_exports), missing
-egen sales_purch       = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
+egen sales_total = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fyduca final_exports), missing
+egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
 								  comprasexoneradasoce15 comprasexoneradasoce18 adquisifyducagravadas15 adquisifyducagravadas18 ///
 								  adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
 
