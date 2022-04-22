@@ -428,6 +428,7 @@ restore
 
 preserve
 import excel using "$path\buscar_genero.xlsx", firstrow clear
+rename genero genero_merge
 tempfile buscar_genero
 save "`buscar_genero'"
 restore
@@ -461,8 +462,19 @@ merge m:1 id using "`civil_records'", keepusing(nombre genero)
 drop if _merge == 2
 drop _merge
 
-merge m:1 id using "`buscar_genero'" keepusing(nombre_relacionada genero)
+merge m:1 id using "`buscar_genero'", keepusing(genero_merge)
+drop if _merge == 2
 
+g gender = genero if _merge == 1
+replace gender = genero_merge if _merge == 3
+drop _merge
+restore
+
+
+preserve
+keep if missing(gender)
+keep id nombre_relacionada
+export excel "$path\buscar2.xlsx", firstrow(variable)
 restore
 
 
