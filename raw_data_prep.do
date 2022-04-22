@@ -418,6 +418,17 @@ restore
 **********************************************************************************
 **********        SIXTH PART: NUMBER OF PARTNERS AND MANAGER GENDER      *********
 **********************************************************************************
+* Number of partners
+preserve 
+import delimited "$input\Socios.csv", stringcols(1 3) clear
+keep if tipo_relacion == "SOCIO EXTRANJERO" | tipo_relacion == "SOCIOS"
+order rtn rtn_relacionado, first
+sort rtn rtn_relacionado
+drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1])
+egen x = group(rtn_relacionado)
+collapse (count) partner_number = x, by(rtn)
+restore
+
 * Gender and age of the manager
 preserve 
 import delimited "$input\base_rnp.csv", stringcols(2) clear
@@ -462,20 +473,17 @@ merge m:1 id using "`civil_records'", keepusing(nombre genero)
 drop if _merge == 2
 drop _merge
 
-merge m:1 id using "`buscar_genero'", keepusing(genero_merge)
+merge m:1 id using "`buscar_genero'", keepusing(nombre_relacionado genero_merge)
 drop if _merge == 2
 
-g gender = genero if _merge == 1
-replace gender = genero_merge if _merge == 3
-drop _merge
+g manager_gender = genero if _merge == 1
+replace manager_gender = genero_merge if _merge == 3
+keep rtn manager_gender
+tempfile partner_manager
+save "`gender'"
 restore
 
 
-preserve
-keep if missing(gender)
-keep id nombre_relacionada
-export excel "$path\buscar2.xlsx", firstrow(variable)
-restore
 
 
 **********************************************************************************
