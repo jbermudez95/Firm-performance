@@ -447,7 +447,7 @@ egen min = min(desde), by(rtn)
 duplicates tag rtn, gen(tag)
 gen dum = cond(rtn == rtn[_n-1] & min == desde & tag > 0 & desde != desde[_n-1], 1, 0) 
 drop if dum == 1
-drop dum tag fecha_desde desde min
+drop dum fecha_desde desde min
 keep if tag == 0
 
 gen id = substr(rtn_relacionado, 1, 13)
