@@ -420,13 +420,19 @@ restore
 **********************************************************************************
 * Gender and age of the manager
 preserve 
-import delimited "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio\base_rnp.csv", stringcols(2) clear
-keep nombre id fecnac genero
+import delimited "$input\base_rnp.csv", stringcols(2) clear
+keep nombre id genero
 tempfile civil_records
 save "`civil_records'"
 restore
 
 preserve
+import excel using "$path\buscar_genero.xlsx", firstrow clear
+tempfile buscar_genero
+save "`buscar_genero'"
+restore
+
+*preserve
 import delimited "$input\Socios.csv", stringcols(1 3) clear
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
 order rtn rtn_relacionado, first
@@ -451,9 +457,12 @@ drop dum fecha_desde desde min
 keep if tag == 0
 
 gen id = substr(rtn_relacionado, 1, 13)
-merge m:1 id using "`civil_records'", keepusing(nombre fecnac genero)
+merge m:1 id using "`civil_records'", keepusing(nombre genero)
 drop if _merge == 2
 drop _merge
+
+merge m:1 id using "`buscar_genero'" keepusing(nombre_relacionada genero)
+
 restore
 
 
