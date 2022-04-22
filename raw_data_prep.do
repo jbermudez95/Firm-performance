@@ -426,7 +426,7 @@ tempfile civil_records
 save "`civil_records'"
 restore
 
-*preserve
+preserve
 import delimited "$input\Socios.csv", stringcols(1 3) clear
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
 order rtn rtn_relacionado, first
