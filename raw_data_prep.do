@@ -420,7 +420,8 @@ restore
 **********************************************************************************
 * Number of partners
 preserve 
-import delimited "$input\Socios.csv", stringcols(1 3) clear
+import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
+rename identificacion rtn_relacionado
 keep if tipo_relacion == "SOCIO EXTRANJERO" | tipo_relacion == "SOCIOS"
 order rtn rtn_relacionado, first
 sort rtn rtn_relacionado
@@ -431,7 +432,7 @@ tempfile partner_number
 save "`partner_number'"
 restore
 
-* Gender and age of the manager
+* Gender of the manager
 preserve 
 import delimited "$input\base_rnp.csv", stringcols(2) clear
 keep nombre id genero
@@ -446,14 +447,15 @@ tempfile buscar_genero
 save "`buscar_genero'"
 restore
 
-*preserve
-import delimited "$input\Socios.csv", stringcols(1 3) clear
+preserve
+import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
+rename identificacion rtn_relacionado
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
 order rtn rtn_relacionado, first
 sort rtn rtn_relacionado
 drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1])
 gen dum = (fecha_hasta != "")
-drop if (dum == 1)
+drop if (rtn == rtn[_n-1] & dum == 1)
 drop fecha_hasta dum
 gen relacion = 1
 replace relacion = 2 if tipo_relacion == "ADMINISTRADOR ¿NICO"
@@ -514,7 +516,7 @@ egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasme
 
 * Impute economic activities for final panel dataset and only keep corporations
 drop tipo_ot
-merge m:1 rtn using "$input\Datos_Generales_AE_02_2022.dta", ///
+merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", ///
 	  keepusing(codigo clase codigoseccion seccion tipo_ot departamento municipio)
 keep if _merge == 3
 duplicates drop
@@ -541,6 +543,20 @@ merge m:m rtn using "`date'", keepusing(date_start)
 drop if _merge == 2
 drop _merge
 
+
+
+* Merge with the number of partners
+merge m:m rtn using "`partner_number'", keepusing(partner_number)
+keep if _merge == 3
+drop _merge
+
+
+
+
+* Merge with the manager gender
+merge m:m rtn using "`partner_manager'", keepusing(partner_manager)
+keep if _merge == 3
+drop _merge
 
 
 egen id = group(rtn)
