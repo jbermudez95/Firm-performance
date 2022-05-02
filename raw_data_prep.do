@@ -447,7 +447,7 @@ tempfile buscar_genero
 save "`buscar_genero'"
 restore
 
-preserve
+*preserve
 import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
 rename identificacion rtn_relacionado
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
