@@ -434,20 +434,20 @@ restore
 
 * Gender of the manager
 preserve 
-import delimited "$input\base_rnp.csv", stringcols(2) clear
+use "$input\base_rnp.dta", replace
 keep nombre id genero
 tempfile civil_records
 save "`civil_records'"
 restore
 
-preserve
+/*preserve
 import excel using "$path\buscar_genero.xlsx", firstrow clear
 rename genero genero_merge
 tempfile buscar_genero
 save "`buscar_genero'"
 restore
 
-*preserve
+preserve*/
 import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
 rename identificacion rtn_relacionado
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
@@ -545,27 +545,28 @@ drop _merge
 
 
 
+
+
+
+egen id = group(rtn)
+*drop rtn
+duplicates tag id year, gen(isdup)
+keep if isdup == 0
+*keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start 
+*order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start
+mvencode _all, mv(0) override
+compress
+
 * Merge with the number of partners
 merge m:m rtn using "`partner_number'", keepusing(partner_number)
 keep if _merge == 3
 drop _merge
 
 
-
-
 * Merge with the manager gender
 merge m:m rtn using "`partner_manager'", keepusing(partner_manager)
+5353535
 keep if _merge == 3
 drop _merge
-
-
-egen id = group(rtn)
-drop rtn
-duplicates tag id year, gen(isdup)
-keep if isdup == 0
-keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start 
-order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start
-mvencode _all, mv(0) override
-compress
 
 save "$out\final_dataset", replace
