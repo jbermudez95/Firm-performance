@@ -275,7 +275,6 @@ preserve
 		   $details ytitle("Log(productivity)") xtitle("Total tax credits") ///
 		   text(6 -25 "Rho = `r_y'(`sig_y')", color(blue))         ///
 		   text(5 -25 "Rho = `r_va'(`sig_va')", color(navy))       ///
-		   ylabel(-8(2)6) xlabel(-30(5)-15) ///
 		   legend(row(2) order(1 "TFP on sales" 2 "TFP on value added" 3 "Lfit TFP on sales" 4 "Lfit TFP on value added")) 
 	graph_scatter   
 restore
