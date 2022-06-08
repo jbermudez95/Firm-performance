@@ -7,7 +7,7 @@ Description: 	This do file cleans and prepares administrative datasets that are
 				and social security records) which are merged later to build an 
 				unbalanced panel dataset. 
 Date:			July 3rd, 2021
-Modified:       April, 2022
+Modified:       May, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -16,9 +16,17 @@ clear all
 set more off
 
 *Set up directories
-global path  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\preparacion inicial\base profit margins"
-global input "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio"
-global out	 "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"
+if "`c(username)'" == "Owner" {
+	global path  "C:\Users\Owner\OneDrive - SAR\Profit Margins\preparacion inicial\base profit margins"
+	global input "C:\Users\Owner\OneDrive - SAR\Bases del repositorio"
+	global out	 "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"	
+}
+else if "`c(username)'" == "jbermudez" {
+	global path  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\preparacion inicial\base profit margins"
+	global input "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio"
+	global out	 "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"
+} 
+
 
 **********************************************************************************
 ********      FIRST PART: SETTING UP CORPORATE AND SALES TAX RECORDS      ********
@@ -416,38 +424,18 @@ restore
 
 
 **********************************************************************************
-**********        SIXTH PART: NUMBER OF PARTNERS AND MANAGER GENDER      *********
+**********     			    SIXTH PART: MANAGER GENDER      			 *********
 **********************************************************************************
-* Number of partners
-preserve 
-import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
-rename identificacion rtn_relacionado
-keep if tipo_relacion == "SOCIO EXTRANJERO" | tipo_relacion == "SOCIOS"
-order rtn rtn_relacionado, first
-sort rtn rtn_relacionado
-drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1])
-egen x = group(rtn_relacionado)
-collapse (count) partner_number = x, by(rtn)
-tempfile partner_number
-save "`partner_number'"
-restore
 
-* Gender of the manager
-preserve 
-use "$input\base_rnp.dta", replace
-keep nombre id genero
-tempfile civil_records
-save "`civil_records'"
-restore
-
-/*preserve
+preserve
 import excel using "$path\buscar_genero.xlsx", firstrow clear
-rename genero genero_merge
+encode genero, gen(genero_merge)
+drop genero
 tempfile buscar_genero
 save "`buscar_genero'"
 restore
 
-preserve*/
+preserve
 import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
 rename identificacion rtn_relacionado
 keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
@@ -471,21 +459,22 @@ gen dum = cond(rtn == rtn[_n-1] & min == desde & tag > 0 & desde != desde[_n-1],
 drop if dum == 1
 drop dum fecha_desde desde min
 keep if tag == 0
+drop tag
 
 gen id = substr(rtn_relacionado, 1, 13)
-merge m:1 id using "`civil_records'", keepusing(nombre genero)
+merge m:1 id using "$input\base_rnp.dta", keepusing(nombre genero)
 drop if _merge == 2
 drop _merge
 
 merge m:1 id using "`buscar_genero'", keepusing(nombre_relacionado genero_merge)
 drop if _merge == 2
 
-g manager = genero if _merge == 1
-replace manager = genero_merge if _merge == 3
-encode manager, gen(partner_manager)
-keep rtn partner_manager
-tempfile partner_manager
-save "`partner_manager'"
+g manager_gender = genero if _merge == 1
+replace manager_gender = genero_merge if _merge == 3
+*encode manager, gen(manager_gender)
+keep rtn manager_gender
+tempfile manager_gender
+save "`manager_gender'"
 restore
 
 
@@ -513,7 +502,6 @@ egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasme
 								  adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
 
 
-
 * Impute economic activities for final panel dataset and only keep corporations
 drop tipo_ot
 merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", ///
@@ -523,7 +511,6 @@ duplicates drop
 drop _merge 
 keep if tipo_ot == 1
 drop tipo_ot
-
 
 
 * Merge with multinational corporations
@@ -537,36 +524,24 @@ label def mnc 1 "MNC" 0 "Not a MNC"
 label val mnc mnc
 
 
-
 * Merge with the age of the firm
 merge m:m rtn using "`date'", keepusing(date_start)
 drop if _merge == 2
 drop _merge
 
 
-
-
+* Merge with the manager gender
+merge m:m rtn using "`manager_gender'", keepusing(manager_gender)
+keep if _merge == 3
+drop _merge
 
 
 egen id = group(rtn)
-*drop rtn
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-*keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start 
-*order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start
 mvencode _all, mv(0) override
+keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start manager_gender
+order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start manager_gender
 compress
 
-* Merge with the number of partners
-merge m:m rtn using "`partner_number'", keepusing(partner_number)
-keep if _merge == 3
-drop _merge
-
-
-* Merge with the manager gender
-merge m:m rtn using "`partner_manager'", keepusing(partner_manager)
-5353535
-keep if _merge == 3
-drop _merge
-
-save "$out\final_dataset", replace
+*save "$out\final_dataset", replace
