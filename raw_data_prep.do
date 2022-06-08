@@ -348,7 +348,7 @@ save "`ihss_tax_id'"
 **********                  FOURTH PART: IDENTIFYING MNC                 *********
 **********************************************************************************
 preserve
-use "$input\Base_precios_2014_2020.dta", replace 
+use "$input\Base_precios_2014_2021.dta", replace 
 drop if periodo ==202001
 drop if ptstiporelaciónid==18   // no relationship
 keep if tipodedeclaración=="ORIGINAL" 
@@ -428,7 +428,7 @@ restore
 **********************************************************************************
 
 preserve
-import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7)
+import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7) clear
 keep if tipo_relacion == "REPRESENTANTE LEGAL"
 duplicates tag rtn identificacion , gen(istag)
 order tipo_relacion, last
@@ -510,8 +510,8 @@ egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
 mvencode _all, mv(0) override
-keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start legal_proxy
-order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start legal_proxy
+keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
+order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
 compress
 
 *save "$out\final_dataset", replace
