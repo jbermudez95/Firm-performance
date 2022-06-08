@@ -424,57 +424,27 @@ restore
 
 
 **********************************************************************************
-**********     			    SIXTH PART: MANAGER GENDER      			 *********
+**********     			      SIXTH PART: LEGAL PROXY      			     *********
 **********************************************************************************
 
 preserve
-import excel using "$path\buscar_genero.xlsx", firstrow clear
-encode genero, gen(genero_merge)
-drop genero
-tempfile buscar_genero
-save "`buscar_genero'"
-restore
+import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7)
+keep if tipo_relacion == "REPRESENTANTE LEGAL"
+duplicates tag rtn identificacion , gen(istag)
+order tipo_relacion, last
+sort rtn identificacion
+drop if istag > 0 & fecha_hasta != ""
+drop istag
+drop if rtn == rtn[_n-1] & identificacion == identificacion[_n-1]
+g hasta = substr(fecha_hasta, 1, 4)
+destring hasta, replace
+drop if hasta > 2022 & !missing(hasta)
+egen x = group(identificacion)
+collapse (count) x, by(rtn)
+g legal_proxy = cond(x>1,1,0)
 
-preserve
-import delimited "$input\relaciones_profesionales.csv", stringcols(_all) clear
-rename identificacion rtn_relacionado
-keep if tipo_relacion == "ADMINISTRADOR ¿NICO" | tipo_relacion == "GERENTE GENERAL"
-order rtn rtn_relacionado, first
-sort rtn rtn_relacionado
-drop if (rtn == rtn[_n-1] & rtn_relacionado == rtn_relacionado[_n-1])
-gen dum = (fecha_hasta != "")
-drop if (rtn == rtn[_n-1] & dum == 1)
-drop fecha_hasta dum
-gen relacion = 1
-replace relacion = 2 if tipo_relacion == "ADMINISTRADOR ¿NICO"
-sort rtn relacion
-gen dum = (rtn == rtn[_n-1] & relacion != relacion[_n-1])
-drop if dum == 1
-drop dum relacion
-gen desde = substr(fecha_desde,1,4)
-destring desde, replace
-egen min = min(desde), by(rtn)
-duplicates tag rtn, gen(tag)
-gen dum = cond(rtn == rtn[_n-1] & min == desde & tag > 0 & desde != desde[_n-1], 1, 0) 
-drop if dum == 1
-drop dum fecha_desde desde min
-keep if tag == 0
-drop tag
-
-gen id = substr(rtn_relacionado, 1, 13)
-merge m:1 id using "$input\base_rnp.dta", keepusing(nombre genero)
-drop if _merge == 2
-drop _merge
-
-merge m:1 id using "`buscar_genero'", keepusing(nombre_relacionado genero_merge)
-drop if _merge == 2
-
-g manager_gender = genero if _merge == 1
-replace manager_gender = genero_merge if _merge == 3
-*encode manager, gen(manager_gender)
-keep rtn manager_gender
-tempfile manager_gender
-save "`manager_gender'"
+tempfile legal_proxy
+save "`legal_proxy'"
 restore
 
 
@@ -531,7 +501,7 @@ drop _merge
 
 
 * Merge with the manager gender
-merge m:m rtn using "`manager_gender'", keepusing(manager_gender)
+merge m:m rtn using "`legal_proxy'", keepusing(legal_proxy)
 keep if _merge == 3
 drop _merge
 
@@ -540,8 +510,8 @@ egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
 mvencode _all, mv(0) override
-keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start manager_gender
-order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start manager_gender
+keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start legal_proxy
+order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* partner_* mnc date_start legal_proxy
 compress
 
 *save "$out\final_dataset", replace
