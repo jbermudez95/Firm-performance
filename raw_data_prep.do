@@ -7,7 +7,7 @@ Description: 	This do file cleans and prepares administrative datasets that are
 				and social security records) which are merged later to build an 
 				unbalanced panel dataset. 
 Date:			July 3rd, 2021
-Modified:       May, 2022
+Modified:       June, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
