@@ -2,12 +2,12 @@
 Name:			raw_data_prep.do
 Description: 	This do file cleans and prepares administrative datasets that are 
 				use for the descriptive and empirical estimations of the paper 
-				"Firm performance and tax incentives: evidence from Honduras". 
+				"Firms' performance and tax incentives: evidence from Honduras". 
 				It produces three individual datasets (tax, custom, 
-				and social security records) which are merged later to build an 
+				and social security records) which are merged to build an 
 				unbalanced panel dataset. 
-Date:			July 3rd, 2021
-Modified:       June, 2022
+Date:			July, 2021
+Modified:       August, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -32,34 +32,22 @@ else if "`c(username)'" == "jbermudez" {
 ********      FIRST PART: SETTING UP CORPORATE AND SALES TAX RECORDS      ********
 **********************************************************************************
 
-**------------- 1.1 AUXILIAR DATASET TO IDENTIFY EXONERATED FIRMS -------------
+**------------- 1.1 CORPORATE TAX RECORDS -------------
+
 preserve
-use "$path\Base exonerados anual\exonerados2017.dta", replace
-append using "$path\Base exonerados anual\exonerados2018.dta"
-
-encode beneficio1, gen(beneficio)
-drop beneficio1
-
-keep if (beneficio == 1 | beneficio == 2 | beneficio == 3 | beneficio == 5 | beneficio == 6 | beneficio == 10)
-g regimen = 1
-
-tempfile regimen
-save "`regimen'"
-restore
-
-**------------- 1.2 CORPORATE TAX RECORDS -------------
-preserve
-use "$input\Base_ISRPJ_2014_2020_0821.dta", clear
+* Initial setting (only keep electronic tax forms)
+use "$input\Base_ISRPJ_2014_2021_0707.dta", clear
 compress 
 
 keep if year == 2017 | year == 2018
 sort rtn year
 duplicates drop rtn year, force
 
-* Keeping only electronic tax forms
 format %13.0f nro_preimpreso
 tostring nro_preimpreso, gen(form) usedisplayformat
 replace form = (substr(form, 1, 3))
+keep if form == "357"
+
 
 * Income variables
 egen cit_turnover_exempt  = rowtotal(ingr_vtas_grav_12_art22 ingr_vtas_grav_15_art22 ingr_vtas_grav_18_art22 ///
@@ -84,9 +72,9 @@ g cit_total_taxed_inc  = cit_turnover_taxed  + cit_other_inc_taxed
 g cit_total_inc        = cit_total_taxed_inc + cit_total_exempt_inc
 g cit_total_sales	   = cit_turnover_exempt + cit_turnover_taxed
 
-g cit_dif_ingresos      = abs(cit_total_inc - ingr_total_ingresos_total)
-g cit_result_income     = cit_total_inc     - ct_ingresos_no_gravados
-g cit_dif_result_income = cit_result_income - total_ingresos_resul_ejercicio
+* Adjusting firms that turned out without income (in our construction) but have income > 0 in the tax form
+replace cit_total_inc = cond(total_ingresos_resul_ejercicio > 0 & cit_total_inc == 0, total_ingresos_resul_ejercicio, cit_total_inc)
+
 
 * Costs and expenses
 g cit_goods_materials_non_ded = cyg_gastos_compra_vnd
@@ -100,10 +88,10 @@ g 	 cit_goods_materials_ded 	 = cit_com_costs + cit_prod_costs
 
 replace cit_goods_materials_ded  = cit_goods_materials_ded + cyg_gastos_compra_c + cyg_gastos_compra_g 
 
-egen cit_labor_non_ded           = rowtotal(cyg_cyg_gastos_com_vtas_vnd cygsueldossalariosvnd cyg_honorarios_prof_vnd cyg_honorarios_extranj_vnd), missing
+egen cit_labor_non_ded           = rowtotal(cyg_cyg_gastos_com_vtas_vnd cyg_sueldos_salarios_vnd cyg_honorarios_prof_vnd cyg_honorarios_extranj_vnd), missing
 
-egen cit_labor_ded               = rowtotal(cygmanoobradirc cygmanoobraindirc cyg_gastos_com_vtas_c cygsueldossalariosc cyg_honorarios_prof_c cyg_honorarios_extranj_c ///
-											cyg_gastos_com_vtas_g cygsueldossalariosg cyg_honorarios_prof_g cyg_cyg_honorarios_extranj_g), missing
+egen cit_labor_ded               = rowtotal(cygmanoobradirc cygmanoobraindirc cyg_gastos_com_vtas_c cyg_sueldos_salarios_c cyg_honorarios_prof_c cyg_honorarios_extranj_c ///
+											cyg_gastos_com_vtas_g cyg_sueldos_salarios_g cyg_honorarios_prof_g cyg_cyg_honorarios_extranj_g), missing
 											
 egen cit_financial_non_ded 		 = rowtotal(cyg_inter_banc_local_vnd cyg_inter_banc_exterior_vnd cyg_inter_pag_ter_local_vnd /// 
 										    cyg_inter_pag_ter_ext_er_vnd cyg_inter_pag_ter_localenr_vnd cyg_inter_pag_ter_ext_enr_vnd), missing
@@ -146,49 +134,20 @@ egen cit_losses_other_ded       = rowtotal(cyg_otros_costos_gastos_c cyg_inventa
 										   cyg_contr_especial_seg_pob_g cyg_multas_recargos_g cyg_doc_no_cumplen_ley_g cyg_impt_rj_an_ap_g                  ///
 										   cyg_otros_gasto_no_deduc_g cyg_gastos_otras_prov_g cyg_perd_medicion_g cyg_perd_medicion_c), missing
 
-g  double cit_precio_trans_ded  = deducautoajustepreciostran + cygajustespreciostranfc
-replace cit_precio_trans_ded = 0 if (abs(deducautoajustepreciostran - cygajustespreciostranfc) < 1 & deducautoajustepreciostran != 0)
+g  double cit_precio_trans_ded  = deducautoajustepreciostran 
+replace cit_precio_trans_ded = cond(abs(deducautoajustepreciostran - cygajustespreciostranfc) < 1 & deducautoajustepreciostran != 0, 0, cit_precio_trans_ded) 
 
 g cit_total_costs_ded = cit_goods_materials_ded + cit_operations_ded + cit_financial_ded + cit_labor_ded + cit_losses_other_ded - cit_precio_trans_ded
 replace cit_total_costs_ded = 0 if cit_total_costs_ded < 0
+replace cit_total_costs_ded = cond(total_deduc_del_ejerc > 0 & cit_total_costs_ded == 0, total_deduc_del_ejerc, cit_total_costs_ded)
 
 g cit_total_costs_non_ded = cit_goods_materials_non_ded + cit_labor_non_ded + cit_financial_non_ded + cit_operations_non_ded + cit_losses_other_non_ded 
 replace cit_total_costs_non_ded = 0 if cit_total_costs_non_ded < 0
 
 g cit_total_costs = cit_total_costs_ded + cit_total_costs_non_ded 
 
-* Generate a variable for the caused tax
-loc tax_rate = 0.25
-g double imp_segun_tarifa_renta_alt	   = `tax_rate' * baseimponrtanetagrav		
-g porcentaje_ing_brutos_correct        = porcentaje_ing_brutos
-replace porcentaje_ing_brutos_correct  = 0 if baseimponrtanetagrav <= 0 
 
-g max_ISR_IM = max(porcentaje_ing_brutos_correct, imp_segun_tarifa_renta_alt)	
-g max_AS     = max_ISR_IM + imp_segun_tarifa_aport_solid	
-
-g causa_impuesto = .
-replace causa_impuesto = 0 if max(max_AS, imp_segun_tarifa_activo_neto) == 0
-replace causa_impuesto = 1 if max(max_AS, imp_segun_tarifa_activo_neto) == max_AS & ///
-							  max(porcentaje_ing_brutos_correct, imp_segun_tarifa_renta_alt) == imp_segun_tarifa_renta_alt & ///
-							  max(max_AS, imp_segun_tarifa_activo_neto) > 0
-replace causa_impuesto = 2 if max(max_AS, imp_segun_tarifa_activo_neto) == imp_segun_tarifa_activo_neto & ///
-							  max(max_AS, imp_segun_tarifa_activo_neto) > 0
-replace causa_impuesto = 3 if max(max_AS, imp_segun_tarifa_activo_neto) == max_AS & ///
-							  max(porcentaje_ing_brutos_correct, imp_segun_tarifa_renta_alt) == porcentaje_ing_brutos_correct & ///
-							  max(max_AS, imp_segun_tarifa_activo_neto) > 0 
-lab def causa_impuesto 0 "None" 1 "CIT" 2 "Net Asset" 3 "Minimum Tax"
-lab val causa_impuesto causa_impuesto
-
-g double impuesto_causado = .
-replace impuesto_causado  = 0 		 						if causa_impuesto == 0 
-replace impuesto_causado  = max_AS 							if causa_impuesto == 1
-replace impuesto_causado  = imp_segun_tarifa_activo_neto 	if causa_impuesto == 2
-replace impuesto_causado  = max_AS 							if causa_impuesto == 3
-label var impuesto_causado "Impuesto causado real"
-
-* Identify exempted firms based on tax credit levels and caused tax. If the company doesn't cause any tax, 
-* it most to satisfy that made an exoneration request to the Ministery of Finance and also it has to belong to 
-* any especial regime to be consider as an exonerated firm
+* Identify exonerated firms based on exonerations credits (tax authority only enables exonerated firms to fill this cell in the tax form)
 egen cit_total_credits_r = rowtotal(cre_importe_exo_red_rta cre_retencion_art50_ley_rta cre_reten_anti_isr_o_atn_rta cre_pagos_cuenta_rta  ///
 									cre_exe_ejer_fiscal_ant_rta cre_cesiones_credi_recib_rta cre_pagos_reali_periodo_rta                   ///
 									cre_credi_gene_nuevos_empl cre_retencion_anti_irs_impor cre_import_compensacion_rta                    ///
@@ -200,36 +159,29 @@ egen cit_total_credits_an = rowtotal(cre_importe_exo_red_act_neto  cre_ret_anti_
 egen cit_total_credits_as = rowtotal(cre_importe_exo_aport_soli cre_pagos_cuenta_as cre_excedente_ejer_ant_as cre_cesiones_cred_recib_as ///
 									 cre_pagos_reali_periodo_as cre_import_compensacion_as creditos_apli_pagos_cuenta_as), missing
 
-egen cre_importe_exo1 = rowtotal(cit_total_credits_*), missing
-egen cre_importe_exo2 = rowtotal(cre_importe_exo_red_rta cre_importe_exo_red_act_neto cre_importe_exo_aport_soli), missing
+egen cit_cre_exo = rowtotal(cre_importe_exo_red_rta cre_importe_exo_red_act_neto cre_importe_exo_aport_soli), missing
 
-g       exonerado_rit = 1 if max(cre_importe_exo1, cre_importe_exo2) > 1000 & (causa_impuesto == 1 | causa_impuesto == 3) & (regimenespecial == 4)
-replace exonerado_rit = 0 if exonerado_rit ==.
+replace regimenespecial = 6 if regimenespecial == 0
+lab def regimenespecial 1 "ZADE" 2 "ZOLI" 3 "ZOLT" 4 "RIT" 5 "Otros Regímenes" 6 "Ninguno" 7 "ZOLITUR" 8 "Simplificado" 9 "LIT" ///
+						11 "Depósitos Temporales" 13 "Otros Exonerados" 14 "ZADE" 15 "Cooperativas" 16 "MIPYMES" ///
+						17 "Sector Social de la Economía" 18 "Transportistas" 20 "Alianza Público Privada" 21 "Incentivos al Turismo" ///
+						23 "Energía Renovable" 24 "Iglesias" 27 "ONG" 28 "Organismos Internacionales" 34 "El Estado" 39 "Asociaciones Patronales" ///
+						40 "Colegios Profesionales" 41 "Sindicatos Obreros" 43 "Biocombustibles" 44 "Call Centers" 46 "OPDF"					
+label val regimenespecial regimenespecial
 
-g       ratio_exoneracion = 0
-replace ratio_exoneracion = (cre_importe_exo_red_rta + cre_importe_exo_aport_soli)/(imp_segun_tarifa_renta + ///
-							 imp_segun_tarifa_aport_solid) if (causa_impuesto == 1 | causa_impuesto == 3) 				
-replace ratio_exoneracion = cre_importe_exo_red_act_neto / imp_segun_tarifa_activo_neto if causa_impuesto == 2	
-replace ratio_exoneracion = 0 if missing(ratio_exoneracion)
+* The church, the government, professional colleges, ccoperatives, and non profit organizations are removed
+drop if (regimenespecial == 8 | regimenespecial == 11 | regimenespecial == 15 | regimenespecial == 16 | ////
+         regimenespecial == 18 | regimenespecial == 24 | regimenespecial == 27 | regimenespecial == 28 | /// 
+         regimenespecial == 34 | regimenespecial == 39 | regimenespecial == 40 | regimenespecial == 41) 
 
-merge 1:m rtn year using "`regimen'"  // Merge with the dataset of exonerated firms from the Ministry of Finance
-duplicates drop
-drop if _merge == 2
-drop _merge
-replace regimen = 0 if regimen == .
-
-replace regimenespecial = 0 if regimenespecial == 6
-g cit_exonerated = (ratio_exoneracion >= 0.9 | regimenespecial > 0)
-replace cit_exonerated = 1 if (causa_impuesto == 0 & regimenespecial > 0 & regimen == 1)
-replace cit_exonerated = 1 if (ratio_exoneracion < 0.9 & regimen == 1)
+gen cit_exonerated = cond(cit_cre_exo > 0 & regimenespecial != 6, 1, 0)
+replace regimenespecial = 6 if cit_exonerated == 0
 label def cit_exonerated 0 "Non-Exonerated" 1 "Exonerated"
 label val cit_exonerated cit_exonerated
 
 rename total_ingresos_resul_ejercicio cit_turnover
 rename total_deduc_del_ejerc		  cit_deductions
-rename form							  cit_form
 rename regimenespecial				  cit_regime
-rename causa_impuesto    			  cit_caused_tax
 rename propiedad_planta_eq            cit_fixed_assets
 rename c525_deprec_acum_propiedad	  cit_fixed_assets_depr  
 rename total_activo_sf                cit_total_assets
@@ -242,11 +194,13 @@ tempfile cit_records
 save "`cit_records'"
 restore
 
+
+
 **------------- 1.3 SALES TAX RECORDS -------------
 preserve
-use "$path\isv.dta", replace
+use "$input\ISV_anual_2004_2021.dta", replace
 keep if (year == 2017 | year == 2018)
-keep if tipo_ot == "JURÍDICO"
+duplicates drop rtn year, force
 
 egen sales_exempted    = rowtotal(vtas_exentas_mcdo_interno12 vtas_exentas_mcdo_interno15 ventas_exentas_mcdo_interno18), missing
 egen sales_taxed       = rowtotal(vtas_netas_grav_mcdo_int12 ventas_netas_grav_mcdo_int15 ventas_netas_grav_mcdo_int18), missing
@@ -258,7 +212,8 @@ egen sales_imports     = rowtotal(importgrav12 importgrav15 importgrav18 importr
 								  importacionesexentas12 importacionesexentas15 importacionesexentas18), missing
 
 ** 1.3 MERGE BETWEEN CORPORATE AND SALES TAX RECORDS
-merge 1:m rtn year using "`cit_records'"
+merge 1:1 rtn year using "`cit_records'"
+drop if _m == 1
 drop _merge
 tempfile tax_records
 save "`tax_records'"
@@ -271,29 +226,31 @@ restore
 **********            SECOND PART: SETTING UP CUSTOMS RECORDS            *********
 **********************************************************************************
 preserve
-use "$path\export.dta"
+use "$path\export.dta", replace
 destring year, replace
 keep if (year == 2017 | year == 2018)
-egen x = group(rtn)
-duplicates tag x year, gen(isdup)
-keep if isdup == 0
-drop x isdup
+bys rtn year: egen suma_export = sum(custom_export)
+duplicates drop rtn year, force
+drop custom_export 
+rename suma_export custom_export
 tempfile exports
 save "`exports'"
 restore
 
 preserve
-use "$path\import.dta"
+use "$path\import.dta", replace
 keep if regimen == "4000"
 drop regimen
 destring year, replace
 keep if (year == 2017 | year == 2018)
-egen x = group(rtn)
-duplicates tag x year, gen(isdup)
-keep if isdup == 0
-drop x isdup
+bys rtn year: egen suma_import = sum(custom_import)
+duplicates drop rtn year, force
+drop custom_import 
+rename suma_import custom_import
 merge m:m rtn year using "`exports'"
-drop _merge
+replace custom_import = cond(missing(custom_import), 0, custom_import)
+replace custom_export = cond(missing(custom_export), 0, custom_export)
+drop _m
 tempfile custom_records
 save "`custom_records'"
 restore
@@ -308,13 +265,11 @@ restore
 *Count for the total number of employees for each firm in 2017
 preserve 
 use "$path\ihss_2017.dta", replace 
-merge m:1 NUMERO_PATRONAL using "$path\rtn_patrono.dta"
+merge m:m NUMERO_PATRONAL using "$input\rtn_patrono.dta"
 keep if _merge == 3
 drop _merge
-egen ihss_n_workers = count(IDENTIDAD), by(RTN)
-sort RTN
-drop if RTN == RTN[_n-1]
-drop NOMBRE IDENTIDAD NUMERO_PATRONAL PATRONO RAZON_SOCIAL
+egen ihss_n_workers = group(IDENTIDAD)
+collapse (count) ihss_n_workers, by(rtn nombre_razonsocial)
 g year = 2017
 tempfile ihss_2017
 save "`ihss_2017'"
@@ -323,23 +278,17 @@ restore
 *Count for the total number of employees for each firm in 2018
 preserve
 use "$path\ihss_2018.dta", replace
-merge m:1 NUMERO_PATRONAL using "$path\rtn_patrono.dta"
+merge m:m NUMERO_PATRONAL using "$input\rtn_patrono.dta"
 keep if _merge == 3
 drop _merge
-egen ihss_n_workers = count(IDENTIDAD), by(RTN)
-sort RTN
-drop if RTN == RTN[_n-1]
-drop NOMBRE IDENTIDAD NUMERO_PATRONAL PATRONO RAZON_SOCIAL
+egen ihss_n_workers = group(IDENTIDAD)
+collapse (count) ihss_n_workers, by(rtn nombre_razonsocial)
 g year = 2018
-tempfile ihss_2018
-save "`ihss_2018'"
-restore
-
-*Building social security dataset with tax identifier
-append using "`ihss_2017'" "`ihss_2018'"
-rename RTN rtn
+append using "`ihss_2017'"
 tempfile ihss_tax_id
 save "`ihss_tax_id'"
+restore
+
 
 
 
@@ -349,23 +298,20 @@ save "`ihss_tax_id'"
 **********************************************************************************
 preserve
 use "$input\Base_precios_2014_2021.dta", replace 
-drop if periodo ==202001
-drop if ptstiporelaciónid==18   // no relationship
-keep if tipodedeclaración=="ORIGINAL" 
-drop if ptstiporelaciónid==11 | ptstiporelaciónid==12
+keep if tipodedeclaración == "ORIGINAL" 
+drop if (ptstiporelacióndesc == "AMBAS PARTES SE ENCUENTRAN DIRECTAMENTE BAJO LA DIRECCIÓN, CONTROL O CAPITAL DE UNA MISMA PERSONA O ENTIDAD" | ///
+         ptstiporelacióndesc == "AMBAS PARTES SE ENCUENTRAN INDIRECTAMENTE BAJO LA DIRECCIÓN, CONTROL O CAPITAL DE UNA MISMA PERSONA O ENTIDAD" | ///
+		 ptstiporelacióndesc == "NO HAY RELACIÓN")
 
-gen foreign = 0
-replace foreign = 1 if ptspais != "HONDURAS"
-
-gen owner = 0
-replace owner = 1 if (ptstiporelaciónid == 1 | ptstiporelaciónid == 3 | ptstiporelaciónid == 5 | ///
-					  ptstiporelaciónid == 6 | ptstiporelaciónid == 9)
-
-gen owned = 0
-replace owned = 1 if owner != 1
-
-gen foreign_owner = 0
-replace foreign_owner = 1 if owned == 1 & foreign == 1
+gen owner = cond(ptstiporelacióndesc == "DECLARANTE ES MATRIZ O TIENE EL 50% O MÁS DE LA PROPIEDAD DE LA CONTRAPARTE" | ///
+                 ptstiporelacióndesc == "DECLARANTE ES AGENCIA O ESTABLECIMIENTO PERMANENTE" | ///
+				 ptstiporelacióndesc == "DECLARANTE TIENE PARTICIPACIÓN DIRECTA EN LA DIRECCIÓN O ADMINISTRACIÓN DE LA CONTRAPARTE" | ///
+				 ptstiporelacióndesc == "DECLARANTE TIENE PARTICIPACIÓN INDIRECTA EN LA DIRECCIÓN O ADMINISTRACIÓN DEL CONTRAPARTE" | ///
+				 ptstiporelacióndesc == "DECLARANTE ES CONTROLADOR", 1, 0)
+				 
+gen owned   = cond(owner != 1, 1, 0)
+gen foreign = cond(ptspais != "HONDURAS", 1, 0)
+gen foreign_owner = cond(owned == 1 & foreign == 1, 1, 0)
 
 sort otrtn
 bys otrtn: egen max_foreign       = max(foreign)
@@ -426,19 +372,18 @@ restore
 **********************************************************************************
 **********     			      SIXTH PART: LEGAL PROXY      			     *********
 **********************************************************************************
-
 preserve
 import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7) clear
 keep if tipo_relacion == "REPRESENTANTE LEGAL"
 duplicates tag rtn identificacion , gen(istag)
 order tipo_relacion, last
 sort rtn identificacion
-drop if istag > 0 & fecha_hasta != ""
+gen hasta = cond(fecha_hasta != "", substr(fecha_hasta,1,4), "")
+destring hasta, replace
+drop if istag > 0 & hasta < 2017 & !missing(hasta)
+drop if hasta > 2022 & !missing(hasta)
 drop istag
 drop if rtn == rtn[_n-1] & identificacion == identificacion[_n-1]
-g hasta = substr(fecha_hasta, 1, 4)
-destring hasta, replace
-drop if hasta > 2022 & !missing(hasta)
 egen x = group(identificacion)
 collapse (count) x, by(rtn)
 g legal_proxy = cond(x>1,1,0)
@@ -451,10 +396,13 @@ restore
 
 
 **********************************************************************************
-**********               SEVENTH PART: FINAL PANEL DATASET               *********
+**********               SEVENTH PART: MERGE ALL DATASETS                *********
 **********************************************************************************
 
 * Constructing final panel dataset
+use "`tax_records'", replace
+
+jojojojooj
 merge 1:m rtn year using "`tax_records'"
 keep if _merge == 3
 drop _merge 
@@ -468,12 +416,12 @@ g final_imports = max(sales_imports, custom_import)
 
 egen sales_total = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fyduca final_exports), missing
 egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
-								  comprasexoneradasoce15 comprasexoneradasoce18 adquisifyducagravadas15 adquisifyducagravadas18 ///
-								  adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
+							comprasexoneradasoce15 comprasexoneradasoce18 adquisifyducagravadas15 adquisifyducagravadas18 ///
+							adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
 
 
 * Impute economic activities for final panel dataset and only keep corporations
-drop tipo_ot
+*drop tipo_ot
 merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", ///
 	  keepusing(codigo clase codigoseccion seccion tipo_ot departamento municipio)
 keep if _merge == 3
