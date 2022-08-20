@@ -1,3 +1,4 @@
+
 /*
 Name:			raw_data_prep.do
 Description: 	This do file cleans and prepares administrative datasets that are 
@@ -209,8 +210,8 @@ egen sales_fyduca      = rowtotal(transfbienesfyduca15 transfbienesfyduca18 tran
 egen sales_exports     = rowtotal(ventas_exentas_expor_12 ventas_exentas_expor_15 ventas_exentas_expor_18 ///
 								  ventas_exentas_exp_fuera_ca_12 ventas_exentas_exp_fuera_ca_15 ventas_exentas_exp_fuera_ca_18), missing
 egen sales_imports     = rowtotal(importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18  ///
-								  importacionesexentas12 importacionesexentas15 importacionesexentas18), missing
-
+								  importacionesexentas12 importacionesexentas15 importacionesexentas18), missing							  
+								  
 ** 1.3 MERGE BETWEEN CORPORATE AND SALES TAX RECORDS
 merge 1:1 rtn year using "`cit_records'"
 drop if _m == 1
