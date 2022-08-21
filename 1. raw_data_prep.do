@@ -223,7 +223,7 @@ restore
 
 
 **********************************************************************************
-**********             THIRD STEP: SETTING UP CUSTOMS RECORDS            *********
+**********                   THIRD STEP: CUSTOMS RECORDS                 *********
 **********************************************************************************
 
 * Data on Exports (already in local currency - Lempiras)
@@ -271,8 +271,8 @@ keep if _m == 3
 drop _merge
 egen ihss_n_workers = group(IDENTIDAD)
 collapse (count) ihss_n_workers, by(rtn year)
-tempfile ihss_tax_id
-save "`ihss_tax_id'"
+tempfile social_security
+save "`social_security'"
 restore
 
 
@@ -486,18 +486,17 @@ restore
 **********               EIGHTH STEP: MERGE ALL DATASETS                 *********
 **********************************************************************************
 
-* Constructing final panel dataset
 use "`tax_records'", replace
 
-merge m:m rtn year using "`custom_records'"
-jojojo
-duplicates drop
+merge 1:1 rtn year using "`custom_records'"
+drop if _m == 2
 drop _merge
 
 foreach var of varlist custom_import custom_export sales_exports sales_imports {
 	replace `var' = cond(missing(`var'), 0, `var')
 }
 
+* We assume the true value of exports/imports is the highest between the internal tax (in the sales tax form) and customs records
 g final_exports = max(sales_exports, custom_export)
 g final_imports = max(sales_imports, custom_import)
 
@@ -507,15 +506,21 @@ egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasme
 							adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
 
 
-* Merge with multinational corporations
+* Merge with social security records
+merge 1:1 rtn year using "`social_security'"
+drop if _m == 2
+drop _merge
+jojojo
+
+							
+* Merge with data on MNC
 merge m:1 rtn using "`mnc'", keepusing(foreign_ownership)
-duplicates drop
 drop if _merge == 2
 drop _merge
-replace foreign_ownership = 0 if foreign_ownership == .
-gen mnc = (foreign_ownership == 1 & ihss_n_workers >= 100)
-label def mnc 1 "MNC" 0 "Not a MNC"
-label val mnc mnc
+replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
+gen final_mnc = (foreign_ownership == 1 & ihss_n_workers >= 100)
+label def final_mnc 1 "MNC" 0 "Not a MNC"
+label val final_mnc final_mnc
 
 
 * Merge with the age of the firm
@@ -529,6 +534,7 @@ merge m:m rtn using "`legal_proxy'", keepusing(legal_proxy)
 keep if _merge == 3
 drop _merge
 
+duplicates drop rtn year, force
 
 * Impute economic activities for final panel dataset and only keep corporations
 *drop tipo_ot
