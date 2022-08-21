@@ -1,12 +1,10 @@
 
 /*
 Name:			raw_data_prep.do
-Description: 	This do file cleans and prepares administrative datasets that are 
-				use for the descriptive and empirical estimations of the paper 
+Description: 	This do file cleans and prepares different administrative sources
+                which are merged to build an unbalanced panel for the descriptive 
+				and empirical estimations of the paper 
 				"Firms' performance and tax incentives: evidence from Honduras". 
-				It produces three individual datasets (tax, custom, 
-				and social security records) which are merged to build an 
-				unbalanced panel dataset. 
 Date:			July, 2021
 Modified:       August, 2022
 Author:			Jose Carlo Bermúdez
