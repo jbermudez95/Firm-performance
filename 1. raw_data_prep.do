@@ -226,7 +226,7 @@ restore
 **********             THIRD STEP: SETTING UP CUSTOMS RECORDS            *********
 **********************************************************************************
 
-* Data on Exports 
+* Data on Exports (already in local currency - Lempiras)
 preserve
 use "$path\export.dta", replace
 destring year, replace
@@ -239,7 +239,7 @@ tempfile exports
 save "`exports'"
 restore
 
-* Data on Imports 
+* Data on Imports (already in local currency - Lempiras)
 preserve
 use "$path\import.dta", replace
 keep if regimen == "4000"
@@ -251,8 +251,6 @@ duplicates drop rtn year, force
 drop custom_import 
 rename suma_import custom_import
 merge m:m rtn year using "`exports'"
-replace custom_import = cond(missing(custom_import), 0, custom_import)
-replace custom_export = cond(missing(custom_export), 0, custom_export)
 drop _m
 tempfile custom_records
 save "`custom_records'"
@@ -491,14 +489,14 @@ restore
 * Constructing final panel dataset
 use "`tax_records'", replace
 
-jojojojooj
-merge 1:m rtn year using "`tax_records'"
-keep if _merge == 3
-drop _merge 
-
 merge m:m rtn year using "`custom_records'"
+jojojo
 duplicates drop
 drop _merge
+
+foreach var of varlist custom_import custom_export sales_exports sales_imports {
+	replace `var' = cond(missing(`var'), 0, `var')
+}
 
 g final_exports = max(sales_exports, custom_export)
 g final_imports = max(sales_imports, custom_import)
@@ -507,17 +505,6 @@ egen sales_total = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fy
 egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
 							comprasexoneradasoce15 comprasexoneradasoce18 adquisifyducagravadas15 adquisifyducagravadas18 ///
 							adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
-
-
-* Impute economic activities for final panel dataset and only keep corporations
-*drop tipo_ot
-merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", ///
-	  keepusing(codigo clase codigoseccion seccion tipo_ot departamento municipio)
-keep if _merge == 3
-duplicates drop
-drop _merge 
-keep if tipo_ot == 1
-drop tipo_ot
 
 
 * Merge with multinational corporations
@@ -537,11 +524,21 @@ drop if _merge == 2
 drop _merge
 
 
-* Merge with the manager gender
+* Merge with the legal proxy
 merge m:m rtn using "`legal_proxy'", keepusing(legal_proxy)
 keep if _merge == 3
 drop _merge
 
+
+* Impute economic activities for final panel dataset and only keep corporations
+*drop tipo_ot
+merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", ///
+	  keepusing(codigo clase codigoseccion seccion tipo_ot departamento municipio)
+keep if _merge == 3
+duplicates drop
+drop _merge 
+keep if tipo_ot == 1
+drop tipo_ot
 
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
