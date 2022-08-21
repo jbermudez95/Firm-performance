@@ -1,4 +1,3 @@
-
 /*
 Name:			raw_data_prep.do
 Description: 	This do file cleans and prepares different administrative sources
@@ -34,8 +33,6 @@ else if "`c(username)'" == "jbermudez" {
 preserve
 * Initial setting (only keep electronic tax forms)
 use "$input\Base_ISRPJ_2014_2021_0707.dta", clear
-compress 
-
 keep if year == 2017 | year == 2018
 sort rtn year
 duplicates drop rtn year, force
@@ -45,8 +42,11 @@ tostring nro_preimpreso, gen(form) usedisplayformat
 replace form = (substr(form, 1, 3))
 keep if form == "357"
 
-
 * Income variables
+egen cit_sales_local = rowtotal(ingr_vtas_grav_12_total_ingr ingr_vtas_grav_15_total ingr_vtas_grav_18_total ingr_vtas_servicios_exe_total), missing
+
+egen cit_sales_exports = rowtotal(ingr_vtas_serv_expor_total ingr_vtas_serv_fyduca_total), missing
+
 egen cit_turnover_exempt  = rowtotal(ingr_vtas_grav_12_art22 ingr_vtas_grav_15_art22 ingr_vtas_grav_18_art22 ///
 								     ingr_vtas_serv_expor_art22 ingr_vtas_servicios_exe_art22 ingr_vtas_serv_fyduca_art22), missing
 									 
@@ -67,7 +67,6 @@ egen cit_other_inc_exempt = rowtotal(ingr_int_no_bancarios_art22 ingr_alq_exe_is
 g cit_total_exempt_inc = cit_turnover_exempt + cit_other_inc_exempt
 g cit_total_taxed_inc  = cit_turnover_taxed  + cit_other_inc_taxed
 g cit_total_inc        = cit_total_taxed_inc + cit_total_exempt_inc
-g cit_total_sales	   = cit_turnover_exempt + cit_turnover_taxed
 
 * Adjusting firms that turned out without income (in our construction) but have income > 0 in the tax form
 replace cit_total_inc = cond(total_ingresos_resul_ejercicio > 0 & cit_total_inc == 0, total_ingresos_resul_ejercicio, cit_total_inc)
@@ -176,7 +175,7 @@ replace regimenespecial = 6 if cit_exonerated == 0
 label def cit_exonerated 0 "Non-Exonerated" 1 "Exonerated"
 label val cit_exonerated cit_exonerated
 
-rename total_ingresos_resul_ejercicio cit_turnover
+rename total_ingresos_resul_ejercicio cit_gross_income
 rename total_deduc_del_ejerc		  cit_deductions
 rename regimenespecial				  cit_regime
 rename propiedad_planta_eq            cit_fixed_assets
@@ -202,16 +201,26 @@ use "$input\ISV_anual_2004_2021.dta", replace
 keep if (year == 2017 | year == 2018)
 duplicates drop rtn year, force
 
-egen sales_exempted    = rowtotal(vtas_exentas_mcdo_interno12 vtas_exentas_mcdo_interno15 ventas_exentas_mcdo_interno18), missing
-egen sales_taxed       = rowtotal(vtas_netas_grav_mcdo_int12 ventas_netas_grav_mcdo_int15 ventas_netas_grav_mcdo_int18), missing
-egen sales_exmp_purch  = rowtotal(ventasexoneradasoce15 ventasexoneradasoce18 ventasexoneradaspn15), missing
-egen sales_fyduca      = rowtotal(transfbienesfyduca15 transfbienesfyduca18 transfserviciosfyduca15 transfserviciosfyduca18), missing
-egen sales_exports     = rowtotal(ventas_exentas_expor_12 ventas_exentas_expor_15 ventas_exentas_expor_18 ///
-								  ventas_exentas_exp_fuera_ca_12 ventas_exentas_exp_fuera_ca_15 ventas_exentas_exp_fuera_ca_18), missing
-egen sales_imports     = rowtotal(importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18  ///
-								  importacionesexentas12 importacionesexentas15 importacionesexentas18), missing							  
-								  
-** 1.3 MERGE BETWEEN CORPORATE AND SALES TAX RECORDS
+* Variables on Sales 
+egen vat_sales_exempted   = rowtotal(ventasexoneradasoce15 ventasexoneradasoce18 ventasexoneradaspn15 ///
+                                     vtas_exentas_mcdo_interno12 vtas_exentas_mcdo_interno15 ventas_exentas_mcdo_interno18), missing
+egen vat_sales_taxed      = rowtotal(vtas_netas_grav_mcdo_int12 ventas_netas_grav_mcdo_int15 ventas_netas_grav_mcdo_int18), missing
+egen vat_sales_exports    = rowtotal(transfbienesfyduca15 transfbienesfyduca18 transfserviciosfyduca15 transfserviciosfyduca18 ///
+									 ventas_exentas_expor_12 ventas_exentas_expor_15 ventas_exentas_expor_18 ///
+								     ventas_exentas_exp_fuera_ca_12 ventas_exentas_exp_fuera_ca_15 ventas_exentas_exp_fuera_ca_18), missing
+gen vat_sales_local	      = vat_sales_exempted + vat_sales_taxed								 
+									  
+* Variables on Purchases
+egen vat_purch_exempted = rowtotal(comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
+							       comprasexoneradasoce15 comprasexoneradasoce18), missing
+egen vat_purch_taxed    = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18), missing						  
+egen vat_purch_imports  = rowtotal(adquisifyducagravadas15 adquisifyducagravadas18 adquisifyducaexeexo15 adquisifyducaexeexo18 ///
+								   importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18  ///
+							       importacionesexentas12 importacionesexentas15 importacionesexentas18), missing							   
+gen vat_purch_local     = vat_purch_exempted + vat_purch_taxed					   
+						  
+								  								  
+* Merge between internal tax records (CIT and VAT)
 merge 1:1 rtn year using "`cit_records'"
 drop if _m == 1
 drop _merge
@@ -259,7 +268,7 @@ restore
 
 
 
-**********************************************************************************
+/**********************************************************************************
 **********              FOURTH STEP: SOCIAL SECURITY RECORDS             *********
 **********************************************************************************
 
@@ -478,7 +487,7 @@ keep rtn legal_proxy
 tempfile legal_proxy
 save "`legal_proxy'"
 restore
-
+*/
 
 
 
@@ -487,30 +496,29 @@ restore
 **********************************************************************************
 
 use "`tax_records'", replace
-
 merge 1:1 rtn year using "`custom_records'"
 drop if _m == 2
 drop _merge
 
-foreach var of varlist custom_import custom_export sales_exports sales_imports {
+* Turnover (and purchases) might be underestimated so we rebuild it combining CIT, VAT and Customs records for local and foreign sales
+* We assume the true value of exports/imports is the highest between the internal tax (in the CIT/VAT tax form) and customs records
+foreach var of varlist cit_sales_local cit_sales_exports vat_sales_local vat_sales_exports vat_purch_imports custom_import custom_export {
 	replace `var' = cond(missing(`var'), 0, `var')
 }
 
-* We assume the true value of exports/imports is the highest between the internal tax (in the sales tax form) and customs records
-g final_exports = max(sales_exports, custom_export)
-g final_imports = max(sales_imports, custom_import)
+g final_sales_local   = max(cit_sales_local, vat_sales_local)
+g final_sales_exports = max(cit_sales_exports, vat_sales_exports, custom_export)
+g final_purch_imports = max(vat_purch_imports, custom_import)
 
-egen sales_total = rowtotal(sales_exempted sales_taxed sales_exmp_purch sales_fyduca final_exports), missing
-egen sales_purch = rowtotal(comprasnetasmerc12 comprasnetasmerc15 comprasnetasmerc18 comprasexentasmerc12 comprasexentasmerc15 comprasexentasmerc18 ///
-							comprasexoneradasoce15 comprasexoneradasoce18 adquisifyducagravadas15 adquisifyducagravadas18 ///
-							adquisifyducaexeexo15 adquisifyducaexeexo18 final_imports), missing
-
+egen final_total_sales = rowtotal(final_sales_local final_sales_exports), missing
+egen final_total_purch = rowtotal(vat_purch_local + final_purch_imports), missing
+jojo
 
 * Merge with social security records
 merge 1:1 rtn year using "`social_security'"
 drop if _m == 2
 drop _merge
-jojojo
+
 
 							
 * Merge with data on MNC
