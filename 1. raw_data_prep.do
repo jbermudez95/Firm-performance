@@ -30,10 +30,8 @@ else if "`c(username)'" == "jbermudez" {
 
 
 **********************************************************************************
-********      FIRST PART: SETTING UP CORPORATE AND SALES TAX RECORDS      ********
+********               FIRST STEP: CORPORATE TAX RECORDS                  ********
 **********************************************************************************
-
-**------------- 1.1 CORPORATE TAX RECORDS -------------
 
 preserve
 * Initial setting (only keep electronic tax forms)
@@ -197,7 +195,10 @@ restore
 
 
 
-**------------- 1.3 SALES TAX RECORDS -------------
+**********************************************************************************
+********                 SECOND STEP: SALES TAX RECORDS                   ********
+**********************************************************************************
+
 preserve
 use "$input\ISV_anual_2004_2021.dta", replace
 keep if (year == 2017 | year == 2018)
@@ -224,8 +225,10 @@ restore
 
 
 **********************************************************************************
-**********            SECOND PART: SETTING UP CUSTOMS RECORDS            *********
+**********             THIRD STEP: SETTING UP CUSTOMS RECORDS            *********
 **********************************************************************************
+
+* Data on Exports 
 preserve
 use "$path\export.dta", replace
 destring year, replace
@@ -238,6 +241,7 @@ tempfile exports
 save "`exports'"
 restore
 
+* Data on Imports 
 preserve
 use "$path\import.dta", replace
 keep if regimen == "4000"
@@ -260,32 +264,17 @@ restore
 
 
 **********************************************************************************
-**********              THIRD PART: SOCIAL SECURITY RECORDS              *********
+**********              FOURTH STEP: SOCIAL SECURITY RECORDS             *********
 **********************************************************************************
 
-*Count for the total number of employees for each firm in 2017
+* Counting the total number of employees for each firm 
 preserve 
-use "$path\ihss_2017.dta", replace 
+use "$input\IHSS_2017_2018.dta", replace 
 merge m:m NUMERO_PATRONAL using "$input\rtn_patrono.dta"
-keep if _merge == 3
+keep if _m == 3
 drop _merge
 egen ihss_n_workers = group(IDENTIDAD)
-collapse (count) ihss_n_workers, by(rtn nombre_razonsocial)
-g year = 2017
-tempfile ihss_2017
-save "`ihss_2017'"
-restore
-
-*Count for the total number of employees for each firm in 2018
-preserve
-use "$path\ihss_2018.dta", replace
-merge m:m NUMERO_PATRONAL using "$input\rtn_patrono.dta"
-keep if _merge == 3
-drop _merge
-egen ihss_n_workers = group(IDENTIDAD)
-collapse (count) ihss_n_workers, by(rtn nombre_razonsocial)
-g year = 2018
-append using "`ihss_2017'"
+collapse (count) ihss_n_workers, by(rtn year)
 tempfile ihss_tax_id
 save "`ihss_tax_id'"
 restore
@@ -295,34 +284,36 @@ restore
 
 
 **********************************************************************************
-**********                  FOURTH PART: IDENTIFYING MNC                 *********
+**********                   FIFTH STEP: IDENTIFYING MNC                 *********
 **********************************************************************************
+
+* MNC are pre-defined (before size restrictions) as companies reporting at least one transaction (between 2014-2021) 
+* with another foreign counterpart under an ownership dependency
 preserve
 use "$input\Base_precios_2014_2021.dta", replace 
 keep if tipodedeclaración == "ORIGINAL" 
 drop if (ptstiporelacióndesc == "AMBAS PARTES SE ENCUENTRAN DIRECTAMENTE BAJO LA DIRECCIÓN, CONTROL O CAPITAL DE UNA MISMA PERSONA O ENTIDAD" | ///
          ptstiporelacióndesc == "AMBAS PARTES SE ENCUENTRAN INDIRECTAMENTE BAJO LA DIRECCIÓN, CONTROL O CAPITAL DE UNA MISMA PERSONA O ENTIDAD" | ///
-		 ptstiporelacióndesc == "NO HAY RELACIÓN")
+		 ptstiporelacióndesc == "NO HAY RELACIÓN")	 
+		 
+gen owned = cond(ptstiporelacióndesc == "DECLARANTE ES FILIAL O LA CONTRAPARTE TIENE EL 50% O MÁS DE SU PROPIEDAD" | ///
+				 ptstiporelacióndesc == "CONTRAPARTE TIENE PARTICIPACIÓN DIRECTA EN LA DIRECCIÓN O ADMINISTRACIÓN DEL DECLARANTE" | ///
+                 ptstiporelacióndesc == "CONTRAPARTE TIENE PARTICIPACIÓN INDIRECTA EN LA DIRECCIÓN O ADMINISTRACIÓN DEL DECLARANTE" | ///
+				 ptstiporelacióndesc == "DECLARANTE ES AGENCIA O ESTABLECIMIENTO PERMANENTE" | ///
+				 ptstiporelacióndesc == "DECLARANTE ES CONTROLADA" | ///
+				 ptstiporelacióndesc == "DEPENDENCIA FINANCIERA O ECONÓMICA", 1, 0)
 
-gen owner = cond(ptstiporelacióndesc == "DECLARANTE ES MATRIZ O TIENE EL 50% O MÁS DE LA PROPIEDAD DE LA CONTRAPARTE" | ///
-                 ptstiporelacióndesc == "DECLARANTE ES AGENCIA O ESTABLECIMIENTO PERMANENTE" | ///
-				 ptstiporelacióndesc == "DECLARANTE TIENE PARTICIPACIÓN DIRECTA EN LA DIRECCIÓN O ADMINISTRACIÓN DE LA CONTRAPARTE" | ///
-				 ptstiporelacióndesc == "DECLARANTE TIENE PARTICIPACIÓN INDIRECTA EN LA DIRECCIÓN O ADMINISTRACIÓN DEL CONTRAPARTE" | ///
-				 ptstiporelacióndesc == "DECLARANTE ES CONTROLADOR", 1, 0)
-				 
-gen owned   = cond(owner != 1, 1, 0)
 gen foreign = cond(ptspais != "HONDURAS", 1, 0)
-gen foreign_owner = cond(owned == 1 & foreign == 1, 1, 0)
+gen foreign_owned = cond(owned == 1 & foreign == 1, 1, 0)
 
 sort otrtn
-bys otrtn: egen max_foreign       = max(foreign)
-bys otrtn: egen max_foreign_owner = max(foreign_owner)
+bys otrtn: egen max_foreign_owned = max(foreign_owned)
 
-keep if max_foreign_owner == 1
-collapse (mean) max_foreign_owner, by(otrtn)
+keep if max_foreign_owned == 1
+collapse (mean) max_foreign_owned, by(otrtn otnombrerazónsocial)
+duplicates drop otrtn, force
 rename otrtn rtn
-rename max_foreign_owner foreign_ownership
-
+rename max_foreign_owned foreign_ownership
 keep rtn foreign_ownership
 tempfile mnc
 save "`mnc'"
@@ -332,37 +323,137 @@ restore
 
 
 **********************************************************************************
-**********                  FIFTH PART: IDENTIFYING AGE                  *********
+**********                  SIXTH STEP: IDENTIFYING AGE                  *********
 **********************************************************************************
 preserve 
 import excel "$path\EDAD_PJ.xlsx", firstrow clear
 rename RTN 					  rtn
 rename FECHA_CONSTITUCION     date_begin_aux
 rename FECHA_INICIO_ACTIVIDAD date_start_aux
-keep rtn date_*
 tostring date_begin_aux, replace
 tostring date_start_aux, replace
 g date_begin = substr(date_begin_aux,1,4)
 g date_start = substr(date_start_aux,1,4)
 destring date_begin, replace
 destring date_start, replace
-drop if (missing(date_begin) | missing(date_start))
-keep rtn date_begin date_start
-g date_aux = max(date_begin, date_start)
-drop date_begin date_start
-rename date_aux date_start
-drop if date_start == 6052
-drop if date_start == 5062
-drop if date_start == 5032
-drop if date_start == 4042
-drop if date_start == 3072
+drop if (missing(date_begin) & missing(date_start))
+
+* Fixing up wrong dates by hand
+replace date_begin = 2001 if date_begin == 1001 | date_begin == 1042
+replace date_begin = 2002 if date_begin == 1002
+replace date_begin = 1960 if date_begin == 1060
+replace date_begin = 2005 if date_begin == 1201
+replace date_begin = 2007 if date_begin == 2007
+replace date_begin = 1991 if date_begin == 1091
+replace date_begin = 1990 if date_begin == 1990
+replace date_begin = 1982 if date_begin == 1820
+replace date_begin = 1971 if date_begin == 1071
+replace date_begin = 1982 if date_begin == 1082
+replace date_begin = 1997 if date_begin == 1197
+replace date_begin = 2006 if date_begin == 1837
+replace date_begin = 1976 if date_begin == 1900
+replace date_start = 2011 if date_start == 6052
+replace date_start = 1999 if date_start == 5062
+replace date_start = 2005 if date_start == 5032
+replace date_start = 2005 if date_start == 4042
+replace date_start = 2009 if date_start == 3072
 replace date_start = 1994 if date_start == 9994
-replace date_start = 1990 if date_start == 9990
+replace date_start = 2012 if date_start == 9990
 replace date_start = 2003 if date_start == 9003
 replace date_start = 2007 if date_start == 3007
-replace date_start = 2005 if date_start == 3005
-replace date_start = 1967 if date_start == 1867
-replace date_start = 1968 if date_start == 1868
+replace date_start = 2014 if date_start == 3005
+replace date_start = 2002 if date_start == 2202
+replace date_start = 2013 if date_start == 2200
+replace date_start = 2006 if date_start == 2060
+replace date_start = 2007 if date_start == 2207
+replace date_start = 2009 if date_start == 2099
+replace date_start = 2002 if date_start == 2092
+replace date_start = 2010 if date_start == 2505
+replace date_start = 2010 if date_start == 2201
+replace date_start = 2008 if date_start == 2088
+replace date_start = 2010 if date_start == 2201
+replace date_start = 2004 if date_start == 2044
+replace date_start = 2011 if date_start == 2101
+replace date_start = 2010 if date_start == 2301
+replace date_start = 2011 if date_start == 2032
+replace date_start = 2005 if date_start == 2055
+replace date_start = 2008 if date_start == 2088
+replace date_start = 2008 if date_start == 2044
+replace date_start = 2007 if date_start == 2207
+replace date_start = 2012 if date_start == 2031
+replace date_start = 2013 if date_start == 2052
+replace date_start = 2013 if date_start == 2225
+replace date_start = 2013 if date_start == 2213
+replace date_start = 2013 if date_start == 2031
+replace date_start = 2014 if date_start == 2040
+replace date_start = 2012 if date_start == 2041
+replace date_start = 1995 if date_start == .
+replace date_begin = 1979 if rtn == "08019995313990"
+replace date_begin = 2007 if rtn == "12129007114176" 
+replace date_begin = 1990 if rtn == "08019995367485"
+replace date_begin = 2007 if rtn == "05019007485205"
+replace date_begin = 2009 if rtn == "05019009492085"
+replace date_start = 2016 if rtn == "08019016875008"
+replace date_start = 2018 if rtn == "08019019093491"
+replace date_start = 2018 if rtn == "04019019139143"
+replace date_start = 2020 if rtn == "08019020236054"
+replace date_start = 2021 if rtn == "08019021257260"
+replace date_start = 2021 if rtn == "08019021282966"
+replace date_start = 2021 if rtn == "08019021291269"
+replace date_start = 2021 if rtn == "08019021303971"
+replace date_start = 2021 if rtn == "08019021311475"
+replace date_start = 2021 if rtn == "08019021322465"
+replace date_start = 2021 if rtn == "08019021330061"
+replace date_start = 2021 if rtn == "08019021328201"
+replace date_start = 1975 if rtn == "01019995013536"
+replace date_start = 2013 if rtn == "08019013601520"
+replace date_start = 2008 if rtn == "05019008164664"
+replace date_start = 2006 if rtn == "10069007053489"
+replace date_start = 2001 if rtn == "04019002035232"
+replace date_start = 2000 if rtn == "14169006503710"
+replace date_start = 2010 if rtn == "08019009253390"
+replace date_start = 2008 if rtn == "05019009209033"
+replace date_start = 2009 if rtn == "08019010274457"
+replace date_start = 2011 if rtn == "08019011356994"
+replace date_start = 2001 if rtn == "05019008186129"
+replace date_start = 2008 if rtn == "05019008139473"
+replace date_start = 2001 if rtn == "05019001055434"
+replace date_start = 2000 if rtn == "05019001054690"
+replace date_start = 2013 if rtn == "08019013578662"
+replace date_start = 2012 if rtn == "05019012505640"
+replace date_start = 2011 if rtn == "17019011433857"
+replace date_start = 1989 if rtn == "07019995379153"
+replace date_start = 1992 if rtn == "15179004473784"
+replace date_start = 1992 if rtn == "05019995108344"
+replace date_start = 2010 if rtn == "17099011344403"
+replace date_start = 2001 if rtn == "05019002066596"
+replace date_start = 2000 if rtn == "05019001051767"
+replace date_start = 2015 if rtn == "08019014703372"
+replace date_start = 2008 if rtn == "08019011406916"
+replace date_start = 1996 if rtn == "05019002068600"
+replace date_start = 1995 if rtn == "05069995154411"
+replace date_start = 1992 if rtn == "05019998168899"
+replace date_start = 1983 if rtn == "08019999402898"
+replace date_start = 2000 if rtn == "03029001029422"
+replace date_start = 1970 if rtn == "16219995440272"
+replace date_start = 2012 if rtn == "08019012447460"
+replace date_start = 1999 if rtn == "08019998386654"
+replace date_start = 1998 if rtn == "08019995381815"
+replace date_start = 1998 if rtn == "08019998394364"
+replace date_start = 1998 if rtn == "15099998443855"
+replace date_start = 1998 if rtn == "08019995368181"
+replace date_start = 1999 if rtn == "05019998170605"
+replace date_start = 2011 if rtn == "02099011439544"
+replace date_start = 1996 if rtn == "04019998037887"
+replace date_start = 1997 if rtn == "07039998206570"
+replace date_start = 2004 if rtn == "01019995012998"
+replace date_start = 2003 if rtn == "04019003036825"
+replace date_start = 2010 if rtn == "01079995021595"
+replace date_start = 1995 if rtn == "08019998390080"
+
+g date_aux = min(date_begin, date_start)
+keep rtn date_aux
+rename date_aux date_start
 tempfile date
 save "`date'"
 restore
@@ -371,24 +462,23 @@ restore
 
 
 **********************************************************************************
-**********     			      SIXTH PART: LEGAL PROXY      			     *********
+**********     			      SEVENTH STEP: LEGAL PROXY    			     *********
 **********************************************************************************
 preserve
 import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7) clear
-keep if tipo_relacion == "REPRESENTANTE LEGAL"
-duplicates tag rtn identificacion , gen(istag)
-order tipo_relacion, last
+keep if tipo_relacion == "REPRESENTANTE LEGAL" | tipo_relacion == "APODERADO LEGAL"
 sort rtn identificacion
 gen hasta = cond(fecha_hasta != "", substr(fecha_hasta,1,4), "")
 destring hasta, replace
-drop if istag > 0 & hasta < 2017 & !missing(hasta)
+drop if hasta < 2017 & !missing(hasta)
 drop if hasta > 2022 & !missing(hasta)
-drop istag
-drop if rtn == rtn[_n-1] & identificacion == identificacion[_n-1]
+duplicates drop rtn identificacion , force
 egen x = group(identificacion)
 collapse (count) x, by(rtn)
 g legal_proxy = cond(x>1,1,0)
-
+label def legal_proxy 0 "No lobbying ability" 1 "Lobbying ability"
+label val legal_proxy legal_proxy
+keep rtn legal_proxy
 tempfile legal_proxy
 save "`legal_proxy'"
 restore
@@ -397,7 +487,7 @@ restore
 
 
 **********************************************************************************
-**********               SEVENTH PART: MERGE ALL DATASETS                *********
+**********               EIGHTH STEP: MERGE ALL DATASETS                 *********
 **********************************************************************************
 
 * Constructing final panel dataset
