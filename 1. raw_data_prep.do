@@ -12,6 +12,7 @@ Contact: 		jbermudez@sar.gob.hn
 
 clear all
 set more off
+cap prog drop _all
 
 *Set up directories
 if "`c(username)'" == "Owner" {
@@ -27,11 +28,30 @@ else if "`c(username)'" == "jbermudez" {
 
 global traits "tipo_ot tamaño_ot codigo clase codigoseccion seccion departamento municipio"
 
+program main_setting
+dis "Setting Corporate Income Tax Records"
+qui cit_setting
+dis "Setting Value Added Tax Records"
+qui vat_setting
+dis "Setting Customs Records"
+qui customs_setting
+dis "Setting Social Security Records"
+qui ihss_setting
+dis "Setting Transfer Pricing Records for MNC"
+qui mnc_setting
+dis "Setting Date for Firms' Start-Up'"
+qui age_setting
+dis "Setting for Legal Representative Proxy on Lobby"
+qui legal_setting
+dis "Final Dataset is Done :)"
+end
+
 
 **********************************************************************************
 ********      FIRST STEP: CORPORATE TAX RECORDS (MASTER DATASET)          ********
 **********************************************************************************
-
+program cit_setting
+preserve
 * Initial setting (only keep electronic tax forms)
 use "$input\Base_ISRPJ_2014_2021_0707.dta", clear
 keep if year == 2017 | year == 2018
@@ -150,13 +170,10 @@ egen cit_total_credits_r = rowtotal(cre_importe_exo_red_rta cre_retencion_art50_
 									cre_exe_ejer_fiscal_ant_rta cre_cesiones_credi_recib_rta cre_pagos_reali_periodo_rta                   ///
 									cre_credi_gene_nuevos_empl cre_retencion_anti_irs_impor cre_import_compensacion_rta                    ///
 									creditos_apli_pagos_cuenta_rta  pagos_anti_isr_decre96_2012), missing
-
 egen cit_total_credits_an = rowtotal(cre_importe_exo_red_act_neto  cre_ret_anti_isr_o_atn_act_net cre_exe_ejer_fis_ant_ac_neto 		   ///
 									 cre_cesiones_cred_recib_ac_net cre_pagos_reali_peri_act_net  cre_import_compensa_act_neto cre_isr_activo_neto), missing
-
 egen cit_total_credits_as = rowtotal(cre_importe_exo_aport_soli cre_pagos_cuenta_as cre_excedente_ejer_ant_as cre_cesiones_cred_recib_as ///
 									 cre_pagos_reali_periodo_as cre_import_compensacion_as creditos_apli_pagos_cuenta_as), missing
-
 egen cit_cre_exo = rowtotal(cre_importe_exo_red_rta cre_importe_exo_red_act_neto cre_importe_exo_aport_soli), missing
 
 replace regimenespecial = 6 if regimenespecial == 0
@@ -185,15 +202,18 @@ rename c525_deprec_acum_propiedad	  cit_fixed_assets_depr
 rename total_activo_sf                cit_total_assets
 rename activos_corrientes 			  cit_current_assets
 rename pasivos_corrientes			  cit_current_liabilities
-
 keep rtn year cit_*
-
+tempfile cit_records
+save "`cit_records'"
+restore
+end
 
 
 
 **********************************************************************************
 ********                 SECOND STEP: SALES TAX RECORDS                   ********
 **********************************************************************************
+program vat_setting
 preserve
 use "$input\ISV_anual_2004_2021.dta", replace
 keep if (year == 2017 | year == 2018)
@@ -218,20 +238,15 @@ gen vat_purch_local     = vat_purch_exempted + vat_purch_taxed
 keep rtn year vat_*
 tempfile vat_records
 save "`vat_records'"				   
-restore					  
-								  								  
-* Merge with MASTER DATASET
-merge m:m rtn year using "`vat_records'"
-drop if _m == 2
-drop _merge
-duplicates drop rtn year, force 
-mvencode vat_*, mv(0) override
+restore					 
+end
 
 
 
 **********************************************************************************
 **********                   THIRD STEP: CUSTOMS RECORDS                 *********
 **********************************************************************************
+program customs_setting
 * Data on Exports/Imports (already in local currency - Lempiras)
 preserve
 * Exports
@@ -260,20 +275,14 @@ drop _m
 tempfile custom_records
 save "`custom_records'"
 restore
-
-* Merge with MASTER DATASET
-merge m:m rtn year using "`custom_records'"
-drop if _m == 2
-drop _merge
-duplicates drop rtn year, force 
-mvencode custom_*, mv(0) override
-
+end
 
 
 
 **********************************************************************************
 **********              FOURTH STEP: SOCIAL SECURITY RECORDS             *********
 **********************************************************************************
+program ihss_setting
 * Counting the total number of employees for each firm 
 preserve 
 use "$input\IHSS_2017_2018.dta", replace 
@@ -285,20 +294,15 @@ collapse (count) ihss_workers, by(rtn year)
 tempfile social_security
 save "`social_security'"
 restore
+end
 
-* Merge with MASTER DATASET
-merge m:m rtn year using "`social_security'"
-drop if _m == 2
-drop _merge
-duplicates drop rtn year, force 
-mvencode ihss_workers, mv(0) override
 
 
 
 **********************************************************************************
 **********                   FIFTH STEP: IDENTIFYING MNC                 *********
 **********************************************************************************
-
+program mnc_setting
 * As in Alfaro-Ureña et al (QJE, 2022), MNC are defined as companies reporting at least one transaction  
 * (between 2014-2021) with another foreign counterpart with some kind of ownership dependency and also has >= 100 workers
 preserve
@@ -327,20 +331,14 @@ keep rtn foreign_ownership
 tempfile mnc
 save "`mnc'"
 restore
-
-* Merge with MASTER DATASET
-merge m:1 rtn using "`mnc'"
-drop if _m == 2
-drop _merge 
-duplicates drop rtn year, force 
-mvencode foreign_ownership, mv(0) override
-
+end
 
 
 
 **********************************************************************************
 **********                  SIXTH STEP: IDENTIFYING AGE                  *********
 **********************************************************************************
+program age_setting
 * In order to identify the age, we define the beginning of the firm as the
 * minimum value between the registration year and the start-up year of operations
 preserve 
@@ -473,12 +471,7 @@ rename date_aux date_start
 tempfile date
 save "`date'"
 restore
-
-* Merge with MASTER DATASET
-merge m:1 rtn using "`date'"
-drop if _merge == 2
-drop _merge
-
+end
 
 
 
@@ -486,6 +479,7 @@ drop _merge
 **********************************************************************************
 **********     			      SEVENTH STEP: LEGAL PROXY    			     *********
 **********************************************************************************
+program legal_setting
 * We approximate firms' lobbying ability as an extensive margin measure, according to the number of attorneys it has
 preserve
 import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7) clear
@@ -505,13 +499,7 @@ keep rtn legal_proxy
 tempfile legal_proxy
 save "`legal_proxy'"
 restore
-
-* Merge with MASTER DATASET
-merge m:1 rtn using "`legal_proxy'"
-drop if _merge == 2
-drop _merge
-mvencode legal_proxy, mv(0) override
-duplicates drop rtn year, force
+end
 
 
 
@@ -519,6 +507,26 @@ duplicates drop rtn year, force
 **********                  EIGHTH STEP: FINAL DATASET                   *********
 **********************************************************************************
 
+program merge_setting
+* Merge with CIT records 
+use "`cit_records'", replace
+loc records1 "vat_records custom_records social_security"
+foreach r of loc records1 {
+	merge 1:1 rtn year using "``r''"
+	drop if _m == 2
+	drop _m
+	duplicates drop rtn year, force 	
+}
+loc records2 "mnc date legal_proxy"
+foreach r of loc records2 {
+	merge m:1 rtn using "``r''"
+	drop if _m == 2
+	drop _m
+	duplicates drop rtn year, force 	
+}
+
+replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
+replace legal_proxy = cond(missing(legal_proxy), 0, legal_proxy)
 
 * Turnover (and purchases) might be underestimated so we rebuild it combining CIT, VAT and Customs records for local and foreign sales
 * We assume that the true value of exports/imports is the highest between the internal tax (in the CIT/VAT tax form) and customs records
@@ -526,12 +534,12 @@ foreach var of varlist cit_sales_local cit_sales_exports vat_sales_local vat_sal
 	replace `var' = cond(missing(`var'), 0, `var')
 }
 
-g final_sales_local   = max(cit_sales_local, vat_sales_local)
-g final_sales_exports = max(cit_sales_exports, vat_sales_exports, custom_export)
-g final_purch_imports = max(vat_purch_imports, custom_import)
+g final_sales_local = max(cit_sales_local, vat_sales_local)
+g final_exports     = max(cit_sales_exports, vat_sales_exports, custom_export)
+g final_imports     = max(vat_purch_imports, custom_import)
 
-egen final_total_sales = rowtotal(final_sales_local final_sales_exports), missing
-egen final_total_purch = rowtotal(vat_purch_local final_purch_imports), missing
+egen final_total_sales = rowtotal(final_sales_local final_exports)
+egen final_total_purch = rowtotal(vat_purch_local final_imports)
 
 * Identifying MNC according to foreign ownership and size restrictions
 bys rtn: egen mean_work = mean(ihss_workers)
@@ -539,7 +547,6 @@ gen final_mnc = (foreign_ownership == 1 & mean_work >= 100)
 label def final_mnc 1 "MNC" 0 "Not a MNC"
 label val final_mnc final_mnc
 drop mean_work
-
 
 * Impute economic activities for final panel dataset and only keep corporations
 merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", keepusing($traits)
@@ -553,5 +560,9 @@ mvencode _all, mv(0) override
 keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
 order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
 compress
-
 *save "$out\final_dataset", replace
+end
+
+main_setting
+
+								  								  
