@@ -43,7 +43,6 @@ dis "Setting Date for Firms' Start-Up'"
 qui age_setting
 dis "Setting for Legal Representative Proxy on Lobby"
 qui legal_setting
-dis "Final Dataset is Done :)"
 end
 
 
@@ -507,7 +506,8 @@ end
 **********                  EIGHTH STEP: FINAL DATASET                   *********
 **********************************************************************************
 
-program merge_setting
+main_setting
+
 * Merge with CIT records 
 use "`cit_records'", replace
 loc records1 "vat_records custom_records social_security"
@@ -561,8 +561,7 @@ keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_w
 order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
 compress
 *save "$out\final_dataset", replace
-end
 
-main_setting
+
 
 								  								  
