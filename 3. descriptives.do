@@ -99,11 +99,17 @@ estpost ttest final_epm, by(final_regime) unequal quietly
 est store epm_diff2
 restore
 
-esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1.tex", replace ///
+/*esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes */
+
+	   esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
+	      mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
+	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
+	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
+	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes 
 	   
-global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy"
+global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban tamaño_ot final_export_share final_import_share"
 	   
 eststo: qui estpost summ $vars, detail
 est store pooled  
@@ -124,9 +130,15 @@ eststo: qui estpost ttest $vars, by(final_regime) unequal
 est store diff2
 restore	
 
-esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1.tex", append ///
+/*esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1_oct.tex", append ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers	   
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers*/
+	   
+	   esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1_oct.tex", replace ///
+	      mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
+	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
+	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
+	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers nonotes 
 
 	   
 * Sample distribution by special regime and industry (Table 3)
@@ -172,7 +184,7 @@ twoway line d1 x1, lc(blue) 	  lw(thick)  		   	   		||   ///
 	   line d3 x3, lc(midblue%80) lw(thick) lpattern(longdash)  || , ///
 	   $details legend(row(1) order(1 "Primary sector" 2 "Manufacturing" 3 "Services")) ///
 	   ytitle("Density") xtitle("TFP on value added") 
-graph export "$out/tfp_sectors.pdf", replace
+*graph export "$out/tfp_sectors.pdf", replace
 restore
 
 * Distributions for TFP on sales (Figure A3)
@@ -191,7 +203,7 @@ twoway line d1 x1, lc(blue) 	  lw(thick)  		   	   		||   ///
 	   line d3 x3, lc(midblue%80) lw(thick) lpattern(longdash)  || , ///
 	   $details legend(row(1) order(1 "Primary sector" 2 "Manufacturing" 3 "Services")) ///
 	   ytitle("Density") xtitle("TFP on sales") 
-graph export "$out/tfp_sales_sectors.pdf", replace
+*graph export "$out/tfp_sales_sectors.pdf", replace
 restore
 
 * Distributions for different measures of productivity (Figure A4)
@@ -207,7 +219,7 @@ twoway line d1 x1, lc(blue) 	 lw(thick)  ||   ///
 graph export "$out/tfp_measures.pdf", replace
 restore
 
-* Correlation between tax credits and productivity (Figure 6)
+/* Correlation between tax credits and productivity (Figure 6)
 program graph_scatter 
 	if final_industry == 1 {
 		graph export "$out\scatter_primary.svg", replace
@@ -243,5 +255,5 @@ preserve
 	graph_scatter   
 restore
 }
-
+*/
 			       

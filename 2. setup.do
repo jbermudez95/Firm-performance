@@ -303,3 +303,6 @@ label var final_salary 				   "Salary"
 label var final_log_salary			   "Salary (logs)"
 label var final_log_credits			   "Tax credits (logs)"
 label var cit_exonerated 			   "Exonerated"
+label var legal_proxy 				   "Lobbying ability"
+label var urban 					   "Main urban cities"
+
