@@ -14,19 +14,18 @@ Contact: 		jbermudez@sar.gob.hn
 clear all
 clear matrix
 set more off
-set seed 2000
 
 * Insert personal directories
 if "`c(username)'" == "Owner" {
 	global path "C:\Users\Owner\Desktop\firm-performance-github"		
-	global out  "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
+	global out  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
 	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
-	global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
+	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 }
 
-run "$path\setup.do" 	// Run the do file that prepare all variables for descriptive statistics
+run "$path\2. setup.do" 	// Run the do file that prepare all variables for descriptive statistics
 
 *************************************************************************
 *******               BUILDING SUMMARY STATISTICS                 ******* 
@@ -156,42 +155,6 @@ esttab corr_matrix using "$out\corr_matrix.tex", replace b(3) unstack ///
 *************************************************************************
 
 global details "ylabel(, nogrid) legend(region(lcolor(none))) graphr(color(white))"
-
-* CDF plots and KS tests for different measures of profitability (Figure 5)
-loc z "npm epm roa roce"
-foreach k of local z {
-		preserve
-		qui summ final_`k', d
-		keep if final_`k' > r(p1) & final_`k' < r(p99)
-		cumul final_`k' if cit_exonerated == 0, gen(cum0_`k')	
-		cumul final_`k' if cit_exonerated == 1, gen(cum1_`k')
-		qui ksmirnov final_`k', by(cit_exonerated)
-		loc ks1_a: di %5.4f r(D)
-		loc ks1_b: di %5.4f r(p)
-		twoway (line cum0_`k' final_`k', sort lwidth(medthick) lcolor(blue)) ///
-			   (line cum1_`k' final_`k', sort lwidth(medthick) lcolor(navy)), ///
-			   $details ytitle("Cumulative Probability") xtitle("") ///
-			   legend(order(1 "Non-Exonerated" 2 "Exonerated"))   ///
-			   text(0.5 -0.5 "KS test = `ks1_a'(`ks1_b')", color(black)) xline(0, lp(-) lc(red))
-		graph export "$out\cdf_`k'.pdf", replace
-		restore
-} 
-
-		preserve
-		qui summ final_gpm, d
-		keep if final_gpm > r(p1) & final_gpm < r(p99)
-		cumul final_gpm if cit_exonerated == 0, gen(cum0_gpm)	
-		cumul final_gpm if cit_exonerated == 1, gen(cum1_gpm)
-		qui ksmirnov final_gpm, by(cit_exonerated)
-		loc ks1_a: di %5.4f r(D)
-		loc ks1_b: di %5.4f r(p)
-		twoway (line cum0_gpm final_gpm, sort lwidth(medthick) lcolor(blue)) ///
-			   (line cum1_gpm final_gpm, sort lwidth(medthick) lcolor(navy)), ///
-			   $details ytitle("Cumulative Probability") xtitle("") ///
-			   legend(order(1 "Non-Exonerated" 2 "Exonerated"))   ///
-			   text(0.4 0.8 "KS test = `ks1_a'(`ks1_b')", color(black)) xline(0, lp(-) lc(red))
-		graph export "$out\cdf_gpm.pdf", replace
-		restore
 
 * Distributions for TFP on value added (Figure A2)
 twoway (hist final_log_productivity_va if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
