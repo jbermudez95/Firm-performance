@@ -5,7 +5,7 @@ Description: 	This do file cleans and prepares different administrative sources
 				and empirical estimations of the paper 
 				"Firms' performance and tax incentives: evidence from Honduras". 
 Date:			July, 2021
-Modified:       August, 2022
+Modified:       October, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -16,40 +16,26 @@ cap prog drop _all
 
 *Set up directories
 if "`c(username)'" == "Owner" {
-	global path  "C:\Users\Owner\OneDrive - SAR\Profit Margins\preparacion inicial\base profit margins"
+	global path  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\preparacion inicial\base profit margins"
 	global input "C:\Users\Owner\OneDrive - SAR\Bases del repositorio"
-	global out	 "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"	
+	global out	 "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"	
 }
 else if "`c(username)'" == "jbermudez" {
-	global path  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\preparacion inicial\base profit margins"
+	global path  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\preparacion inicial\base profit margins"
 	global input "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio"
-	global out	 "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"
+	global out	 "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"
 } 
 
 global traits "tipo_ot tamaño_ot codigo clase codigoseccion seccion departamento municipio"
 
-program main_setting
-dis "Setting Corporate Income Tax Records"
-qui cit_setting
-dis "Setting Value Added Tax Records"
-qui vat_setting
-dis "Setting Customs Records"
-qui customs_setting
-dis "Setting Social Security Records"
-qui ihss_setting
-dis "Setting Transfer Pricing Records for MNC"
-qui mnc_setting
-dis "Setting Date for Firms' Start-Up'"
-qui age_setting
-dis "Setting for Legal Representative Proxy on Lobby"
-qui legal_setting
-end
 
 
 **********************************************************************************
 ********      FIRST STEP: CORPORATE TAX RECORDS (MASTER DATASET)          ********
 **********************************************************************************
-program cit_setting
+
+dis "Setting Corporate Income Tax Records"
+qui{
 preserve
 * Initial setting (only keep electronic tax forms)
 use "$input\Base_ISRPJ_2014_2021_0707.dta", clear
@@ -205,14 +191,16 @@ keep rtn year cit_*
 tempfile cit_records
 save "`cit_records'"
 restore
-end
+}
 
 
 
 **********************************************************************************
 ********                 SECOND STEP: SALES TAX RECORDS                   ********
 **********************************************************************************
-program vat_setting
+
+dis "Setting Value Added Tax Records"
+qui{
 preserve
 use "$input\ISV_anual_2004_2021.dta", replace
 keep if (year == 2017 | year == 2018)
@@ -236,16 +224,18 @@ egen vat_purch_imports  = rowtotal(adquisifyducagravadas15 adquisifyducagravadas
 gen vat_purch_local     = vat_purch_exempted + vat_purch_taxed	
 keep rtn year vat_*
 tempfile vat_records
-save "`vat_records'"				   
-restore					 
-end
+save "`vat_records'"		   
+restore	
+}
 
 
 
 **********************************************************************************
 **********                   THIRD STEP: CUSTOMS RECORDS                 *********
 **********************************************************************************
-program customs_setting
+
+dis "Setting Customs Records"
+qui{
 * Data on Exports/Imports (already in local currency - Lempiras)
 preserve
 * Exports
@@ -274,14 +264,16 @@ drop _m
 tempfile custom_records
 save "`custom_records'"
 restore
-end
+}
 
 
 
 **********************************************************************************
 **********              FOURTH STEP: SOCIAL SECURITY RECORDS             *********
 **********************************************************************************
-program ihss_setting
+
+dis "Setting Social Security Records"
+qui {
 * Counting the total number of employees for each firm 
 preserve 
 use "$input\IHSS_2017_2018.dta", replace 
@@ -293,7 +285,7 @@ collapse (count) ihss_workers, by(rtn year)
 tempfile social_security
 save "`social_security'"
 restore
-end
+}
 
 
 
@@ -301,9 +293,11 @@ end
 **********************************************************************************
 **********                   FIFTH STEP: IDENTIFYING MNC                 *********
 **********************************************************************************
-program mnc_setting
-* As in Alfaro-Ureña et al (QJE, 2022), MNC are defined as companies reporting at least one transaction  
-* (between 2014-2021) with another foreign counterpart with some kind of ownership dependency and also has >= 100 workers
+
+dis "Setting Transfer Pricing Records for MNC"
+qui{
+/* As in Alfaro-Ureña et al (QJE, 2022), MNC are defined as companies reporting at least one transaction  
+(between 2014-2021) with another foreign counterpart with some kind of ownership dependency and also has >= 100 workers */
 preserve
 use "$input\Base_precios_2014_2021.dta", replace 
 keep if tipodedeclaración == "ORIGINAL" 
@@ -330,16 +324,17 @@ keep rtn foreign_ownership
 tempfile mnc
 save "`mnc'"
 restore
-end
-
+}
 
 
 **********************************************************************************
 **********                  SIXTH STEP: IDENTIFYING AGE                  *********
 **********************************************************************************
-program age_setting
-* In order to identify the age, we define the beginning of the firm as the
-* minimum value between the registration year and the start-up year of operations
+
+dis "Setting Date for Firms' Start-Up'"
+qui {
+/* In order to identify the age, we define the beginning of the firm as the
+ minimum value between the registration year and the start-up year of operations */
 preserve 
 import excel "$path\EDAD_PJ.xlsx", firstrow clear
 rename RTN 					  rtn
@@ -470,15 +465,16 @@ rename date_aux date_start
 tempfile date
 save "`date'"
 restore
-end
-
+}
 
 
 
 **********************************************************************************
 **********     			      SEVENTH STEP: LEGAL PROXY    			     *********
 **********************************************************************************
-program legal_setting
+
+dis "Setting for Legal Representative Proxy on Lobby"
+qui {
 * We approximate firms' lobbying ability as an extensive margin measure, according to the number of attorneys it has
 preserve
 import delimited "$input\relaciones_profesionales.csv", stringcols(1 4 5 6 7) clear
@@ -498,31 +494,28 @@ keep rtn legal_proxy
 tempfile legal_proxy
 save "`legal_proxy'"
 restore
-end
-
+}
 
 
 **********************************************************************************
 **********                  EIGHTH STEP: FINAL DATASET                   *********
 **********************************************************************************
 
-main_setting
-
-* Merge with CIT records 
+* Merge datasets
 use "`cit_records'", replace
 loc records1 "vat_records custom_records social_security"
 foreach r of loc records1 {
 	merge 1:1 rtn year using "``r''"
 	drop if _m == 2
 	drop _m
-	duplicates drop rtn year, force 	
+	duplicates drop rtn year, force 
 }
 loc records2 "mnc date legal_proxy"
 foreach r of loc records2 {
 	merge m:1 rtn using "``r''"
 	drop if _m == 2
 	drop _m
-	duplicates drop rtn year, force 	
+	duplicates drop rtn year, force 
 }
 
 replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
@@ -549,7 +542,7 @@ label val final_mnc final_mnc
 drop mean_work
 
 * Impute economic activities for final panel dataset and only keep corporations
-merge m:1 rtn using "$input\Datos_Generales_AE_04_2022.dta", keepusing($traits)
+merge m:1 rtn using "$input\Datos_Generales_09_2022.dta", keepusing($traits)
 keep if _m == 3
 drop _merge 
 
@@ -557,11 +550,8 @@ egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
 mvencode _all, mv(0) override
-keep  id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
-order id year codigo clase codigoseccion seccion departamento municipio ihss_n_workers cit_* sales_* custom_* final_* mnc date_start legal_proxy
+keep  id year codigo clase codigoseccion seccion departamento municipio ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
+order id year codigo clase codigoseccion seccion departamento municipio ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
 compress
 *save "$out\final_dataset", replace
-
-
-
 								  								  
