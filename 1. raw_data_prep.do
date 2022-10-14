@@ -42,7 +42,7 @@ use "$input\Base_ISRPJ_2014_2021_0707.dta", clear
 keep if year == 2017 | year == 2018
 sort rtn year
 duplicates drop rtn year, force
-drop $traits
+drop ${traits}
 
 format %13.0f nro_preimpreso
 tostring nro_preimpreso, gen(form) usedisplayformat
@@ -206,7 +206,7 @@ preserve
 use "$input\ISV_anual_2004_2021.dta", replace
 keep if (year == 2017 | year == 2018)
 duplicates drop rtn year, force
-drop $traits
+drop ${traits}
 * Variables on Sales 
 egen vat_sales_exempted   = rowtotal(ventasexoneradasoce15 ventasexoneradasoce18 ventasexoneradaspn15 ///
                                      vtas_exentas_mcdo_interno12 vtas_exentas_mcdo_interno15 ventas_exentas_mcdo_interno18), missing
@@ -520,14 +520,6 @@ foreach r of loc records2 {
 	duplicates drop rtn year, force 
 }
 
-	mvdecode vat_* custom_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
-			 cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports cit_turnover_exempt cit_turnover_taxed ///
-			 cit_other_inc_taxed cit_other_inc_exempt cit_total_exempt_inc cit_total_taxed_inc cit_total_inc ///
-			 cit_goods_materials_non_ded cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded ///
-			 cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded ///
-			 cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded cit_total_costs_non_ded ///
-			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as cit_cre_exo, mv(0)
-
 replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
 replace legal_proxy = cond(missing(legal_proxy), 0, legal_proxy)
 
@@ -540,6 +532,15 @@ g final_imports     = max(vat_purch_imports, custom_import)
 egen final_total_sales = rowtotal(final_sales_local final_exports)
 egen final_total_purch = rowtotal(vat_purch_local final_imports)
 
+* Encode as missing all values equal to zero
+	mvdecode vat_* custom_* final_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
+			 cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports cit_turnover_exempt cit_turnover_taxed ///
+			 cit_other_inc_taxed cit_other_inc_exempt cit_total_exempt_inc cit_total_taxed_inc cit_total_inc ///
+			 cit_goods_materials_non_ded cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded ///
+			 cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded ///
+			 cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded cit_total_costs_non_ded ///
+			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as cit_cre_exo, mv(0)
+
 * Identifying MNC according to foreign ownership and size restrictions
 bys rtn: egen mean_work = mean(ihss_workers)
 gen final_mnc = (foreign_ownership == 1 & mean_work >= 100 & !missing(mean_work))
@@ -548,10 +549,9 @@ label val final_mnc final_mnc
 drop mean_work
 
 * Impute economic activities for final panel dataset and only keep corporations
-merge m:1 rtn using "$input\Datos_Generales_09_2022.dta", keepusing($traits)
+merge m:1 rtn using "$input\Datos_Generales_09_2022.dta", keepusing(${traits})
 keep if _m == 3
 drop _merge 
-
 
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
