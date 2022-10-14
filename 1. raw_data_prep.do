@@ -552,10 +552,10 @@ merge m:1 rtn using "$input\Datos_Generales_09_2022.dta", keepusing($traits)
 keep if _m == 3
 drop _merge 
 
+
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-mvencode _all, mv(0) override
 keep  id year codigo clase codigoseccion seccion departamento municipio ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
 order id year codigo clase codigoseccion seccion departamento municipio ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
 compress

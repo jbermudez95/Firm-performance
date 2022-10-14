@@ -5,7 +5,7 @@ Description: 	This do file uses the panel data "final_dataset" built from data_p
 				and tax incentives: evidence from Honduras". It also generates table A3
 				for TFP estimations that are inlcuded in the online appendix of the paper.
 Date:			November, 2021
-Modified:		April, 2022
+Modified:		October, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -36,45 +36,55 @@ ssc install ftools
 *******                           SET UP                          ******* 
 *************************************************************************
 
-* Drop firms without economic activity. Drop cooperatives, non-profit org and simplified regimes.
-* Drop firms without income (or turnover) or costs. Drop firms with only one employee
 use "$path\final_dataset1.dta", replace
-keep if (cit_form == "352" | cit_form == "357")
-encode municipio, gen(province)
-drop if codigoseccion == "Z"     						         
-keep if (codigoseccion == "A" | codigoseccion == "B" | codigoseccion == "C" | ///
-		 codigoseccion == "D" | codigoseccion == "G" | codigoseccion == "I" )
-drop if (cit_regime == 8| cit_regime == 15 | cit_regime == 27) 
-drop if (cit_total_inc == 0 | cit_total_costs == 0)		       
-drop if max(cit_total_sales, sales_total) == 0			       
-drop if ihss_n_workers == 1
-egen x = group(id)
-drop id
-rename x id
+
+* Drop firms in the financial sector, real state, education, public administration, diplomatics or without economic activity. 
+* Drop cooperatives, non-profit organizations, public-private partnerships, and simplified regimes.
+* Drop firms with only one employee.
+drop if (codigoseccion == "K" | codigoseccion == "L" | codigoseccion == "O" | codigoseccion == "P" | codigoseccion == "U" | codigoseccion == "Z")    
+drop if (cit_regime == 8 | cit_regime == 15 | cit_regime == 20 | cit_regime == 27) 		       
+drop if ihss_workers == 1
 
 * Categories for the different special fiscal regimes (according to the number code in the CIT form). 
 * We reclassify firms advocated to the Tourism Incentives Law to the LIT regime.
+replace cit_regime = 0 if cit_regime == 6
 replace cit_regime = 5 if cit_regime == 13
 replace cit_regime = 9 if cit_regime == 21
-replace cit_regime = 5 if (cit_exonerated == 1 & cit_regime == 0)
-label def cit_regime 0 "None" 1 "ZIP" 2 "ZOLI" 3 "ZOLT" 4 "RIT" 5 "Others" 7 "ZOLITUR" ///
-					 9 "LIT" 14 "ZADE" 23 "Renewable Energy"
+replace cit_regime = 1 if cit_regime == 14
+label def cit_regime 0 "None" 1 "ZADE" 2 "ZOLI" 3 "ZOLT" 4 "RIT" 5 "Other regimes" ///	
+				     7 "ZOLITUR" 9 "LIT" 23 "Renewable energy", replace
 label val cit_regime cit_regime		
 
 * Dummy identifying the type of tax exemption
 g 		final_regime = 0
-replace	final_regime = 1 if (cit_regime == 1 | cit_regime == 2 | cit_regime == 4 | cit_regime == 14)
-replace final_regime = 2 if (cit_regime == 3 | cit_regime == 5 | cit_regime == 7 | cit_regime == 9 | cit_regime == 23)
+replace	final_regime = 1 if inlist(cit_regime, 1, 2, 4)
+replace final_regime = 2 if inlist(cit_regime, 3, 5, 7, 9, 23)
 label def final_regime 0 "Taxed" 1 "Export Oriented" 2 "Non-Export Oriented"
 label val final_regime final_regime
 
-* Generate economic categories 
-gen     final_industry = 1 if (codigoseccion == "A")
-replace final_industry = 2 if (codigoseccion == "B" | codigoseccion == "C" | codigoseccion == "D")
-replace final_industry = 3 if (codigoseccion == "G" | codigoseccion == "I")
-label def final_industry 1 "Primary" 2 "Manufacturing" 3 "Services"
-label val final_industry final_industry
-
+* Economic activities
+recode codigo (1/990 = 1) (1010/3320 = 2) (3510/4390 = 3) (4510/4540 = 4) (4610/4690 4711/4799 = 5) ///
+   (4910/5630 = 6) (5811/6630 = 7) (6810/8430 = 8) (8510/9329 = 9) (9411/9900 = 10) (. 0 9988= 11), gen(activity_sector)
+replace activity_sector = 1  if activity_sector == 11 & inlist(codigoseccion, "A","B")
+replace activity_sector = 2  if activity_sector == 11 & inlist(codigoseccion, "C")
+replace activity_sector = 3  if activity_sector == 11 & inlist(codigoseccion, "D","E","F")
+replace activity_sector = 5  if activity_sector == 11 & inlist(codigoseccion, "G")
+replace activity_sector = 6  if activity_sector == 11 & inlist(codigoseccion, "H","I")
+replace activity_sector = 7  if activity_sector == 11 & inlist(codigoseccion, "J")
+replace activity_sector = 8  if activity_sector == 11 & inlist(codigoseccion, "M","N")
+replace activity_sector = 9  if activity_sector == 11 & inlist(codigoseccion, "Q","R")
+replace activity_sector = 10 if activity_sector == 11 & inlist(codigoseccion, "S","T")
+	lab def activity_sector 1 "Agriculture and extraction" 2 "Manufacturing" 3 "Utilities and construction" ///
+							4 "Automotive" 5 "Wholesale and retail" 6 "Transportation, housing and toruism" 7 "Comunications and technology" ///
+							8 "Professional and technical services" 9 "Health and arts" 10 "Other services", replace
+	lab val activity_sector activity_sector
+	
+* Minor settings
+encode municipio, gen(province)
+egen x = group(id)
+drop id
+rename x id
+order id, first
 
 
 *************************************************************************
@@ -86,22 +96,21 @@ label val final_industry final_industry
 loc mill = 1000000
 loc ipc2017 = 138.0563124
 loc ipc2018 = 144.0660006
-foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_turnover           						  ///
-					   cit_deductions cit_fixed_assets_depr cit_turnover_exempt cit_turnover_taxed 					      ///
-					   cit_other_inc_taxed cit_other_inc_exempt cit_total_exempt_inc cit_total_taxed_inc 				  ///
-					   cit_total_inc cit_total_sales cit_dif_ingresos cit_result_income cit_dif_result_income 			  ///
-					   cit_goods_materials_non_ded cit_com_costs cit_prod_costs cit_goods_materials_ded 				  ///
-					   cit_labor_non_ded cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded 	  ///
-					   cit_operations_ded cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded       		  ///
-					   cit_total_costs_ded cit_total_costs_non_ded cit_total_costs cit_caused_tax cit_total_credits_r     ///
-					   cit_total_credits_an cit_total_credits_as sales_exempted sales_taxed sales_exmp_purch sales_fyduca ///
-					   sales_exports sales_imports sales_total sales_purch custom_import custom_export 					  ///
-					   cit_current_liabilities {
-							replace `var' = `var' / `mill'
-							replace `var' = 0 if `var' < 0
-							replace `var' = ((`var' / `ipc2017') * 100) if year == 2017
-							replace `var' = ((`var' / `ipc2018') * 100) if year == 2018
-							replace `var' = 0 if missing(`var')									 
+foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities 		///
+					cit_gross_income cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports ///
+					cit_turnover_exempt cit_turnover_taxed cit_other_inc_taxed cit_other_inc_exempt 		///
+					cit_total_exempt_inc cit_total_taxed_inc cit_total_inc cit_goods_materials_non_ded 		///
+					cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded cit_labor_ded 	///
+					cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded 		///
+					cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded 	///
+					cit_total_costs_non_ded cit_total_costs cit_total_credits_r cit_total_credits_an 		///
+					cit_total_credits_as cit_cre_exo vat_sales_exempted vat_sales_taxed vat_sales_exports 	///
+					vat_sales_local vat_purch_exempted vat_purch_taxed vat_purch_imports vat_purch_local 	///
+					custom_import custom_export final_sales_local final_exports final_imports final_total_sales final_total_purch {
+							replace `var' = `var' / `mill' if !missing(`var')
+							replace `var' = 0 if `var' < 0 & !missing(`var')
+							replace `var' = ((`var' / `ipc2017') * 100) if year == 2017 & !missing(`var')
+							replace `var' = ((`var' / `ipc2018') * 100) if year == 2018 & !missing(`var')								 
 }
 
 g final_credits				 = cit_total_credits_r + cit_total_credits_an + cit_total_credits_as
