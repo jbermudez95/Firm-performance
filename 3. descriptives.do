@@ -33,7 +33,7 @@ run "$path\2. setup.do" 	// Run the do file that prepare all variables for descr
 
 * Summary statistics (Table 2)
 eststo drop *		
-preserve															
+/*preserve															
 qui summ final_npm, d	
 keep if final_npm > r(p1)	
 qui summ     final_npm, d
@@ -68,7 +68,7 @@ esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
 	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes 
-	   
+	*/   
 preserve															
 qui summ final_epm, d	
 keep if final_epm > r(p5)	
@@ -99,11 +99,11 @@ estpost ttest final_epm, by(final_regime) unequal quietly
 est store epm_diff2
 restore
 
-esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1.tex", append ///
+esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1.tex", replace ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 	   
-global vars "final_gpm final_roa final_roce final_eta final_gfsal final_turnover final_liquidity ihss_n_workers final_log_salary final_log_labor_productivity final_log_productivity_y final_log_productivity_va final_age mnc cit_fixed_assets final_input_costs final_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
+global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity "
 	   
 eststo: qui estpost summ $vars, detail
 est store pooled  
