@@ -103,7 +103,7 @@ esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 	   
-global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity "
+global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy"
 	   
 eststo: qui estpost summ $vars, detail
 est store pooled  

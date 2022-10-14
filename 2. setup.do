@@ -90,6 +90,8 @@ egen x = group(id)
 drop id
 rename x id
 order id, first
+gen urban = cond(municipio == "SAN PEDRO SULA" | municipio == "DISTRITO CENTRAL", 1, 0)
+label def urban 0 "Not main urban" 1 "Main urban cities"
 
 
 *************************************************************************
