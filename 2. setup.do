@@ -16,12 +16,12 @@ set more off
 
 * Directories
 if "`c(username)'" == "Owner" {
-	global path "C:\Users\Owner\OneDrive - SAR\Profit Margins\database and codes"		
-	global out "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
+	global path "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
+	global out "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\database and codes"		
-	global out "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
+	global path "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
+	global out "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 } 
 
 /* Packages required for estimations
@@ -38,7 +38,7 @@ ssc install ftools
 
 * Drop firms without economic activity. Drop cooperatives, non-profit org and simplified regimes.
 * Drop firms without income (or turnover) or costs. Drop firms with only one employee
-use "$path\final_dataset.dta"
+use "$path\final_dataset1.dta", replace
 keep if (cit_form == "352" | cit_form == "357")
 encode municipio, gen(province)
 drop if codigoseccion == "Z"     						         

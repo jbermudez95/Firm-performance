@@ -187,6 +187,7 @@ rename c525_deprec_acum_propiedad	  cit_fixed_assets_depr
 rename total_activo_sf                cit_total_assets
 rename activos_corrientes 			  cit_current_assets
 rename pasivos_corrientes			  cit_current_liabilities
+rename form							  cit_form
 keep rtn year cit_*
 tempfile cit_records
 save "`cit_records'"
@@ -325,6 +326,7 @@ tempfile mnc
 save "`mnc'"
 restore
 }
+
 
 
 **********************************************************************************
@@ -518,15 +520,19 @@ foreach r of loc records2 {
 	duplicates drop rtn year, force 
 }
 
+	mvdecode vat_* custom_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
+			 cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports cit_turnover_exempt cit_turnover_taxed ///
+			 cit_other_inc_taxed cit_other_inc_exempt cit_total_exempt_inc cit_total_taxed_inc cit_total_inc ///
+			 cit_goods_materials_non_ded cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded ///
+			 cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded ///
+			 cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded cit_total_costs_non_ded ///
+			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as cit_cre_exo, mv(0)
+
 replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
 replace legal_proxy = cond(missing(legal_proxy), 0, legal_proxy)
 
 * Turnover (and purchases) might be underestimated so we rebuild it combining CIT, VAT and Customs records for local and foreign sales
 * We assume that the true value of exports/imports is the highest between the internal tax (in the CIT/VAT tax form) and customs records
-foreach var of varlist cit_sales_local cit_sales_exports vat_sales_local vat_sales_exports vat_purch_imports custom_import custom_export {
-	replace `var' = cond(missing(`var'), 0, `var')
-}
-
 g final_sales_local = max(cit_sales_local, vat_sales_local)
 g final_exports     = max(cit_sales_exports, vat_sales_exports, custom_export)
 g final_imports     = max(vat_purch_imports, custom_import)
@@ -536,7 +542,7 @@ egen final_total_purch = rowtotal(vat_purch_local final_imports)
 
 * Identifying MNC according to foreign ownership and size restrictions
 bys rtn: egen mean_work = mean(ihss_workers)
-gen final_mnc = (foreign_ownership == 1 & mean_work >= 100)
+gen final_mnc = (foreign_ownership == 1 & mean_work >= 100 & !missing(mean_work))
 label def final_mnc 1 "MNC" 0 "Not a MNC"
 label val final_mnc final_mnc
 drop mean_work
@@ -553,5 +559,5 @@ mvencode _all, mv(0) override
 keep  id year codigo clase codigoseccion seccion departamento municipio ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
 order id year codigo clase codigoseccion seccion departamento municipio ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
 compress
-*save "$out\final_dataset", replace
+save "$out\final_dataset1", replace
 								  								  
