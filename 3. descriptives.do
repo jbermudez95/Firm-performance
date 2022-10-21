@@ -31,7 +31,12 @@ run "$path\2. setup.do" 	// Run the do file that prepare all variables for descr
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
 
-* Summary statistics (Table 2)
+* Summary statistics on main characteristics (Table 2)
+globarl var1 "size_small size_medium size_large final_industry"
+
+
+
+* Balance table
 eststo drop *		
 /*preserve															
 qui summ final_npm, d	
@@ -68,7 +73,7 @@ esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
 	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes 
-	*/   
+   
 preserve															
 qui summ final_epm, d	
 keep if final_epm > r(p5)	
@@ -99,15 +104,15 @@ estpost ttest final_epm, by(final_regime) unequal quietly
 est store epm_diff2
 restore
 
-/*esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
+esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes */
+	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
 
 	   esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
 	      mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes 
+	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes */
 	   
 global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban tamaño_ot final_export_share final_import_share"
 	   
@@ -154,13 +159,13 @@ esttab using "$out\tab2.tex", cell(colpct(fmt(1))) unstack label ///
 	   tex f alignment(r) noobs nonumber collabels("") compress replace  
 restore
 
-*Correlation matrix between explanatory variables (Table 4)
+/*Correlation matrix between explanatory variables (Table 4)
 global controls "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 qui correlate $controls
 estpost correlate $controls, matrix listwise
 est store corr_matrix
 esttab corr_matrix using "$out\corr_matrix.tex", replace b(3) unstack ///
-	   not nonumbers nonotes noobs compress label 
+	   not nonumbers nonotes noobs compress label */
 
 *************************************************************************
 *******       			        ILUSTRATIONS   		    	      ******* 
@@ -255,5 +260,11 @@ preserve
 	graph_scatter   
 restore
 }
-*/
+*/	  
+
+twoway (hist tfp_va_LP if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
+       (hist tfp_va_LP if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
+	   $details legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
+	   xtitle("TFP on value added") ytitle("Density") 	   
+	   
 			       

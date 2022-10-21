@@ -26,12 +26,13 @@ else if "`c(username)'" == "jbermudez" {
 
 /* Packages required for estimations
 ssc install winsor
-ssc install acfest
 ssc install eststo
 ssc install estout
 ssc install reghdfe
 ssc install ftools
+ssc install prodest
 */
+
 *************************************************************************
 *******                           SET UP                          ******* 
 *************************************************************************
@@ -43,7 +44,7 @@ use "$path\final_dataset1.dta", replace
 * Drop firms with only one employee or zero values from social security records.
 drop if (codigoseccion == "K" | codigoseccion == "L" | codigoseccion == "O" | codigoseccion == "P" | codigoseccion == "U" | codigoseccion == "Z")    
 drop if (cit_regime == 8 | cit_regime == 15 | cit_regime == 20 | cit_regime == 27) 		       
-drop if ihss_workers == 1 | missing(ihss_workers)
+drop if (ihss_workers == 1 | missing(ihss_workers))
 
 * Categories for the different special fiscal regimes (according to the number code in the CIT form). 
 * We reclassify firms advocated to the Tourism Incentives Law to the LIT regime.
@@ -53,7 +54,7 @@ replace cit_regime = 9 if cit_regime == 21
 replace cit_regime = 1 if cit_regime == 14
 label def cit_regime 0 "None" 1 "ZADE" 2 "ZOLI" 3 "ZOLT" 4 "RIT" 5 "Other regimes" ///	
 				     7 "ZOLITUR" 9 "LIT" 23 "Renewable energy", replace
-label val cit_regime cit_regime		
+label val cit_regime cit_regime	
 
 * Dummy identifying the type of tax exemption
 g 		final_regime = 0
@@ -85,42 +86,52 @@ label def final_industry 1 "Primary" 2 "Industry - secondary" 3 "Services - tert
 label val final_industry final_industry
 	
 * Minor settings
-encode municipio, gen(province)
+encode municipio, gen(municipality)
 egen x = group(id)
 drop id
 rename x id
 order id, first
+
 gen urban = cond(municipio == "SAN PEDRO SULA" | municipio == "DISTRITO CENTRAL", 1, 0)
-label def urban 0 "Not main urban" 1 "Main urban cities"
+lab def urban 0 "Not main urban" 1 "Main urban cities"
+
+gen trader = cond(!missing(final_exports) | !missing(final_imports), 1, 0)
+lab def trader 0 "Non Trader" 1 "Foreign trade activity"
+
+gen size_small  = cond(tamaño_ot == 3, 1, 0)
+gen size_medium = cond(tamaño_ot == 2, 1, 0)
+gen size_large  = cond(tamaño_ot == 1, 1, 0)
+
 
 
 *************************************************************************
 *******               BUILDING VARIABLES OF INTEREST              ******* 
 *************************************************************************
 
-* Constructing variables for descriptive statistics and empirical estimations. 
 * Variables are adjusted for inflation using 2010 = 100, and presented in millions of Lempiras.
 loc mill = 1000000
 loc ipc2017 = 138.0563124
 loc ipc2018 = 144.0660006
-foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities 		///
-					cit_gross_income cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports ///
-					cit_turnover_exempt cit_turnover_taxed cit_other_inc_taxed cit_other_inc_exempt 		///
-					cit_total_exempt_inc cit_total_taxed_inc cit_total_inc cit_goods_materials_non_ded 		///
-					cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded cit_labor_ded 	///
-					cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded 		///
-					cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded 	///
-					cit_total_costs_non_ded cit_total_costs cit_total_credits_r cit_total_credits_an 		///
-					cit_total_credits_as cit_cre_exo vat_sales_exempted vat_sales_taxed vat_sales_exports 	///
-					vat_sales_local vat_purch_exempted vat_purch_taxed vat_purch_imports vat_purch_local 	///
-					custom_import custom_export final_sales_local final_exports final_imports final_total_sales final_total_purch {
-							replace `var' = `var' / `mill' if !missing(`var')
-							replace `var' = 0 if `var' < 0 & !missing(`var')
-							replace `var' = ((`var' / `ipc2017') * 100) if year == 2017 & !missing(`var')
-							replace `var' = ((`var' / `ipc2018') * 100) if year == 2018 & !missing(`var')	
-							replace `var' = cond(missing(`var'), 0, `var')
-}
 
+	foreach var of varlist cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities 		///
+						cit_gross_income cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports ///
+						cit_turnover_exempt cit_turnover_taxed cit_other_inc_taxed cit_other_inc_exempt 		///
+						cit_total_exempt_inc cit_total_taxed_inc cit_total_inc cit_goods_materials_non_ded 		///
+						cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded cit_labor_ded 	///
+						cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded 		///
+						cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded 	///
+						cit_total_costs_non_ded cit_total_costs cit_total_credits_r cit_total_credits_an 		///
+						cit_total_credits_as cit_cre_exo vat_sales_exempted vat_sales_taxed vat_sales_exports 	///
+						vat_sales_local vat_purch_exempted vat_purch_taxed vat_purch_imports vat_purch_local 	///
+						custom_import custom_export final_sales_local final_exports final_imports final_total_sales final_total_purch {
+								replace `var' = `var' / `mill' if !missing(`var')
+								replace `var' = 0 if (`var' < 0 & !missing(`var'))
+								replace `var' = ((`var' / `ipc2017') * 100) if year == 2017 & !missing(`var')
+								replace `var' = ((`var' / `ipc2018') * 100) if year == 2018 & !missing(`var')	
+								replace `var' = cond(missing(`var'), 0, `var')
+	}
+
+* Constructing variables for descriptive statistics and empirical estimations. 
 g final_credits				 = cit_total_credits_r + cit_total_credits_an + cit_total_credits_as
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
@@ -146,13 +157,8 @@ g final_log_value_added     	 = log(1 + final_value_added)
 g final_log_salary               = log(1 + final_salary)
 g final_log_labor_productivity   = log(final_labor_productivity)
 
-replace final_total_sales = final_exports if (final_total_sales == 0 & final_exports > 0)
 g final_export_share        = final_exports / final_total_sales
-replace final_export_share  = 1 if final_export_share > 1 & !missing(final_export_share)
-
-replace final_total_purch = final_imports if (final_total_purch == 0 & final_imports > 0)
 g final_import_share		= final_imports / final_total_purch
-replace final_import_share  = 1 if final_import_share > 1 & !missing(final_import_share)
 
 g final_capital_inte = final_net_fixed_assets / final_total_sales
 winsor final_capital_inte if !missing(final_capital_inte), gen(final_capital_int) p(0.07)
@@ -162,27 +168,13 @@ g final_labor_inte = final_net_labor_costs / final_total_sales
 winsor final_labor_inte if !missing(final_labor_inte), gen(final_labor_int) p(0.01)
 drop final_labor_inte
 
-/*g final_gross_pmargin       = (final_total_sales - final_input_costs) / final_total_sales
+/*g final_gross_pmargin     = (final_total_sales - final_input_costs) / final_total_sales
 replace final_gross_pmargin = 0 if missing(final_gross_pmargin)
 winsor  final_gross_pmargin, gen(final_gpm) p(0.01)
 replace final_gpm = -1 if final_gpm < -1
 replace final_gpm = 1 if final_gpm > 1
 drop final_gross_pmargin
 
-g final_net_pmargin       = (cit_turnover - cit_deductions) / cit_turnover
-replace final_net_pmargin = 0 if missing(final_net_pmargin)
-winsor  final_net_pmargin, gen(final_npm) p(0.01)
-replace final_npm = -1 if final_npm < -1
-replace final_npm = 1 if final_npm > 1
-drop final_net_pmargin
-*/
-g final_econ_pmargin        = (cit_total_inc - cit_total_costs) / cit_total_inc 
-replace final_econ_pmargin  = 0 if missing(final_econ_pmargin)
-winsor  final_econ_pmargin, gen(final_epm) p(0.01)
-replace final_epm = -1 if final_epm < -1
-replace final_epm = 1 if final_epm > 1
-drop final_econ_pmargin
-/*
 g final_roa_pmargin       = (cit_turnover - cit_deductions) / cit_total_assets
 replace final_roa_pmargin = 0 if missing(final_roa_pmargin)
 winsor  final_roa_pmargin, gen(final_roa) p(0.01)
@@ -197,6 +189,12 @@ replace final_roce = -1 if final_roce < -1
 replace final_roce = 1 if final_roce > 1
 drop final_roce_pmargin
 */
+
+g final_econ_pmargin        = (cit_total_inc - cit_total_costs) / cit_total_inc 
+replace final_econ_pmargin  = 0 if missing(final_econ_pmargin) | final_econ_pmargin < 0
+winsor  final_econ_pmargin, gen(final_epm) p(0.01)
+drop final_econ_pmargin
+
 g final_expenses_assets = cit_total_costs / cit_total_assets
 replace final_expenses_assets = 0 if missing(final_expenses_assets)
 winsor  final_expenses_assets, gen(final_eta) p(0.07)
@@ -218,53 +216,36 @@ winsor final_liquidity1, gen(final_liquidity) p(0.01)
 drop final_liquidity1
 
 
-* Estimation of Total Factor Productivity at the firm level by industry employing 
-* the method developed by Ackerberg et al. (2015). Variables most to be renamed 
-* before using the acfest command. 
+* TFP estimation at the firm level.
+* Variables most to be renamed before using the acfest command.
+set seed 123 
 xtset id year
+
 g y  = final_log_sales
 g va = final_log_value_added
 g k  = final_log_total_assets
-g a  = final_log_age
 g l  = final_log_employment
 g m  = final_log_input_costs
 
-g final_log_productivity_y  = 0
-g final_log_productivity_va = 0
-
 eststo drop *
-forv val = 1/3 {
-	preserve
-	keep if final_industry == `val'
-	keep id year y va k a m l 
-	eststo model_s_`val': qui acfest y, state(k a) proxy(m) free(l) nbs(200)
-	predict tfp_y_`val', omega
-	eststo model_va_`val': qui acfest va, state(k a) proxy(m) free(l) nbs(200) va
-	predict tfp_va_`val', omega
-	tempfile tfp_`val'
-	save `tfp_`val'', replace
-	restore
-	
-	merge m:1 id year using `tfp_`val'', keepusing(tfp_y_`val' tfp_va_`val')
-	replace final_log_productivity_y  = tfp_y_`val'  if final_industry == `val'
-	replace final_log_productivity_va = tfp_va_`val' if final_industry == `val'
-	drop _merge tfp_y_`val' tfp_va_`val' 
-	capture drop `tfp_`val''
+local output y va
+foreach var of local output {
+	eststo model_LP_`var':  qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) reps(100) id(id) t(year) fsresidual(tfp_`var'_LP) 
+	eststo model_ACF_`var': qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) acf reps(100) id(id) t(year) fsresidual(tfp_`var'_ACF)
+
 }
+
 drop y va k a l m
 
 * Table A3 for online Appendix
-esttab model_s_* using "$out\tfp_estimates.tex", booktabs f replace 			///
-	   mtitles("Primary Sector" "Manufacturing" "Services") keep(k l)			///
-	   coeflabels(k "Capital" a "Age" l "Labor" m "Input costs") order(k l a m)	///
-	   scalars("N Observations" "waldcrs Wald test" "j Sargan-Hansen test")     ///
-	   sfmt(%9.3fc) se(2) star staraux nonumbers b(a3)	
-
-esttab model_va_* using "$out\tfp_estimates.tex", booktabs f append   			///
-	   mtitles("Primary Sector" "Manufacturing" "Services") keep(k l)			///
-	   coeflabels(k "Capital" l "Labor") order(k l a)					   		///
-	   scalars("N Observations" "waldcrs Wald test" "j Sargan-Hansen test")     ///
-	   sfmt(%9.3fc) se(2) star staraux nonumbers b(a3)	   
+esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l m)  ///
+	   mgroups("\cite{levinsohn03} Method" "\cite{ackerberg15} Method", ///
+	   span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(1 0 1 0) erepeat(\cmidrule(lr){@span})) ///
+	   mtitles("Sales" "Value-Added" "Sales" "Value-Added") ///
+	   coeflabels(k "Capital stock" l "Labor" m "Input costs") order(k l m)	///
+	   scalars("N Observations" "waldP Wald test") sfmt(%9.0fc %9.3fc) ///
+	   se(2) b(3) star nonumbers booktabs
+eststo drop *
 
 * Defining labels for all variables
 order id, first
@@ -295,8 +276,10 @@ label var cit_total_assets             "Total assets (Lempiras 1M)"
 label var final_log_total_assets	   "Total assets (logs)"
 label var final_log_net_fixed_assets   "Net fixed assets (logs)"
 label var cit_fixed_assets			   "Fixed assets (Lempiras 1M)"
-label var final_log_productivity_y     "TFP on sales (logs)"
-label var final_log_productivity_va    "TFP on value added (logs)"
+label var tfp_y_LP     				   "TFP on sales LP method (logs)"
+label var tfp_va_LP    				   "TFP on value added LP method (logs)"
+label var tfp_y_ACF     			   "TFP on sales LP method (logs)"
+label var tfp_va_ACF    			   "TFP on value added LP method (logs)"
 label var final_log_labor_productivity "Labor productivity (logs)"
 label var final_log_value_added		   "Value added (logs)"
 label var final_salary 				   "Salary"
@@ -305,4 +288,7 @@ label var final_log_credits			   "Tax credits (logs)"
 label var cit_exonerated 			   "Exonerated"
 label var legal_proxy 				   "Lobbying ability"
 label var urban 					   "Main urban cities"
+label var size_small				   "Share of small firms (%)"
+label var size_medium				   "Share of small firms (%)"
+label var size_large				   "Share of small firms (%)"
 

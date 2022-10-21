@@ -499,6 +499,35 @@ restore
 }
 
 
+
+**********************************************************************************
+**********     			      EIGHTH STEP: EVER AUDITED    			     *********
+**********************************************************************************
+
+dis "Setting for firms that have been audited at least once"
+qui{
+preserve
+import excel using "$path\ORDENES DE FISCALIZACION.xlsx", firstrow clear 
+drop K-Q
+rename _all, lower
+drop if (estado_proceso == "INTERRUMPIDO" | estado_proceso == "PENDIENTE")
+gen notificacion = fecha_presentacion
+tostring notificacion, replace
+replace notificacion = substr(notificacion,3,4)
+destring notificacion, replace
+gen inicio = year(fecha_inicio)
+gen dif = notificacion - inicio
+gsort -dif
+duplicates drop rtn, force
+drop if inicio == 2020
+gen ever_audited = 1
+tempfile ever_audited
+save "`ever_audited'"
+restore	
+}
+
+
+
 **********************************************************************************
 **********                  EIGHTH STEP: FINAL DATASET                   *********
 **********************************************************************************
@@ -512,7 +541,7 @@ foreach r of loc records1 {
 	drop _m
 	duplicates drop rtn year, force 
 }
-loc records2 "mnc date legal_proxy"
+loc records2 "mnc date legal_proxy ever_audited"
 foreach r of loc records2 {
 	merge m:1 rtn using "``r''"
 	drop if _m == 2
@@ -521,7 +550,8 @@ foreach r of loc records2 {
 }
 
 replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
-replace legal_proxy = cond(missing(legal_proxy), 0, legal_proxy)
+replace legal_proxy 	  = cond(missing(legal_proxy), 0, legal_proxy)
+replace ever_audited 	  = cond(missing(ever_audited), 0, ever_audited)
 
 * Turnover (and purchases) might be underestimated so we rebuild it combining CIT, VAT and Customs records for local and foreign sales
 * We assume that the true value of exports/imports is the highest between the internal tax (in the CIT/VAT tax form) and customs records
@@ -556,8 +586,8 @@ drop _merge
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
-order id year ${traits} ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy
+keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy ever_audited
+order id year ${traits} ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy ever_audited
 compress
 save "$out\final_dataset1", replace
 								  								  
