@@ -32,10 +32,31 @@ run "$path\2. setup.do" 	// Run the do file that prepare all variables for descr
 *************************************************************************
 
 * Summary statistics on main characteristics (Table 2)
-globarl var1 "size_small size_medium size_large final_industry"
+global var1 "size_small size_medium size_large final_primary final_secondary final_tertiary"
+global var2 "final_none final_zoli final_rit final_zade final_zolitur final_zolt final_lit final_energy final_others"
+global var3 "cit_total_taxed_inc cit_total_exempt_inc cit_total_costs_ded cit_total_costs_non_ded vat_sales_exempted vat_sales_taxed vat_purch_exempted vat_purch_taxed"
 
+eststo drop *
+mvdecode $var3, mv(0)
 
-
+qui estpost summ $var1, d
+est store panel1
+esttab panel1 using "$out\summary", replace label booktabs nonum f noobs 		///
+	   refcat(size_small "\textsc{Panel A: Firms' Traits}", nolabel)   ///
+	   cells("mean(fmt(%20.2fc)) sd count(fmt(%20.0fc))") collabels("Mean" "SD" "N° Obs.")
+	   
+qui estpost summ $var2, d
+est store panel2
+esttab panel2 using "$out\summary", append label booktabs nonum f noobs  		///
+	   refcat(final_none "\textsc{Panel B: Firms' by Special Regime}" final_zoli "\textit{Export Oriented Regimes}" final_zolitur "\textit{Non Export Oriented Regimes}", nolabel) ///
+	   cells("mean(fmt(%20.2fc)) sd count(fmt(%20.0fc))") collabels(none)
+	   
+qui estpost summ $var3, d
+est store panel3
+esttab panel3 using "$out\summary", append label booktabs nonum f noobs 			  	  ///
+	   refcat(cit_total_taxed_inc "\textsc{Panel C: Tax Base and Exemptions}", nolabel)   ///
+	   cells("mean(fmt(%20.2fc)) sd count(fmt(%20.0fc))") collabels(none)  
+	   
 * Balance table
 eststo drop *		
 /*preserve															

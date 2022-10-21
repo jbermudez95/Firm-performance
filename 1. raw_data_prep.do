@@ -521,6 +521,8 @@ gsort -dif
 duplicates drop rtn, force
 drop if inicio == 2020
 gen ever_audited = 1
+label def ever_audited 0 "Non audited" 1 "Audited at least once"
+label var ever_audited ever_audited
 tempfile ever_audited
 save "`ever_audited'"
 restore	

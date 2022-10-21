@@ -46,6 +46,7 @@ drop if (codigoseccion == "K" | codigoseccion == "L" | codigoseccion == "O" | co
 drop if (cit_regime == 8 | cit_regime == 15 | cit_regime == 20 | cit_regime == 27) 		       
 drop if (ihss_workers == 1 | missing(ihss_workers))
 
+
 * Categories for the different special fiscal regimes (according to the number code in the CIT form). 
 * We reclassify firms advocated to the Tourism Incentives Law to the LIT regime.
 replace cit_regime = 0 if cit_regime == 6
@@ -54,7 +55,35 @@ replace cit_regime = 9 if cit_regime == 21
 replace cit_regime = 1 if cit_regime == 14
 label def cit_regime 0 "None" 1 "ZADE" 2 "ZOLI" 3 "ZOLT" 4 "RIT" 5 "Other regimes" ///	
 				     7 "ZOLITUR" 9 "LIT" 23 "Renewable energy", replace
-label val cit_regime cit_regime	
+label val cit_regime cit_regime
+
+gen final_none = cond(cit_regime == 0, 1, 0)
+labe var final_none "Taxed firms"	
+
+gen final_zade = cond(cit_regime == 1, 1, 0)
+labe var final_zade "Exempt firms: ZADE"
+
+gen final_zoli = cond(cit_regime == 2, 1, 0)
+labe var final_zoli "Exempt firms: ZOLI"
+
+gen final_zolt = cond(cit_regime == 3, 1, 0)
+labe var final_zolt "Exempt firms: ZOLT"
+
+gen final_rit = cond(cit_regime == 4, 1, 0)
+labe var final_rit "Exempt firms: RIT"
+
+gen final_others = cond(cit_regime == 5, 1, 0)
+labe var final_others "Exempt firms: Other regimes"
+
+gen final_zolitur = cond(cit_regime == 7, 1, 0)
+labe var final_zolitur "Exempt firms: ZOLITUR"
+
+gen final_lit = cond(cit_regime == 9, 1, 0)
+labe var final_lit "Exempt firms: LIT"
+
+gen final_energy = cond(cit_regime == 23, 1, 0)
+labe var final_energy "Exempt firms: Renewable energy"
+
 
 * Dummy identifying the type of tax exemption
 g 		final_regime = 0
@@ -62,6 +91,15 @@ replace	final_regime = 1 if inlist(cit_regime, 1, 2, 4)
 replace final_regime = 2 if inlist(cit_regime, 3, 5, 7, 9, 23)
 label def final_regime 0 "Taxed" 1 "Export Oriented" 2 "Non-Export Oriented"
 label val final_regime final_regime
+
+gen exempt_export     = cond(final_regime == 1, 1, 0)
+replace exempt_export = cond(final_regime == 2, ., exempt_export)
+label var exempt_export "Export oriented"
+
+gen exempt_non_export     = cond(final_regime == 2, 1, 0)
+replace exempt_non_export = cond(final_regime == 1, ., exempt_non_export)
+label var exempt_non_export "Non-Export oriented"
+
 
 * Economic activities and industries
 recode codigo (1/990 = 1) (1010/3320 = 2) (3510/4390 = 3) (4510/4540 = 4) (4610/4690 4711/4799 = 5) ///
@@ -82,9 +120,33 @@ lab val activity_sector activity_sector
 	
 gen final_industry = cond(activity_sector == 1, 1, cond(activity_sector == 2 | activity_sector ==  3, 2, ///
 					 cond(activity_sector != 1 | activity_sector != 2 | activity_sector != 3, 3, .)))
-label def final_industry 1 "Primary" 2 "Industry - secondary" 3 "Services - tertiary"
+label def final_industry 1 "Primary: Agricultural, extraction" 2 "Secondary: Industry" 3 "Tertiary: Services"
 label val final_industry final_industry
-	
+
+gen final_primary = cond(final_industry == 1, 1, 0)
+label var final_primary "Primary: Agricultural, extraction"
+
+gen final_secondary = cond(final_industry == 2, 1, 0)
+label var final_secondary "Secondary: Industry"
+
+gen final_tertiary = cond(final_industry == 3, 1, 0)
+label var final_tertiary "Tertiary: Services"
+
+
+* Firms size
+label def tamaño_ot 1 "Large taxpayer" 2 "Medium taxpayer" 3 "Small taxpayer", replace
+label val tamaño_ot tamaño_ot
+
+gen size_small  = cond(tamaño_ot == 3, 1, 0)
+label var size_small "Small sized firms"
+
+gen size_medium = cond(tamaño_ot == 2, 1, 0)
+label var size_medium "Medium sized firms"
+
+gen size_large  = cond(tamaño_ot == 1, 1, 0)
+label var size_large "Large sized firms"
+
+
 * Minor settings
 encode municipio, gen(municipality)
 egen x = group(id)
@@ -97,10 +159,6 @@ lab def urban 0 "Not main urban" 1 "Main urban cities"
 
 gen trader = cond(!missing(final_exports) | !missing(final_imports), 1, 0)
 lab def trader 0 "Non Trader" 1 "Foreign trade activity"
-
-gen size_small  = cond(tamaño_ot == 3, 1, 0)
-gen size_medium = cond(tamaño_ot == 2, 1, 0)
-gen size_large  = cond(tamaño_ot == 1, 1, 0)
 
 
 
@@ -215,7 +273,7 @@ replace final_liquidity1 = 0 if missing(final_liquidity1)
 winsor final_liquidity1, gen(final_liquidity) p(0.01)
 drop final_liquidity1
 
-
+jojo
 * TFP estimation at the firm level.
 * Variables most to be renamed before using the acfest command.
 set seed 123 
@@ -232,10 +290,9 @@ local output y va
 foreach var of local output {
 	eststo model_LP_`var':  qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) reps(100) id(id) t(year) fsresidual(tfp_`var'_LP) 
 	eststo model_ACF_`var': qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) acf reps(100) id(id) t(year) fsresidual(tfp_`var'_ACF)
-
 }
 
-drop y va k a l m
+drop y va k l m
 
 * Table A3 for online Appendix
 esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l m)  ///
@@ -245,7 +302,7 @@ esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l m) 
 	   coeflabels(k "Capital stock" l "Labor" m "Input costs") order(k l m)	///
 	   scalars("N Observations" "waldP Wald test") sfmt(%9.0fc %9.3fc) ///
 	   se(2) b(3) star nonumbers booktabs
-eststo drop *
+
 
 * Defining labels for all variables
 order id, first
@@ -276,6 +333,14 @@ label var cit_total_assets             "Total assets (Lempiras 1M)"
 label var final_log_total_assets	   "Total assets (logs)"
 label var final_log_net_fixed_assets   "Net fixed assets (logs)"
 label var cit_fixed_assets			   "Fixed assets (Lempiras 1M)"
+label var cit_total_taxed_inc 		   "Taxable income (Lempiras 1M)"
+label var cit_total_exempt_inc 		   "Non-taxable income (Lempiras 1M)"
+label var cit_total_costs_ded 		   "Deductible costs (Lempiras 1M)"
+label var cit_total_costs_non_ded 	   "Non-deductible costs (Lempiras 1M)"
+label var vat_sales_exempted 		   "Exempt sales (Lempiras 1M)"
+label var vat_sales_taxed			   "Taxed sales (Lempiras 1M)"
+label var vat_purch_exempted 		   "Exempt purchases (Lempiras 1M)"
+label var vat_purch_taxed			   "Taxed purchases (Lempiras 1M)"
 label var tfp_y_LP     				   "TFP on sales LP method (logs)"
 label var tfp_va_LP    				   "TFP on value added LP method (logs)"
 label var tfp_y_ACF     			   "TFP on sales LP method (logs)"
@@ -288,7 +353,4 @@ label var final_log_credits			   "Tax credits (logs)"
 label var cit_exonerated 			   "Exonerated"
 label var legal_proxy 				   "Lobbying ability"
 label var urban 					   "Main urban cities"
-label var size_small				   "Share of small firms (%)"
-label var size_medium				   "Share of small firms (%)"
-label var size_large				   "Share of small firms (%)"
 

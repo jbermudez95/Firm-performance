@@ -31,6 +31,32 @@ global options "booktabs se(2) b(3) star staraux nomtitles"
 global graphop "grid(none) legend(region(lcolor(none))) graphr(color(white))"
 global controls "final_log_age mnc i.final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
 
+
+
+*************************************************************************
+*******                   PROBIT ESTIMATES                        ******* 
+*************************************************************************
+
+* This section conducts regressions to identify the covariates determining becoming an exonerated firm
+global covariates "final_log_age i.final_mnc i.trader i.legal_proxy i.ever_audited i.urban ib3.tamaño_ot i.activity_sector"
+eststo drop *
+set seed 123
+
+probit exempt_export ${covariates}, vce(robust)
+eststo m_export: qui margins, dydx(*)
+
+probit exempt_non_export ${covariates}, vce(robust)
+eststo m_non_export: qui margins, dydx(*)
+
+coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%70))) ///
+		 (m_non_export, label("Non-Export Oriented") mcolor(orange%60) ciopts(lcolor(orange%60))), ///
+		 drop(_cons exempt_export exempt_non_export i0.final_mnc i0.trader i0.legal_proxy i0.ever_audited i0.urban) ///
+		 groups(*tamaño_ot* = "Firm Size" *activity_sector* = "Economic Activity", labsize(small) gap(2)) ///
+		 coeflabels(final_log_age = "Age" 1.trader = "Foreign trade activity" 1.ever_audited = "Ever audited" 1.urban = "Main urban cities") ///
+		 xline(0, lc(black)) label legend(region(lcolor(none))) graphr(color(white))
+		 graph export "$out/probit_both.pdf", replace	
+
+		 
 *************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
 *************************************************************************
