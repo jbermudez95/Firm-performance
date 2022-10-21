@@ -273,7 +273,7 @@ replace final_liquidity1 = 0 if missing(final_liquidity1)
 winsor final_liquidity1, gen(final_liquidity) p(0.01)
 drop final_liquidity1
 
-jojo
+
 * TFP estimation at the firm level.
 * Variables most to be renamed before using the acfest command.
 set seed 123 
