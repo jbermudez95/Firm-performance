@@ -40,7 +40,6 @@ global controls "final_log_age mnc i.final_fixasset_quint final_log_input_costs 
 * This section conducts regressions to identify the covariates determining becoming an exonerated firm
 global covariates "final_log_age i.final_mnc i.trader i.legal_proxy i.ever_audited i.urban ib3.tamaño_ot i.activity_sector"
 eststo drop *
-set seed 123
 
 probit exempt_export ${covariates}, vce(robust)
 eststo m_export: qui margins, dydx(*)
@@ -56,7 +55,7 @@ coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%
 		 xline(0, lc(black)) label legend(region(lcolor(none))) graphr(color(white))
 		 graph export "$out/probit_both.pdf", replace	
 
-		 
+
 *************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
 *************************************************************************
