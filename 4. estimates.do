@@ -26,11 +26,14 @@ else if "`c(username)'" == "jbermudez" {
 
 run "$path\setup.do" 	// Run the do file that prepare all variables for estimations
 
-global details "booktabs f se(2) b(3) nonumbers star staraux"
-global options "booktabs se(2) b(3) star staraux nomtitles"
-global graphop "grid(none) legend(region(lcolor(none))) graphr(color(white))"
-global controls "final_log_age mnc i.final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
-
+global details   "booktabs f se(2) b(3) nonumbers star staraux"
+global options   "booktabs se(2) b(3) star staraux nomtitles"
+global graphop   "grid(none) legend(region(lcolor(none))) graphr(color(white))"
+global controls  "final_export_share final_import_share final_capital_int final_labor_int final_log_sales"
+global outcomes1 "final_epm final_eta final_gfsal final_turnover final_liquidity"
+global outcomes2 "final_log_net_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"
+global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
+global fixed_ef "ib(freq).codigo year municipality"
 
 
 *************************************************************************
@@ -38,22 +41,26 @@ global controls "final_log_age mnc i.final_fixasset_quint final_log_input_costs 
 *************************************************************************
 
 * This section conducts regressions to identify the covariates determining becoming an exonerated firm
-global covariates "final_log_age i.final_mnc i.trader i.legal_proxy i.ever_audited i.urban ib3.tamaño_ot i.activity_sector"
 eststo drop *
 
-probit exempt_export ${covariates}, vce(robust)
+probit exempt_export ${probit_covariates}, vce(robust)
 eststo m_export: qui margins, dydx(*)
 
-probit exempt_non_export ${covariates}, vce(robust)
+probit exempt_non_export ${probit_covariates}, vce(robust)
 eststo m_non_export: qui margins, dydx(*)
 
 coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%70))) ///
 		 (m_non_export, label("Non-Export Oriented") mcolor(orange%60) ciopts(lcolor(orange%60))), ///
 		 drop(_cons exempt_export exempt_non_export i0.final_mnc i0.trader i0.legal_proxy i0.ever_audited i0.urban) ///
 		 groups(*tamaño_ot* = "Firm Size" *activity_sector* = "Economic Activity", labsize(small) gap(2)) ///
-		 coeflabels(final_log_age = "Age" 1.trader = "Foreign trade activity" 1.ever_audited = "Ever audited" 1.urban = "Main urban cities") ///
+		 coeflabels(final_log_age = "Age" 1.trader = "Foreign trade activity" 1.urban = "Main urban cities") ///
 		 xline(0, lc(black)) label legend(region(lcolor(none))) graphr(color(white))
-		 graph export "$out/probit_both.pdf", replace	
+		 graph export "$out/probit_both.pdf", replace
+		 
+*************************************************************************
+*******                 BASELINE ESTIMATES (NEW)                  ******* 
+*************************************************************************		 
+
 
 
 *************************************************************************

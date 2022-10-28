@@ -595,8 +595,8 @@ drop _merge
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_audited_*
-order id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_audited_*
+keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_*
+order id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_*
 compress
 save "$out\final_dataset1", replace
 								  								  

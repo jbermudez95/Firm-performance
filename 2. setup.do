@@ -203,20 +203,17 @@ g final_labor_productivity   = final_total_sales / ihss_workers
 g final_age        = year - date_start
 replace final_age  = 1 if final_age <= 0
 
-g final_log_credits				 = log(1 + final_credits)
-g final_log_age					 = log(1 + final_age)
-g final_log_sales				 = log(1 + final_total_sales)
-g final_log_input_costs 		 = log(1 + final_input_costs)
-g final_log_financial_costs 	 = log(1 + final_financial_costs)
-g final_log_employment   		 = log(ihss_workers)
+local v "credits age total_sales net_fixed_assets value_added salary input_costs"
+foreach k of local v {
+	g final_log_`k' = log(1 + final_`v')
+}
+
 g final_log_total_assets		 = log(1 + cit_total_assets)
-g final_log_net_fixed_assets	 = log(1 + final_net_fixed_assets)
-g final_log_value_added     	 = log(1 + final_value_added)
-g final_log_salary               = log(1 + final_salary)
+g final_log_employment   		 = log(ihss_workers)
 g final_log_labor_productivity   = log(final_labor_productivity)
 
-g final_export_share        = final_exports / final_total_sales
-g final_import_share		= final_imports / final_total_purch
+g final_export_share = final_exports / final_total_sales
+g final_import_share = final_imports / final_total_purch
 
 g final_capital_inte = final_net_fixed_assets / final_total_sales
 winsor final_capital_inte if !missing(final_capital_inte), gen(final_capital_int) p(0.07)
@@ -295,11 +292,11 @@ foreach var of local output {
 drop y va k l m
 
 * Table A3 for online Appendix
-esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l m)  ///
+esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l)  ///
 	   mgroups("\cite{levinsohn03} Method" "\cite{ackerberg15} Method", ///
 	   span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(1 0 1 0) erepeat(\cmidrule(lr){@span})) ///
 	   mtitles("Sales" "Value-Added" "Sales" "Value-Added") ///
-	   coeflabels(k "Capital stock" l "Labor" m "Input costs") order(k l m)	///
+	   coeflabels(k "Capital stock" l "Labor") order(k l)	///
 	   scalars("N Observations" "waldP Wald test") sfmt(%9.0fc %9.3fc) ///
 	   se(2) b(3) star nonumbers booktabs
 
@@ -353,4 +350,8 @@ label var final_log_credits			   "Tax credits (logs)"
 label var cit_exonerated 			   "Exonerated"
 label var legal_proxy 				   "Lobbying ability"
 label var urban 					   "Main urban cities"
+label var legal_attorneys 			   "Lobbying ability"
+label var legal_proxy				   "Lobbying ability"
+label var ever_audited_times 		   "Number of times audited"
+label var ever_audited				   "Audited at least once"
 
