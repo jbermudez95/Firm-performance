@@ -551,7 +551,7 @@ foreach r of loc records2 {
 	drop _m
 	duplicates drop rtn year, force 
 }
-jojo
+
 replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
 
 replace legal_proxy 	  = cond(missing(legal_proxy), 0, legal_proxy)
