@@ -486,13 +486,14 @@ gen hasta = cond(fecha_hasta != "", substr(fecha_hasta,1,4), "")
 destring hasta, replace
 drop if hasta < 2017 & !missing(hasta)
 drop if hasta > 2022 & !missing(hasta)
-duplicates drop rtn identificacion , force
+duplicates drop rtn identificacion, force
 egen x = group(identificacion)
 collapse (count) x, by(rtn)
+g legal_attorneys = x
 g legal_proxy = cond(x>1,1,0)
 label def legal_proxy 0 "No lobbying ability" 1 "Lobbying ability"
 label val legal_proxy legal_proxy
-keep rtn legal_proxy
+keep rtn legal_*
 tempfile legal_proxy
 save "`legal_proxy'"
 restore
@@ -513,16 +514,16 @@ rename _all, lower
 drop if (estado_proceso == "INTERRUMPIDO" | estado_proceso == "PENDIENTE")
 gen notificacion = fecha_presentacion
 tostring notificacion, replace
-replace notificacion = substr(notificacion,3,4)
+replace notificacion = substr(notificacion,1,4)
 destring notificacion, replace
 gen inicio = year(fecha_inicio)
 gen dif = notificacion - inicio
-gsort -dif
-duplicates drop rtn, force
+sort rtn inicio
+duplicates drop rtn nro_of, force
 drop if inicio == 2020
+bys rtn: gen ever_audited_times = _N
 gen ever_audited = 1
-label def ever_audited 0 "Non audited" 1 "Audited at least once"
-label var ever_audited ever_audited
+collapse (mean) ever_*, by(rtn)
 tempfile ever_audited
 save "`ever_audited'"
 restore	
@@ -531,7 +532,7 @@ restore
 
 
 **********************************************************************************
-**********                  EIGHTH STEP: FINAL DATASET                   *********
+**********                  NINETH STEP: FINAL DATASET                   *********
 **********************************************************************************
 
 * Merge datasets
@@ -550,10 +551,16 @@ foreach r of loc records2 {
 	drop _m
 	duplicates drop rtn year, force 
 }
-
+jojo
 replace foreign_ownership = cond(missing(foreign_ownership), 0, foreign_ownership)
+
 replace legal_proxy 	  = cond(missing(legal_proxy), 0, legal_proxy)
+
 replace ever_audited 	  = cond(missing(ever_audited), 0, ever_audited)
+label def ever_audited 0 "Non audited" 1 "Audited at least once", replace
+label val ever_audited ever_audited
+
+replace ever_audited_times = cond(missing(ever_audited_times), 0, ever_audited_times)
 
 * Turnover (and purchases) might be underestimated so we rebuild it combining CIT, VAT and Customs records for local and foreign sales
 * We assume that the true value of exports/imports is the highest between the internal tax (in the CIT/VAT tax form) and customs records
@@ -588,8 +595,8 @@ drop _merge
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy ever_audited
-order id year ${traits} ihss_workers cit_* vat_* custom_* final_* final_mnc date_start legal_proxy ever_audited
+keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_audited_*
+order id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_audited_*
 compress
 save "$out\final_dataset1", replace
 								  								  
