@@ -16,24 +16,19 @@ set more off
 
 * Insert personal directories
 if "`c(username)'" == "Owner" {
-	global path "C:\Users\Owner\Desktop\firm-performance-github"		
-	global out  "C:\Users\Owner\OneDrive - SAR\Profit Margins\out"	
+	global path "C:\Users\Owner\Desktop\Firm-performance"		
+	global out  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
 	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
-	global out  "C:\Users\jbermudez\OneDrive - SAR\Profit Margins\out"
+	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 }	
 
-run "$path\setup.do" 	// Run the do file that prepare all variables for estimations
+run "$path\2. setup.do" 	// Run the do file that prepare all variables for estimations
 
 global details   "booktabs f se(2) b(3) nonumbers star staraux"
 global options   "booktabs se(2) b(3) star staraux nomtitles"
 global graphop   "grid(none) legend(region(lcolor(none))) graphr(color(white))"
-global controls  "final_export_share final_import_share final_capital_int final_labor_int final_log_sales"
-global outcomes1 "final_epm final_eta final_gfsal final_turnover final_liquidity"
-global outcomes2 "final_log_net_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"
-global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
-global fixed_ef "ib(freq).codigo year municipality"
 
 
 *************************************************************************
@@ -41,6 +36,8 @@ global fixed_ef "ib(freq).codigo year municipality"
 *************************************************************************
 
 * This section conducts regressions to identify the covariates determining becoming an exonerated firm
+global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
+
 eststo drop *
 
 probit exempt_export ${probit_covariates}, vce(robust)
@@ -59,11 +56,26 @@ coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%
 		 
 *************************************************************************
 *******                 BASELINE ESTIMATES (NEW)                  ******* 
-*************************************************************************		 
+*************************************************************************	
+
+local outcomes1 "final_epm final_eta final_gfsal final_turnover final_liquidity"
+local outcomes2 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
+global controls  "final_log_age final_export_share final_import_share final_capital_int final_labor_int final_log_total_sales"
+global fixed_ef "ib(freq).codigo year municipality" 
+
+eststo drop *
+foreach var of local outcomes1 {
+	qui sum `var'
+	loc mean_`var' = r(mean)
+	eststo eq1_`var': reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+	estadd loc sector_fe   "\cmark": eq1_`var'
+	estadd loc province_fe "\cmark": eq1_`var'
+	estadd loc year_fe     "\cmark": eq1_`var'
+	estadd loc controls    "\cmark": eq1_`var'
+}
 
 
-
-*************************************************************************
+/*************************************************************************
 *******                 BASELINE ESTIMATES                        ******* 
 *************************************************************************
 

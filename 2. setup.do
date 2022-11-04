@@ -193,7 +193,7 @@ loc ipc2018 = 144.0660006
 g final_credits				 = cit_total_credits_r + cit_total_credits_an + cit_total_credits_as
 g final_input_costs     	 = cit_goods_materials_non_ded + cit_goods_materials_ded
 g final_financial_costs 	 = cit_financial_ded + cit_financial_non_ded
-g final_net_fixed_assets     = cit_fixed_assets - cit_fixed_assets_depr
+g final_fixed_assets     	 = cit_fixed_assets - cit_fixed_assets_depr
 g final_total_labor_costs    = cit_labor_ded + cit_labor_non_ded
 g final_net_labor_costs 	 = cit_labor_ded - cit_labor_non_ded
 g final_value_added    		 = final_total_sales - final_input_costs
@@ -203,9 +203,9 @@ g final_labor_productivity   = final_total_sales / ihss_workers
 g final_age        = year - date_start
 replace final_age  = 1 if final_age <= 0
 
-local v "credits age total_sales net_fixed_assets value_added salary input_costs"
+local v "credits age total_sales fixed_assets value_added salary input_costs financial_costs"
 foreach k of local v {
-	g final_log_`k' = log(1 + final_`v')
+	g final_log_`k' = log(1 + final_`k')
 }
 
 g final_log_total_assets		 = log(1 + cit_total_assets)
@@ -215,7 +215,7 @@ g final_log_labor_productivity   = log(final_labor_productivity)
 g final_export_share = final_exports / final_total_sales
 g final_import_share = final_imports / final_total_purch
 
-g final_capital_inte = final_net_fixed_assets / final_total_sales
+g final_capital_inte = final_fixed_assets / final_total_sales
 winsor final_capital_inte if !missing(final_capital_inte), gen(final_capital_int) p(0.07)
 drop final_capital_inte
 
@@ -237,7 +237,7 @@ replace final_roa = -1 if final_roa < -1
 replace final_roa = 1 if final_roa > 1
 drop final_roa_pmargin
 
-g final_roce_pmargin       = (cit_turnover - cit_deductions) / final_net_fixed_assets
+g final_roce_pmargin       = (cit_turnover - cit_deductions) / final_fixed_assets
 replace final_roce_pmargin = 0 if missing(final_roce_pmargin)
 winsor  final_roce_pmargin, gen(final_roce) p(0.01)
 replace final_roce = -1 if final_roce < -1
@@ -276,7 +276,7 @@ drop final_liquidity1
 set seed 123 
 xtset id year
 
-g y  = final_log_sales
+g y  = final_log_total_sales
 g va = final_log_value_added
 g k  = final_log_total_assets
 g l  = final_log_employment
@@ -325,10 +325,10 @@ label var final_capital_int 		   "Capital intensity"
 label var final_labor_int 			   "Labor intensity" 
 label var final_export_share 		   "Export share"
 label var final_import_share 		   "Import share"
-label var final_log_sales			   "Sales (logs)"
+label var final_log_total_sales		   "Sales (logs)"
 label var cit_total_assets             "Total assets (Lempiras 1M)"
 label var final_log_total_assets	   "Total assets (logs)"
-label var final_log_net_fixed_assets   "Net fixed assets (logs)"
+label var final_log_fixed_assets   	   "Net fixed assets (logs)"
 label var cit_fixed_assets			   "Fixed assets (Lempiras 1M)"
 label var cit_total_taxed_inc 		   "Taxable income (Lempiras 1M)"
 label var cit_total_exempt_inc 		   "Non-taxable income (Lempiras 1M)"
