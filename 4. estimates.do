@@ -58,21 +58,72 @@ coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%
 *******                 BASELINE ESTIMATES (NEW)                  ******* 
 *************************************************************************	
 
-local outcomes1 "final_epm final_eta final_gfsal final_turnover final_liquidity"
-local outcomes2 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
-global controls  "final_log_age final_export_share final_import_share final_capital_int final_labor_int final_log_total_sales"
+local outcomes1 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
+local outcomes2 "final_epm final_eta final_gfsal final_turnover final_liquidity"
+global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int final_log_total_sales"
 global fixed_ef "ib(freq).codigo year municipality" 
 
 eststo drop *
 foreach var of local outcomes1 {
+	eststo eq1_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var'
-	loc mean_`var' = r(mean)
-	eststo eq1_`var': reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+	estadd scalar mean1 = r(mean)
 	estadd loc sector_fe   "\cmark": eq1_`var'
 	estadd loc province_fe "\cmark": eq1_`var'
 	estadd loc year_fe     "\cmark": eq1_`var'
 	estadd loc controls    "\cmark": eq1_`var'
+	
+	eststo eq2_`var': qui reghdfe `var' i.final_regime ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui test 1.final_regime == 2.final_regime
+	estadd scalar test1 = r(p)
+	qui sum `var'
+	estadd scalar mean1 = r(mean)
+	estadd loc sector_fe   "\cmark": eq2_`var'
+	estadd loc province_fe "\cmark": eq2_`var'
+	estadd loc year_fe     "\cmark": eq2_`var'
+	estadd loc controls    "\cmark": eq2_`var'
 }
+
+foreach var of local outcomes2 {
+	eststo eq3_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var'
+	estadd scalar mean2 = r(mean)
+	estadd loc sector_fe   "\cmark": eq3_`var'
+	estadd loc province_fe "\cmark": eq3_`var'
+	estadd loc year_fe     "\cmark": eq3_`var'
+	estadd loc controls    "\cmark": eq3_`var'
+	
+	eststo eq4_`var': qui reghdfe `var' i.final_regime ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui test 1.final_regime == 2.final_regime
+	estadd scalar test2 = r(p)
+	qui sum `var'
+	estadd scalar mean2 = r(mean)
+	estadd loc sector_fe   "\cmark": eq4_`var'
+	estadd loc province_fe "\cmark": eq4_`var'
+	estadd loc year_fe     "\cmark": eq4_`var'
+	estadd loc controls    "\cmark": eq4_`var'
+}
+
+esttab eq1_* using "$out\reg_performance1.tex", replace f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01) ///
+	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.3fc %9.0fc %9.3fc) ///
+	   keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel A}}", nolabel) ///
+	   scalars("mean1 Mean Dep. Var." "N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   
+esttab eq2_* using "$out\reg_performance1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
+	   sfmt(%9.3fc %9.0fc %9.3fc %9.3fc) keep(1.final_regime 2.final_regime) eqlabels(none) nomtitles ///
+	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") refcat(1.final_regime "\textsc{\textbf{Panel B}}", nolabel) ///
+	   scalars("mean1 Mean Dep. Var." "N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")	   
+
+esttab eq3_* using "$out\reg_financial1.tex", replace f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01) ///
+	   mtitle("EPM" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.3fc %9.0fc %9.3fc) ///
+	   keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel A}}", nolabel) ///
+	   scalars("mean2 Mean Dep. Var." "N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   
+esttab eq4_* using "$out\reg_financial1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
+	   sfmt(%9.3fc %9.0fc %9.3fc %9.3fc) keep(1.final_regime 2.final_regime) eqlabels(none) nomtitles ///
+	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") refcat(1.final_regime "\textsc{\textbf{Panel B}}", nolabel) ///
+	   scalars("mean2 Mean Dep. Var." "N Observations" "r2 R-Squared" "test2 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   	   
 
 
 /*************************************************************************
