@@ -5,7 +5,7 @@ Description: 	This do file uses the panel data "final_dataset" built from data_p
 				9, 10, 11, 12, 13, and 14 included in the Appendix of the paper the paper 
 				"Firm performance and tax incentives: evidence from Honduras". 
 Date:			November, 2021
-Modified:		April, 2022
+Modified:		November, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
