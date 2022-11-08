@@ -183,7 +183,7 @@ loc ipc2018 = 144.0660006
 						cit_cre_assignments cit_cre_compensation cit_cre_employment cit_cre_isran 			    ///
 						vat_sales_exempted vat_sales_taxed vat_sales_exports vat_sales_local vat_purch_exempted ///
 						vat_purch_taxed vat_purch_imports vat_purch_local custom_import custom_export    		///
-						final_sales_local final_exports final_imports final_total_sales final_total_purch {
+						final_sales_local final_exports final_imports final_total_sales final_total_purch cit_tax_liability {
 								replace `var' = `var' / `mill' if !missing(`var')
 								replace `var' = 0 if (`var' < 0 & !missing(`var'))
 								replace `var' = ((`var' / `ipc2017') * 100) if year == 2017 & !missing(`var')

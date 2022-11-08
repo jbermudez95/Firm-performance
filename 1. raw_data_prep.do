@@ -182,6 +182,33 @@ gen cit_cre_employment = cre_credi_gene_nuevos_empl
 gen cit_cre_isran = cre_isr_activo_neto 
 
 
+* Variables for tax liability
+scalar tax_rate = 0.25
+g double imp_segun_tarifa_renta_alt	   = tax_rate * baseimponrtanetagrav	
+g porcentaje_ing_brutos_correct        = porcentaje_ing_brutos
+replace porcentaje_ing_brutos_correct  = 0 if baseimponrtanetagrav <= 0 
+g max_ISR_IM = max(porcentaje_ing_brutos_correct, imp_segun_tarifa_renta_alt)	
+g max_AS     = max_ISR_IM + imp_segun_tarifa_aport_sol	
+g causa_impuesto = .
+replace causa_impuesto = 0 if max(max_AS, imp_segun_tarifa_activo_neto) == 0
+replace causa_impuesto = 1 if max(max_AS, imp_segun_tarifa_activo_neto) == max_AS & ///
+							  max(porcentaje_ing_brutos_correct, imp_segun_tarifa_renta_alt) == imp_segun_tarifa_renta_alt & ///
+							  max(max_AS, imp_segun_tarifa_activo_neto) > 0
+replace causa_impuesto = 2 if max(max_AS, imp_segun_tarifa_activo_neto) == imp_segun_tarifa_activo_neto & ///
+							  max(max_AS, imp_segun_tarifa_activo_neto) > 0
+replace causa_impuesto = 3 if max(max_AS, imp_segun_tarifa_activo_neto) == max_AS & ///
+							  max(porcentaje_ing_brutos_correct, imp_segun_tarifa_renta_alt) == porcentaje_ing_brutos_correct & ///
+							  max(max_AS, imp_segun_tarifa_activo_neto) > 0 
+lab def causa_impuesto 0 "None" 1 "CIT" 2 "Net Asset" 3 "Minimum Tax"
+lab val causa_impuesto causa_impuesto
+g double impuesto_causado = .
+replace impuesto_causado  = 0 		 						if causa_impuesto == 0 
+replace impuesto_causado  = max_AS 							if causa_impuesto == 1
+replace impuesto_causado  = imp_segun_tarifa_activo_neto 	if causa_impuesto == 2
+replace impuesto_causado  = max_AS 							if causa_impuesto == 3
+rename impuesto_causado cit_tax_liability
+
+
 * The church, the government, professional colleges, ccoperatives, and non profit organizations are removed
 drop if (regimenespecial == 8 | regimenespecial == 11 | regimenespecial == 15 | regimenespecial == 16 | ////
          regimenespecial == 18 | regimenespecial == 24 | regimenespecial == 27 | regimenespecial == 28 | /// 

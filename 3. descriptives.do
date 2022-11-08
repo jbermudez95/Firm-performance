@@ -192,7 +192,7 @@ esttab corr_matrix using "$out\corr_matrix.tex", replace b(3) unstack ///
 *******       			        ILUSTRATIONS   		    	      ******* 
 *************************************************************************
 
-global details "ylabel(, nogrid) legend(region(lcolor(none))) graphr(color(white))"
+global details "legend(region(lcolor(none))) graphr(color(white))"
 
 * Distributions for TFP on value added (Figure A2)
 twoway (hist final_log_productivity_va if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
@@ -287,5 +287,84 @@ twoway (hist tfp_va_LP if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) 
        (hist tfp_va_LP if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
 	   $details legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
 	   xtitle("TFP on value added") ytitle("Density") 	   
+
+
+* Income percentiles
+preserve
+keep if !missing(cit_gross_income)
+egen percentil = xtile(cit_gross_income), by(year) p(1(1)99)	 
+tempfile perct
+save `perct'
+restore
+merge 1:1 id year using `perct'
+drop _m
+	
+* Ratio between tax exempt credits and total credits
+preserve
+keep if !missing(percentil)
+gen ratio_exoneration = (final_credits / cit_tax_liability) *100
+replace ratio_exoneration = cond(ratio_exoneration > 1, 1, ratio_exoneration)
+replace ratio_exoneration = cond(missing(ratio_exoneration), 0, ratio_exoneration)
+collapse (mean) ratio_exoneration, by(percentil)
+twoway (scatter ratio_exoneration percentil, mcolor(blue%40)) ///
+	   (fpfit ratio_exoneration percentil if percentil > 4, lcolor(blue)), ///
+	   ytitle("Exempt tax credits / Tax liability") xtitle("Percentile on Gross Income") ///
+	   $details legend(off) yscale(titlegap(3)) xscale(titlegap(3)) ///
+	   ylabel(.75 "75%" .8 "80%" .85 "85%" .9 "90%" .95 "95%" 1 "100%")
+	   graph export "$out\credits_ratio.pdf", replace
+restore
+
+
+* Credits distribution by firm size
+preserve
+keep if !missing(percentil)
+collapse (sum) cit_cre_*, by(percentil)
+egen cit_cre_total = rowtotal(cit_cre_*)
+loc cre "exo withholding pay surplus assignments compensation employment isran"
+foreach c of loc cre {
+	gen `c' = cit_cre_`c' / cit_cre_total
+}
+drop cit_cre_*
+stackedcount `cre' percentil 
+restore
 	   
-			       
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
