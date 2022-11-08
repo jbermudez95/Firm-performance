@@ -169,6 +169,19 @@ lab def regimenespecial 1 "ZADE" 2 "ZOLI" 3 "ZOLT" 4 "RIT" 5 "Otros Regímenes" 
 						40 "Colegios Profesionales" 41 "Sindicatos Obreros" 43 "Biocombustibles" 44 "Call Centers" 46 "OPDF"					
 label val regimenespecial regimenespecial
 
+
+* Additional variables for tax credits
+egen cit_cre_withholding = rowtotal(cre_retencion_art50_ley_rta cre_reten_anti_isr_o_atn_rta cre_ret_anti_isr_o_atn_act_net ///
+									cre_retencion_anti_irs_impor), missing
+egen cit_cre_pay = rowtotal(cre_pagos_cuenta_rta cre_pagos_cuenta_as cre_pagos_reali_periodo_rta cre_pagos_reali_periodo_as ///
+							cre_pagos_reali_peri_act_net pagos_anti_isr_decre96_2012 creditos_apli_pagos_cuenta_rta creditos_apli_pagos_cuenta_as), missing
+egen cit_cre_surplus = rowtotal(cre_exe_ejer_fiscal_ant_rta cre_exe_ejer_fis_ant_ac_neto cre_excedente_ejer_ant_as), missing
+egen cit_cre_assignments = rowtotal(cre_cesiones_credi_recib_rta cre_cesiones_cred_recib_ac_net cre_cesiones_cred_recib_as), missing 
+egen cit_cre_compensation = rowtotal(cre_import_compensa_act_neto cre_import_compensacion_as cre_import_compensacion_rta), missing
+gen cit_cre_employment = cre_credi_gene_nuevos_empl 
+gen cit_cre_isran = cre_isr_activo_neto 
+
+
 * The church, the government, professional colleges, ccoperatives, and non profit organizations are removed
 drop if (regimenespecial == 8 | regimenespecial == 11 | regimenespecial == 15 | regimenespecial == 16 | ////
          regimenespecial == 18 | regimenespecial == 24 | regimenespecial == 27 | regimenespecial == 28 | /// 
@@ -572,13 +585,13 @@ egen final_total_sales = rowtotal(final_sales_local final_exports)
 egen final_total_purch = rowtotal(vat_purch_local final_imports)
 
 * Encode as missing all values equal to zero
-	mvdecode vat_* custom_* final_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
+	mvdecode vat_* custom_* final_* cit_cre_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
 			 cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports cit_turnover_exempt cit_turnover_taxed ///
 			 cit_other_inc_taxed cit_other_inc_exempt cit_total_exempt_inc cit_total_taxed_inc cit_total_inc ///
 			 cit_goods_materials_non_ded cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded ///
 			 cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded ///
 			 cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded cit_total_costs_non_ded ///
-			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as cit_cre_exo, mv(0)
+			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as, mv(0)
 
 * Identifying MNC according to foreign ownership and size restrictions
 bys rtn: egen mean_work = mean(ihss_workers)

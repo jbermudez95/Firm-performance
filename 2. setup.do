@@ -179,9 +179,11 @@ loc ipc2018 = 144.0660006
 						cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded 		///
 						cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded 	///
 						cit_total_costs_non_ded cit_total_costs cit_total_credits_r cit_total_credits_an 		///
-						cit_total_credits_as cit_cre_exo vat_sales_exempted vat_sales_taxed vat_sales_exports 	///
-						vat_sales_local vat_purch_exempted vat_purch_taxed vat_purch_imports vat_purch_local 	///
-						custom_import custom_export final_sales_local final_exports final_imports final_total_sales final_total_purch {
+						cit_total_credits_as cit_cre_exo cit_cre_withholding cit_cre_pay cit_cre_surplus 		///
+						cit_cre_assignments cit_cre_compensation cit_cre_employment cit_cre_isran 			    ///
+						vat_sales_exempted vat_sales_taxed vat_sales_exports vat_sales_local vat_purch_exempted ///
+						vat_purch_taxed vat_purch_imports vat_purch_local custom_import custom_export    		///
+						final_sales_local final_exports final_imports final_total_sales final_total_purch {
 								replace `var' = `var' / `mill' if !missing(`var')
 								replace `var' = 0 if (`var' < 0 & !missing(`var'))
 								replace `var' = ((`var' / `ipc2017') * 100) if year == 2017 & !missing(`var')
@@ -272,7 +274,6 @@ drop final_liquidity1
 
 
 * TFP estimation at the firm level.
-* Variables most to be renamed before using the acfest command.
 set seed 123 
 xtset id year
 
