@@ -6,7 +6,7 @@ Description: 	This do file uses the panel data "final_dataset" built from data_p
 				evidence from Honduras". Also this do file generates figures A2, A3, and A4 that 
 				are then included in the online appendix of the paper.
 Date:			November, 2021
-Modified:		April, 2022
+Modified:		November, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -27,115 +27,43 @@ else if "`c(username)'" == "jbermudez" {
 
 run "$path\2. setup.do" 	// Run the do file that prepare all variables for descriptive statistics
 
+
+
 *************************************************************************
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
 
 * Summary statistics on main characteristics (Table 2)
-global var1 "size_small size_medium size_large final_primary final_secondary final_tertiary"
+global var1 "size_small size_medium size_large final_primary final_secondary final_tertiary exporter non_exporter"
 global var2 "final_none final_zoli final_rit final_zade final_zolitur final_zolt final_lit final_energy final_others"
-global var3 "cit_total_taxed_inc cit_total_exempt_inc cit_total_costs_ded cit_total_costs_non_ded vat_sales_exempted vat_sales_taxed vat_purch_exempted vat_purch_taxed"
+global var3 "vat_sales_exempted vat_sales_taxed vat_purch_exempted vat_purch_taxed cit_total_taxed_inc cit_total_exempt_inc cit_total_costs_ded cit_total_costs_non_ded"
 
 eststo drop *
 mvdecode $var3, mv(0)
 
 qui estpost summ $var1, d
 est store panel1
-esttab panel1 using "$out\summary", replace label booktabs nonum f noobs 		///
+esttab panel1 using "$out\summary", replace label booktabs nonum f noobs ///
 	   refcat(size_small "\textsc{Panel A: Firms' Traits}", nolabel)   ///
 	   cells("mean(fmt(%20.2fc)) sd count(fmt(%20.0fc))") collabels("Mean" "SD" "N° Obs.")
 	   
 qui estpost summ $var2, d
 est store panel2
-esttab panel2 using "$out\summary", append label booktabs nonum f noobs  		///
+esttab panel2 using "$out\summary", append label booktabs nonum f noobs ///
 	   refcat(final_none "\textsc{Panel B: Firms' by Special Regime}" final_zoli "\textit{Export Oriented Regimes}" final_zolitur "\textit{Non Export Oriented Regimes}", nolabel) ///
 	   cells("mean(fmt(%20.2fc)) sd count(fmt(%20.0fc))") collabels(none)
 	   
-qui estpost summ $var3, d
+qui estpost summ vat_filler $var3, d
 est store panel3
-esttab panel3 using "$out\summary", append label booktabs nonum f noobs 			  	  ///
-	   refcat(cit_total_taxed_inc "\textsc{Panel C: Tax Base and Exemptions}", nolabel)   ///
+esttab panel3 using "$out\summary", append label booktabs nonum f noobs ///
+	   refcat(vat_filler "\textsc{Panel C: Tax Base and Exemptions}" vat_sales_exempted "\textit{VAT Descriptives}" cit_total_taxed_inc "\textit{CIT Descriptives}", nolabel)   ///
 	   cells("mean(fmt(%20.2fc)) sd count(fmt(%20.0fc))") collabels(none)  
 	   
-* Balance table
-eststo drop *		
-/*preserve															
-qui summ final_npm, d	
-keep if final_npm > r(p1)	
-qui summ     final_npm, d
-estpost summ final_npm, detail quietly
-est store npm_
-qui summ 	 final_npm if cit_exonerated == 0, d
-estpost summ final_npm if cit_exonerated == 0, detail quietly
-est store npm_nonex1
-qui summ 	 final_npm if cit_exonerated == 1, d
-estpost summ final_npm if cit_exonerated == 1, detail quietly
-est store npm_ex1
-estpost ttest final_npm, by(cit_exonerated) unequal quietly
-est store npm_diff1
-restore
-
-preserve
-drop if final_regime == 0
-qui summ final_npm, d
-keep if final_npm > r(p1)
-qui summ 	 final_npm if final_regime == 1, d
-estpost summ final_npm if final_regime == 1, detail quietly
-est store npm_exor1
-qui summ 	 final_npm if final_regime == 2, d
-estpost summ final_npm if final_regime == 2, detail quietly
-est store npm_nexor1
-estpost ttest final_npm, by(final_regime) unequal quietly
-est store npm_diff2
-restore
-
-esttab npm_ npm_nonex1 npm_ex1 npm_diff1 npm_exor1 npm_nexor1 npm_diff2 using "$out\tab1.tex", replace ///
-	   mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
-	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes 
-   
-preserve															
-qui summ final_epm, d	
-keep if final_epm > r(p5)	
-qui summ     final_epm, d
-estpost summ final_epm, detail quietly
-est store epm_
-qui summ 	 final_epm if cit_exonerated == 0, d
-estpost summ final_epm if cit_exonerated == 0, detail quietly
-est store epm_nonex1
-qui summ 	 final_epm if cit_exonerated == 1, d
-estpost summ final_epm if cit_exonerated == 1, detail quietly
-est store epm_ex1
-estpost ttest final_epm, by(cit_exonerated) unequal quietly
-est store epm_diff1
-restore
-
-preserve
-drop if final_regime == 0
-qui summ final_epm, d
-keep if final_epm > r(p5)
-qui summ 	 final_epm if final_regime == 1, d
-estpost summ final_epm if final_regime == 1, detail quietly
-est store epm_exor1
-qui summ 	 final_epm if final_regime == 2, d
-estpost summ final_epm if final_regime == 2, detail quietly
-est store epm_nexor1
-estpost ttest final_epm, by(final_regime) unequal quietly
-est store epm_diff2
-restore
-
-esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
-	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers noobs nonotes 
-
-	   esttab epm_ epm_nonex1 epm_ex1 epm_diff1 epm_exor1 epm_nexor1 epm_diff2 using "$out\tab1_oct.tex", replace ///
-	      mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
-	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers noobs nonotes */
 	   
-global vars "final_log_net_fixed_assets final_log_value_added ihss_workers final_log_salary final_log_productivity_va final_epm final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban tamaño_ot final_export_share final_import_share"
+	   
+* Balance table
+eststo drop *	
+global vars "final_log_fixed_assets final_log_value_added ihss_workers final_log_salary tfp_y_LP tfp_y_ACF final_epm final_roa final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban final_export_share final_import_share"
 	   
 eststo: qui estpost summ $vars, detail
 est store pooled  
@@ -156,37 +84,13 @@ eststo: qui estpost ttest $vars, by(final_regime) unequal
 est store diff2
 restore	
 
-/*esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1_oct.tex", append ///
-	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   nomtitles collabels(none) label tex f alignment(r) compress nonumbers*/
-	   
-	   esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1_oct.tex", replace ///
-	      mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
+esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1.tex", replace collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers nonotes ///
+	   mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers nonotes 
-
+	   refcat(final_log_fixed_assets "\textsc{Panel A: Firms' performance}" final_epm "\textsc{Panel B: Financial indicators}" final_age "\textsc{Panel C: Covariates}", nolabel)
 	   
-* Sample distribution by special regime and industry (Table 3)
-preserve
-keep if cit_exonerated == 1
-gen final_aux_regime = cit_regime
-replace final_aux_regime = 3 if (cit_regime == 7 | cit_regime == 9) 
-label def final_aux_regime 0 "None" 1 "ZIP" 2 "ZOLI" 3 "Tourism" 4 "RIT" 5 "Others" 14 "ZADE" 23 "Renewable Energy" 
-label val final_aux_regime final_aux_regime
-tab final_aux_regime final_industry, row nofreq
-estpost tab final_aux_regime final_industry, nototal
-esttab using "$out\tab2.tex", cell(colpct(fmt(1))) unstack label ///
-	   tex f alignment(r) noobs nonumber collabels("") compress replace  
-restore
 
-/*Correlation matrix between explanatory variables (Table 4)
-global controls "final_log_age mnc final_fixasset_quint final_log_input_costs final_log_financial_costs final_capital_int final_labor_int final_export_share final_import_share"
-qui correlate $controls
-estpost correlate $controls, matrix listwise
-est store corr_matrix
-esttab corr_matrix using "$out\corr_matrix.tex", replace b(3) unstack ///
-	   not nonumbers nonotes noobs compress label */
 
 *************************************************************************
 *******       			        ILUSTRATIONS   		    	      ******* 
@@ -299,6 +203,32 @@ restore
 merge 1:1 id year using `perct'
 drop _m
 	
+
+* Credits distribution by firm size
+preserve
+keep if !missing(percentil)
+collapse (sum) cit_cre_*, by(percentil)
+egen cit_cre_total = rowtotal(cit_cre_*)
+loc cre "exo withholding pay surplus assignments compensation employment isran"
+
+gen exo 		 = (cit_cre_exo / cit_cre_total) * 100
+gen withholding  = ((cit_cre_exo + cit_cre_withholding) / cit_cre_total) * 100
+gen pay 		 = ((cit_cre_exo + cit_cre_withholding + cit_cre_pay) / cit_cre_total) * 100
+gen surplus 	 = ((cit_cre_exo + cit_cre_withholding + cit_cre_pay + cit_cre_surplus) / cit_cre_total) * 100 
+gen assignments  = ((cit_cre_exo + cit_cre_withholding + cit_cre_pay + cit_cre_surplus + cit_cre_assignments) / cit_cre_total) * 100 
+gen compensation = ((cit_cre_exo + cit_cre_withholding + cit_cre_pay + cit_cre_surplus + cit_cre_assignments + cit_cre_compensation) / cit_cre_total) * 100 
+gen employment 	 = ((cit_cre_exo + cit_cre_withholding + cit_cre_pay + cit_cre_surplus + cit_cre_assignments + cit_cre_compensation + cit_cre_employment) / cit_cre_total) * 100 
+gen isran 		 = ((cit_cre_exo + cit_cre_withholding + cit_cre_pay + cit_cre_surplus + cit_cre_assignments + cit_cre_compensation + cit_cre_employment + cit_cre_isran) / cit_cre_total) * 100 
+   
+twoway (area exo percentil, fcolor(dknavy%80) lcolor(dknavy%80)) (rarea exo withholding percentil, fcolor(navy%60) lcolor(navy%60)) ///
+       (rarea withholding pay percentil, fcolor(blue%60) lcolor(blue%60)) (rarea pay surplus percentil, fcolor(blue%20) lcolor(blue%20)) ///
+	   (rarea surplus assignments percentil, fcolor(midblue%60) lcolor(midblue%60)) (rarea assignments compensation percentil, fcolor(ebblue%60) lcolor(ebblue%60))  /// 
+	   (rarea compensation employment percentil, fcolor(eltblue%60)) (rarea employment isran percentil, fcolor(gray%60) lcolor(gray%60)), ///
+	   $details ylab(0(20)100 0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%", nogrid) xtitle("Percentile on Gross Income") xlab(0(10)100) ///
+	   legend(row(2) lab(1 "Exempt") lab(2 "Withholding") lab(3 "Payments") lab(4 "Surplus") lab(5 "Assignments") lab(6 "Compensation") lab(7 "New jobs") lab(8 "CIT - Net assets") size(small))
+	   graph export "$out\credits_share.pdf", replace
+restore  
+	   
 * Ratio between tax exempt credits and total credits
 preserve
 keep if !missing(percentil)
@@ -309,57 +239,10 @@ collapse (mean) ratio_exoneration, by(percentil)
 twoway (scatter ratio_exoneration percentil, mcolor(blue%40)) ///
 	   (fpfit ratio_exoneration percentil if percentil > 4, lcolor(blue)), ///
 	   ytitle("Exempt tax credits / Tax liability") xtitle("Percentile on Gross Income") ///
-	   $details legend(off) yscale(titlegap(3)) xscale(titlegap(3)) ///
+	   $details legend(off) yscale(titlegap(3)) xscale(titlegap(3)) xlab(0(10)100) ///
 	   ylabel(.75 "75%" .8 "80%" .85 "85%" .9 "90%" .95 "95%" 1 "100%")
 	   graph export "$out\credits_ratio.pdf", replace
 restore
-
-
-* Credits distribution by firm size
-preserve
-keep if !missing(percentil)
-collapse (sum) cit_cre_*, by(percentil)
-egen cit_cre_total = rowtotal(cit_cre_*)
-loc cre "exo withholding pay surplus assignments compensation employment isran"
-foreach c of loc cre {
-	gen `c' = cit_cre_`c' / cit_cre_total
-}
-drop cit_cre_*
-stackedcount `cre' percentil 
-restore
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
 	   
 	   
 	   

@@ -14,4 +14,15 @@ else if "`c(username)'" == "jbermudez" {
 	global codes "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"	
 }
 
+/* Packages required for estimations
+ssc install winsor
+ssc install eststo
+ssc install estout
+ssc install reghdfe
+ssc install ftools
+ssc install erepost
+ssc install prodest
+ssc install binscatter
+*/
+
 * Running do files

@@ -263,6 +263,7 @@ egen vat_purch_imports  = rowtotal(adquisifyducagravadas15 adquisifyducagravadas
 								   importgrav12 importgrav15 importgrav18 importregion12 importregion15 importregion18  ///
 							       importacionesexentas12 importacionesexentas15 importacionesexentas18), missing							   
 gen vat_purch_local     = vat_purch_exempted + vat_purch_taxed	
+gen vat_filler = 1 
 keep rtn year vat_*
 tempfile vat_records
 save "`vat_records'"		   
@@ -602,6 +603,7 @@ label val ever_audited ever_audited
 
 replace ever_audited_times = cond(missing(ever_audited_times), 0, ever_audited_times)
 
+
 * Turnover (and purchases) might be underestimated so we rebuild it combining CIT, VAT and Customs records for local and foreign sales
 * We assume that the true value of exports/imports is the highest between the internal tax (in the CIT/VAT tax form) and customs records
 g final_sales_local = max(cit_sales_local, vat_sales_local)
@@ -611,6 +613,7 @@ g final_imports     = max(vat_purch_imports, custom_import)
 egen final_total_sales = rowtotal(final_sales_local final_exports)
 egen final_total_purch = rowtotal(vat_purch_local final_imports)
 
+
 * Encode as missing all values equal to zero
 	mvdecode vat_* custom_* final_* cit_cre_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
 			 cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports cit_turnover_exempt cit_turnover_taxed ///
@@ -619,13 +622,19 @@ egen final_total_purch = rowtotal(vat_purch_local final_imports)
 			 cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded ///
 			 cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded cit_total_costs_non_ded ///
 			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as, mv(0)
+			 
+replace vat_filler = cond(missing(vat_filler), 0, vat_filler)
+label def vat_filler 0 "Not filling VAT" 1 "Filling VAT", replace
+label val vat_filler vat_filler			 
 
+			 
 * Identifying MNC according to foreign ownership and size restrictions
 bys rtn: egen mean_work = mean(ihss_workers)
 gen final_mnc = (foreign_ownership == 1 & mean_work >= 100 & !missing(mean_work))
 label def final_mnc 1 "MNC" 0 "Not a MNC"
 label val final_mnc final_mnc
 drop mean_work
+
 
 * Impute economic activities for final panel dataset and only keep corporations
 merge m:1 rtn using "$input\Datos_Generales_09_2022.dta", keepusing(${traits})

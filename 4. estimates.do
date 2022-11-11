@@ -26,13 +26,17 @@ else if "`c(username)'" == "jbermudez" {
 
 run "$path\2. setup.do" 	// Run the do file that prepare all variables for estimations
 
+
+* Settings for tables aesthetic
 global details   "booktabs f se(2) b(3) nonumbers star staraux"
 global options   "booktabs se(2) b(3) star staraux nomtitles"
-global graphop   "grid(none) legend(region(lcolor(none))) graphr(color(white))"
+global graphop   "legend(region(lcolor(none))) graphr(color(white))"
 
+
+xtset id year, yearly
 
 *************************************************************************
-*******                   PROBIT ESTIMATES                        ******* 
+*******  PROBIT ESTIMATES 
 *************************************************************************
 
 * This section conducts regressions to identify the covariates determining becoming an exonerated firm
@@ -53,77 +57,162 @@ coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%
 		 coeflabels(final_log_age = "Age" 1.trader = "Foreign trade activity" 1.urban = "Main urban cities") ///
 		 xline(0, lc(black)) label legend(region(lcolor(none))) graphr(color(white))
 		 graph export "$out/probit_both.pdf", replace
-		 
+		
+		
+		
 *************************************************************************
-*******                 BASELINE ESTIMATES (NEW)                  ******* 
+******* BASELINE ESTIMATES (NEW)
 *************************************************************************	
 
 local outcomes1 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
-local outcomes2 "final_epm final_eta final_gfsal final_turnover final_liquidity"
+local outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final_liquidity"
 global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int final_log_total_sales"
 global fixed_ef "ib(freq).codigo year municipality" 
 
 eststo drop *
 foreach var of local outcomes1 {
-	eststo eq1_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
-	qui sum `var'
-	estadd scalar mean1 = r(mean)
-	estadd loc sector_fe   "\cmark": eq1_`var'
-	estadd loc province_fe "\cmark": eq1_`var'
-	estadd loc year_fe     "\cmark": eq1_`var'
-	estadd loc controls    "\cmark": eq1_`var'
+	eststo eq1a_`var': reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe   "\cmark": eq1a_`var'
+	estadd loc province_fe "\cmark": eq1a_`var'
+	estadd loc year_fe     "\cmark": eq1a_`var'
+	estadd loc controls    "\cmark": eq1a_`var'
 	
-	eststo eq2_`var': qui reghdfe `var' i.final_regime ${controls}, a(${fixed_ef}) vce(cluster id)
-	qui test 1.final_regime == 2.final_regime
-	estadd scalar test1 = r(p)
-	qui sum `var'
-	estadd scalar mean1 = r(mean)
-	estadd loc sector_fe   "\cmark": eq2_`var'
-	estadd loc province_fe "\cmark": eq2_`var'
-	estadd loc year_fe     "\cmark": eq2_`var'
-	estadd loc controls    "\cmark": eq2_`var'
+	eststo eq1b_`var': reghdfe `var' i1.exporter#i1.exempt_export exporter exempt_export ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 & exempt_export == 1
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe   "\cmark": eq1b_`var'
+	estadd loc province_fe "\cmark": eq1b_`var'
+	estadd loc year_fe     "\cmark": eq1b_`var'
+	estadd loc controls    "\cmark": eq1b_`var'
+	
+	eststo eq1c_`var': reghdfe `var' i1.non_exporter#i1.exempt_non_export non_exporter exempt_non_export ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 & exempt_non_export == 1
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe   "\cmark": eq1c_`var'
+	estadd loc province_fe "\cmark": eq1c_`var'
+	estadd loc year_fe     "\cmark": eq1c_`var'
+	estadd loc controls    "\cmark": eq1c_`var'
 }
 
 foreach var of local outcomes2 {
-	eststo eq3_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
-	qui sum `var'
-	estadd scalar mean2 = r(mean)
-	estadd loc sector_fe   "\cmark": eq3_`var'
-	estadd loc province_fe "\cmark": eq3_`var'
-	estadd loc year_fe     "\cmark": eq3_`var'
-	estadd loc controls    "\cmark": eq3_`var'
+	eststo eq2a_`var': reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe   "\cmark": eq2a_`var'
+	estadd loc province_fe "\cmark": eq2a_`var'
+	estadd loc year_fe     "\cmark": eq2a_`var'
+	estadd loc controls    "\cmark": eq2a_`var'
 	
-	eststo eq4_`var': qui reghdfe `var' i.final_regime ${controls}, a(${fixed_ef}) vce(cluster id)
-	qui test 1.final_regime == 2.final_regime
-	estadd scalar test2 = r(p)
-	qui sum `var'
-	estadd scalar mean2 = r(mean)
-	estadd loc sector_fe   "\cmark": eq4_`var'
-	estadd loc province_fe "\cmark": eq4_`var'
-	estadd loc year_fe     "\cmark": eq4_`var'
-	estadd loc controls    "\cmark": eq4_`var'
+	eststo eq2b_`var': reghdfe `var' i1.exporter#i1.exempt_export exporter exempt_export ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 & exempt_export == 1
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe   "\cmark": eq2b_`var'
+	estadd loc province_fe "\cmark": eq2b_`var'
+	estadd loc year_fe     "\cmark": eq2b_`var'
+	estadd loc controls    "\cmark": eq2b_`var'
+	
+	eststo eq2c_`var': reghdfe `var' i1.non_exporter#i1.exempt_non_export non_exporter exempt_non_export ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 & exempt_non_export == 1
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe   "\cmark": eq2c_`var'
+	estadd loc province_fe "\cmark": eq2c_`var'
+	estadd loc year_fe     "\cmark": eq2c_`var'
+	estadd loc controls    "\cmark": eq2c_`var'
 }
 
-esttab eq1_* using "$out\reg_performance1.tex", replace f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01) ///
-	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.3fc %9.0fc %9.3fc) ///
+* Tables for first wave of outcomes
+esttab eq1a_* using "$out\reg_performance1.tex", replace f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01) ///
+	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) ///
 	   keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel A}}", nolabel) ///
-	   scalars("mean1 Mean Dep. Var." "N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
 	   
-esttab eq2_* using "$out\reg_performance1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
-	   sfmt(%9.3fc %9.0fc %9.3fc %9.3fc) keep(1.final_regime 2.final_regime) eqlabels(none) nomtitles ///
-	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") refcat(1.final_regime "\textsc{\textbf{Panel B}}", nolabel) ///
-	   scalars("mean1 Mean Dep. Var." "N Observations" "r2 R-Squared" "test1 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")	   
+esttab eq1b_* using "$out\reg_performance1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
+	    sfmt(%9.0fc %9.3fc %9.3fc) keep(1.exporter#1.exempt_export exporter exempt_export) eqlabels(none) nomtitles ///
+	   coeflabels(1.exporter#1.exempt_export "Exporter $\times$ Exempt Exporter" exporter "Exporter" exempt_export "Exempt Exporter") refcat(1.exporter#1.exempt_export "\textsc{\textbf{Panel B}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   
+esttab eq1c_* using "$out\reg_performance1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
+	    sfmt(%9.0fc %9.3fc %9.3fc) keep(1.non_exporter#1.exempt_non_export non_exporter exempt_non_export) eqlabels(none) nomtitles ///
+	   coeflabels(1.non_exporter#1.exempt_non_export "Non Exporter $\times$ Exempt Non-Exporter" non_exporter "Non Exporter" exempt_non_export "Exempt Non-Exporter") refcat(1.non_exporter#1.exempt_non_export "\textsc{\textbf{Panel C}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")	   
 
-esttab eq3_* using "$out\reg_financial1.tex", replace f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01) ///
-	   mtitle("EPM" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.3fc %9.0fc %9.3fc) ///
+* Tables for second wave of outcomes	   
+esttab eq2a_* using "$out\reg_financial1.tex", replace f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01) ///
+	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) ///
 	   keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel A}}", nolabel) ///
-	   scalars("mean2 Mean Dep. Var." "N Observations" "r2 R-Squared" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
 	   
-esttab eq4_* using "$out\reg_financial1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
-	   sfmt(%9.3fc %9.0fc %9.3fc %9.3fc) keep(1.final_regime 2.final_regime) eqlabels(none) nomtitles ///
-	   coeflabels(1.final_regime "Export Oriented ($\beta1$)" 2.final_regime "Non-Export Oriented ($\beta2$)") refcat(1.final_regime "\textsc{\textbf{Panel B}}", nolabel) ///
-	   scalars("mean2 Mean Dep. Var." "N Observations" "r2 R-Squared" "test2 $\beta1=\beta2$" "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
-	   	   
+esttab eq2b_* using "$out\reg_financial1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(1.exporter#1.exempt_export exporter exempt_export) eqlabels(none) nomtitles ///
+	   coeflabels(1.exporter#1.exempt_export "Exporter $\times$ Exempt Exporter" exporter "Exporter" exempt_export "Exempt Exporter") refcat(1.exporter#1.exempt_export "\textsc{\textbf{Panel B}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")
+	   
+esttab eq2c_* using "$out\reg_financial1.tex", append f booktabs se(2) b(3) nonumber star(* 0.10 ** 0.05 *** 0.01) ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(1.non_exporter#1.exempt_non_export non_exporter exempt_non_export) eqlabels(none) nomtitles ///
+	   coeflabels(1.non_exporter#1.exempt_non_export "Non Exporter $\times$ Exempt Non-Exporter" non_exporter "Non Exporter" exempt_non_export "Exempt Non-Exporter") refcat(1.non_exporter#1.exempt_non_export "\textsc{\textbf{Panel C}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "province_fe Province FE?" "year_fe Year FE?" "controls Controls?")	   
+		
+		
+		
+*************************************************************************
+******* SCATTER PLOTS ON RESIDUALS FIXED EFFECTS
+*************************************************************************	
+
+eststo drop *
+preserve
+qui sum final_epm, d
+drop if final_epm > r(p95)
+foreach var of varlist final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF {
+    
+	if "`var'" == "final_log_fixed_assets" {
+	    local ylab "-0.4(0.2)0.4"
+		local yx "0.3 0.18"
+	} 
+	else if "`var'" == "final_log_value_added" {
+	    local ylab "-0.4(0.2)0.6"
+		local yx "-0.25 0.18"
+	} 
+	else if "`var'" == "final_log_employment" {
+	    local ylab "-0.4(0.2)0.4"
+		local yx "0.2 0.18"
+	} 
+	else if "`var'" == "final_log_salary" {
+	    local ylab "-0.04(0.02)0.04"
+		local yx "0.03 0.18"
+	} 
+	else if "`var'" == "tfp_y_LP" {
+	    local ylab "-0.3(0.1)0.3"
+		local yx "0.23 0.18"
+	} 
+	else if "`var'" == "tfp_y_ACF" {
+	    local ylab "-0.3(0.1)0.3"
+		local yx "0.23 0.18"
+	} 	
+	
+	qui reghdfe `var' cit_exonerated, a(${fixed_ef}) vce(cluster id) residuals(r_`var')
+	
+	qui reg r_`var' final_epm, robust
+	loc b1: di %3.2f _b[final_epm]
+	loc s1: di %3.2f _se[final_epm]  
+	
+	loc labvar: var label `var'
+	   
+binscatter r_`var' final_epm, nquantiles(50) ytitle(`"Residuals for `labvar'"') $graphop legend(off) ///
+	       text(`yx' "Slope = `b1'(`s1')", color(black)) yscale(titlegap(3)) mcolors(blue%20) lcolors(blue) ///
+		   xtitle("Economic profit margins") ylabel(`ylab') xscale(titlegap(3))
+	       graph export "$out\residual_`var'.pdf", replace
+}
+restore
+
+		
+
+
+
+
+
+
 
 
 /*************************************************************************

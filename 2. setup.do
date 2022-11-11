@@ -24,14 +24,6 @@ else if "`c(username)'" == "jbermudez" {
 	global out "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 } 
 
-/* Packages required for estimations
-ssc install winsor
-ssc install eststo
-ssc install estout
-ssc install reghdfe
-ssc install ftools
-ssc install prodest
-*/
 
 *************************************************************************
 *******                           SET UP                          ******* 
@@ -147,6 +139,17 @@ gen size_large  = cond(tamaño_ot == 1, 1, 0)
 label var size_large "Large sized firms"
 
 
+* Trade position
+gen trader = cond(!missing(final_exports) | !missing(final_imports), 1, 0)
+lab def trader 0 "Non Trader" 1 "Foreign trade activity"
+
+gen exporter = cond(!missing(final_exports), 1, 0)
+label var exporter "Exporter"
+
+gen non_exporter = cond(missing(final_exports), 1, 0)
+label var non_exporter "Non-exporter"
+
+
 * Minor settings
 encode municipio, gen(municipality)
 egen x = group(id)
@@ -157,8 +160,6 @@ order id, first
 gen urban = cond(municipio == "SAN PEDRO SULA" | municipio == "DISTRITO CENTRAL", 1, 0)
 lab def urban 0 "Not main urban" 1 "Main urban cities"
 
-gen trader = cond(!missing(final_exports) | !missing(final_imports), 1, 0)
-lab def trader 0 "Non Trader" 1 "Foreign trade activity"
 
 
 
@@ -225,27 +226,24 @@ g final_labor_inte = final_net_labor_costs / final_total_sales
 winsor final_labor_inte if !missing(final_labor_inte), gen(final_labor_int) p(0.01)
 drop final_labor_inte
 
-/*g final_gross_pmargin     = (final_total_sales - final_input_costs) / final_total_sales
+g final_gross_pmargin     = (final_total_sales - final_input_costs) / final_total_sales
 replace final_gross_pmargin = 0 if missing(final_gross_pmargin)
 winsor  final_gross_pmargin, gen(final_gpm) p(0.01)
 replace final_gpm = -1 if final_gpm < -1
 replace final_gpm = 1 if final_gpm > 1
 drop final_gross_pmargin
 
-g final_roa_pmargin       = (cit_turnover - cit_deductions) / cit_total_assets
-replace final_roa_pmargin = 0 if missing(final_roa_pmargin)
+g final_roa_pmargin       = (cit_total_inc - cit_total_costs) / cit_total_assets
+replace final_roa_pmargin  = 0 if missing(final_roa_pmargin) | final_roa_pmargin < 0
 winsor  final_roa_pmargin, gen(final_roa) p(0.01)
-replace final_roa = -1 if final_roa < -1
-replace final_roa = 1 if final_roa > 1
 drop final_roa_pmargin
 
-g final_roce_pmargin       = (cit_turnover - cit_deductions) / final_fixed_assets
-replace final_roce_pmargin = 0 if missing(final_roce_pmargin)
+g final_roce_pmargin       = (cit_gross_income - cit_deductions) / final_fixed_assets
+replace final_roce_pmargin  = 0 if missing(final_roce_pmargin) | final_roce_pmargin < 0
 winsor  final_roce_pmargin, gen(final_roce) p(0.01)
 replace final_roce = -1 if final_roce < -1
 replace final_roce = 1 if final_roce > 1
 drop final_roce_pmargin
-*/
 
 g final_econ_pmargin        = (cit_total_inc - cit_total_costs) / cit_total_inc 
 replace final_econ_pmargin  = 0 if missing(final_econ_pmargin) | final_econ_pmargin < 0
@@ -300,16 +298,15 @@ esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l)  /
 	   coeflabels(k "Capital stock" l "Labor") order(k l)	///
 	   scalars("N Observations" "waldP Wald test") sfmt(%9.0fc %9.3fc) ///
 	   se(2) b(3) star nonumbers booktabs
-
+eststo drop *
 
 * Defining labels for all variables
 order id, first
 label var final_mnc  				   "Multinational (MNC)"
-*label var final_gpm   				   "Gross profit margin (GPM)"
-*label var final_npm 				   "Net profit margin (NPM)"
+label var final_gpm   				   "Gross profit margin (GPM)"
 label var final_epm 				   "Economic profit margin (EPM)"
-*label var final_roa 				   "Return on assets (ROA)"
-*label var final_roce 				   "Return on capital employed (ROCE)" 
+label var final_roa 				   "Return on assets (ROA)"
+label var final_roce 				   "Return on capital employed (ROCE)" 
 label var final_eta 		           "Expenses to total assets (ETA)"
 label var final_gfsal 	               "Gross financial costs to sales (GFSAL)"
 label var final_turnover 			   "Turnover"
@@ -339,10 +336,11 @@ label var vat_sales_exempted 		   "Exempt sales (Lempiras 1M)"
 label var vat_sales_taxed			   "Taxed sales (Lempiras 1M)"
 label var vat_purch_exempted 		   "Exempt purchases (Lempiras 1M)"
 label var vat_purch_taxed			   "Taxed purchases (Lempiras 1M)"
-label var tfp_y_LP     				   "TFP on sales LP method (logs)"
-label var tfp_va_LP    				   "TFP on value added LP method (logs)"
-label var tfp_y_ACF     			   "TFP on sales LP method (logs)"
-label var tfp_va_ACF    			   "TFP on value added LP method (logs)"
+label var vat_filler				   "Filling VAT"
+label var tfp_y_LP     				   "TFP on sales (logs), LP method"
+label var tfp_va_LP    				   "TFP on value added (logs), LP method"
+label var tfp_y_ACF     			   "TFP on sales (logs), ACF method"
+label var tfp_va_ACF    			   "TFP on value added (logs), ACF method"
 label var final_log_labor_productivity "Labor productivity (logs)"
 label var final_log_value_added		   "Value added (logs)"
 label var final_salary 				   "Salary"
