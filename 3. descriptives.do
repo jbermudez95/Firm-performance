@@ -84,11 +84,11 @@ eststo: qui estpost ttest $vars, by(final_regime) unequal
 est store diff2
 restore	
 
-esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\tab1.tex", replace collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers nonotes ///
+esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\balance_table.tex", replace collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers nonotes ///
 	   mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   mgroups("" "\textbf{Pooled Comparison}" "\textbf{Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   refcat(final_log_fixed_assets "\textsc{Panel A: Firms' performance}" final_epm "\textsc{Panel B: Financial indicators}" final_age "\textsc{Panel C: Covariates}", nolabel)
+	   mgroups("\textbf{Panel A}" "\textbf{Panel B: Pooled Comparison}" "\textbf{Panel C: Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
+	   refcat(final_log_fixed_assets "\textsc{Panel A: Primary Outcomes}" final_epm "\textsc{Panel B: Secondary Outcomes}" final_age "\textsc{Panel C: Covariates}", nolabel)
 	   
 
 

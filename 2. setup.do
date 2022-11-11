@@ -144,9 +144,11 @@ gen trader = cond(!missing(final_exports) | !missing(final_imports), 1, 0)
 lab def trader 0 "Non Trader" 1 "Foreign trade activity"
 
 gen exporter = cond(!missing(final_exports), 1, 0)
+replace exporter = cond(exempt_non_export == 1, 0, exporter)
 label var exporter "Exporter"
 
 gen non_exporter = cond(missing(final_exports), 1, 0)
+replace non_exporter = cond(exempt_export == 1, ., non_exporter)
 label var non_exporter "Non-exporter"
 
 
