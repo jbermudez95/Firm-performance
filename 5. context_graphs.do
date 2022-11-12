@@ -127,15 +127,22 @@ drop _m
 * Merge with GDP Per capita from the World Bank open dataset
 * ssc install wbopendata
 preserve
-wbopendata, indicator(ny.gdp.pcap.pp.kd) clear long
+wbopendata, indicator(ny.gdp.pcap.pp.kd; ny.gdp.mktp.cd; sp.pop.1564.to; sp.pop.totl) clear long
 rename ny_gdp_pcap_pp_kd gdp_per_capita
+rename ny_gdp_mktp_cd gdp_current_usd
+rename sp_pop_1564_to population_15_64
+rename sp_pop_totl total_population
 tempfile gdp
 save `gdp'
 restore
 
-merge 1:1 countrycode year using `gdp', keepusing(gdp_per_capita)
+merge 1:1 countrycode year using `gdp', keepusing(region gdp_per_capita gdp_current_usd population_15_64 total_population)
 keep if _m == 3
 drop _m
+
+* Building variables
+gen cit_tax_expend_percap1 = log(((tax_exp_cit / 100) * gdp_current_usd) / population_15_64)
+gen cit_tax_expend_percap2 = log(((tax_exp_cit / 100) * gdp_current_usd) / total_population)
 
 gen log_gdp = log(gdp_per_capita)
 label var log_gdp 		"Log(GDP Per Capita, PPP)"
@@ -144,43 +151,27 @@ label var tax_exp_cit   "CIT tax expenditure (% GDP)"
 
 
 * Identifying Honduras for highlighting in the scatterplot
-gen hnd 			  = countrycode   if strpos(countrycode, "HND")   									
-gen hnd_gdp 		  = log_gdp       if countrycode == "HND"
-gen hnd_tax_exp_total = tax_exp_total if countrycode == "HND"
-gen hnd_tax_exp_cit   = tax_exp_cit   if countrycode == "HND"
+gen hnd 			   = countrycode if strpos(countrycode, "HND")   									
+gen hnd_gdp 		   = log_gdp       			if countrycode == "HND"
+gen hnd_tax_exp_total  = tax_exp_total 			if countrycode == "HND"
+gen hnd_tax_exp_cit    = tax_exp_cit   			if countrycode == "HND"
+gen hnd_cit_tax_exp_pc = cit_tax_expend_percap1 if countrycode == "HND"
 
 * Raw Correlations and Scatterplots
-reg tax_exp_total log_gdp, vce(robust)
-loc b1:  di %3.1f _b[log_gdp]
-loc se1: di %3.1f _se[log_gdp]
-
 twoway (scatter tax_exp_total log_gdp if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
 	   (scatter hnd_tax_exp_total hnd_gdp, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
 	   (lfit tax_exp_total log_gdp, lcolor(blue)), ytitle("Total tax expenditure (% GDP)") ///
-	   text(9 10.5 "Coeff = `b1'(`se1')", color(black)) yscale(titlegap(3)) xscale(titlegap(3)) ///
-	   $details ylabel(0(2)10 0 "0%" 2 "2%" 4 "4%" 6 "6%" 8 "8%" 10 "10%") legend(off)
+	   $details yscale(titlegap(3)) xscale(titlegap(3)) ///
+	   ylabel(0(2)10 0 "0%" 2 "2%" 4 "4%" 6 "6%" 8 "8%" 10 "10%") legend(off)
 	   graph export "$out\scatter_tax_exp_total.pdf", replace
 	   
-reg tax_exp_cit log_gdp, vce(robust)
-loc b2:  di %3.1f _b[log_gdp]
-loc se2: di %3.1f _se[log_gdp]	   
-      
-twoway (scatter tax_exp_cit log_gdp if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
-	   (scatter hnd_tax_exp_cit hnd_gdp, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
-	   (lfit tax_exp_cit log_gdp, lcolor(blue)), ytitle("CIT tax expenditure (% GDP)") ///
-	   text(1.6 10.5 "Coeff = `b2'(`se2')", color(black)) yscale(titlegap(3)) xscale(titlegap(3)) ///
-	   $details  ylabel(0(0.5)2 0 "0%" .5 "0.5%" 1 "1%" 1.5 "1.5%" 2 "2%") legend(off)
-	   graph export "$out\scatter_tax_exp_cit.pdf", replace
+twoway (scatter cit_tax_expend_percap1 cit_tax_rate if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
+	   (scatter hnd_cit_tax_exp_pc cit_tax_rate, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
+	   (lfit cit_tax_expend_percap1 cit_tax_rate  if region == "LCN", lcolor(blue)), xtitle("Corporate tax rate") ///
+	   yscale(titlegap(3)) xscale(titlegap(3)) ytitle("CIT tax expenditures per capita (in USD)") ///
+	   $details legend(off)
+	   graph export "$out\scatter_tax_exp_percap.pdf", replace	   
 	   
-reg tax tax_exp_total, vce(robust)	   
-loc b3:  di %3.1f _b[tax_exp_total]
-loc se3: di %3.1f _se[tax_exp_total]	   
-	   
-twoway (scatter tax tax_exp_total, mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
-	   (lfit tax tax_exp_total, lcolor(blue)), ytitle("Tax revenue as a % of GDP ") ///
-	   text(32 7 "Coeff = `b3'(`se3')", color(black)) yscale(titlegap(3)) xscale(titlegap(3)) ///
-	   $details ylabel(5(10)35 5 "5%" 10 "10%" 15 "15%" 20 "20%" 25 "25%" 30 "30%" 35 "35%") legend(off)
-	   graph export "$out\scatter_tax_exp_revenue.pdf", replace
 
 	   
 ********************************************************************************
