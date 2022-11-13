@@ -114,8 +114,9 @@ graph export "$out/taxes.pdf", replace
 ********************************************************************************
 * Scatter plot between tax expenditures and gdp per capita
 ********************************************************************************
-*  Dataset was generated manually based on https://www.ciat.org/Biblioteca/DocumentosdeTrabajo/2019/DT_06_2019_pelaez.pdf
 
+*  Dataset was generated manually based on 
+* https://www.ciat.org/Biblioteca/DocumentosdeTrabajo/2019/DT_06_2019_pelaez.pdf
 import excel using "$path\tax_expenditures.xlsx", firstrow clear
 
 * Merge with tax preassure from the IMF database
