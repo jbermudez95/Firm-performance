@@ -89,7 +89,7 @@ esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\balance_table.tex"
 	   mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
 	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
 	   mgroups("\textbf{Panel A}" "\textbf{Panel B: Pooled Comparison}" "\textbf{Panel C: Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   refcat(final_log_fixed_assets "\textsc{Panel A: Primary Outcomes}" final_epm "\textsc{Panel B: Secondary Outcomes}" final_age "\textsc{Panel C: Covariates}", nolabel)
+	   refcat(final_log_fixed_assets "\textsc{Primary Outcomes}" final_epm "\textsc{Secondary Outcomes}" final_age "\textsc{Covariates}", nolabel)
 	   
 
 
