@@ -37,8 +37,8 @@ global controls "final_log_age final_export_share final_import_share final_capit
 global fixed_ef "ib(freq).codigo year municipality" 
 
 * Run the do file that prepare all variables before estimations
-*run "$path\2. setup.do" 
-*xtset id year, yearly
+run "$path\2. setup.do" 
+xtset id year, yearly
 	
 
 *************************************************************************
@@ -147,7 +147,7 @@ foreach var of local outcomes1 {
 	
 	loc labvar: var label `var'
 	   
-binscatter r_`var' final_epm, nquantiles(50) ytitle(`"Residuals for `labvar'"') $graphop legend(off) ///
+binscatter r_`var' final_epm, nquantiles(100) ytitle(`"Residuals for `labvar'"') $graphop legend(off) ///
 	       text(`yx' "Slope = `b1'(`s1')", color(black)) yscale(titlegap(3)) mcolors(blue%20) lcolors(blue) ///
 		   xtitle("Economic profit margins") ylabel(`ylab') xscale(titlegap(3))
 	       graph export "$out\residual_`var'.pdf", replace
