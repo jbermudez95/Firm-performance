@@ -97,59 +97,7 @@ esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\balance_table.tex"
 *******       			        ILUSTRATIONS   		    	      ******* 
 *************************************************************************
 
-global details "legend(region(lcolor(none))) graphr(color(white))"
-
-* Distributions for TFP on value added (Figure A2)
-twoway (hist final_log_productivity_va if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
-       (hist final_log_productivity_va if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
-	   $details legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
-	   xtitle("TFP on value added") ytitle("Density") 
-graph export "$out/tfp_histogram.pdf", replace
-
-preserve
-kdensity final_log_productivity_va if final_industry == 1, bw(1) gen(x1 d1) nograph
-kdensity final_log_productivity_va if final_industry == 2, bw(1) gen(x2 d2) nograph
-kdensity final_log_productivity_va if final_industry == 3, bw(1) gen(x3 d3) nograph
-twoway line d1 x1, lc(blue) 	  lw(thick)  		   	   		||   ///
-	   line d2 x2, lc(navy) 	  lw(thick)                		||   ///
-	   line d3 x3, lc(midblue%80) lw(thick) lpattern(longdash)  || , ///
-	   $details legend(row(1) order(1 "Primary sector" 2 "Manufacturing" 3 "Services")) ///
-	   ytitle("Density") xtitle("TFP on value added") 
-*graph export "$out/tfp_sectors.pdf", replace
-restore
-
-* Distributions for TFP on sales (Figure A3)
-twoway (hist final_log_productivity_y if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
-       (hist final_log_productivity_y if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
-	   $details legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
-	   xtitle("TFP on sales") ytitle("Density") 
-graph export "$out/tfp_sales_histogram.pdf", replace
-
-preserve
-kdensity final_log_productivity_y if final_industry == 1, bw(1) gen(x1 d1) nograph
-kdensity final_log_productivity_y if final_industry == 2, bw(1) gen(x2 d2) nograph
-kdensity final_log_productivity_y if final_industry == 3, bw(1) gen(x3 d3) nograph
-twoway line d1 x1, lc(blue) 	  lw(thick)  		   	   		||   ///
-	   line d2 x2, lc(navy) 	  lw(thick)                		||   ///
-	   line d3 x3, lc(midblue%80) lw(thick) lpattern(longdash)  || , ///
-	   $details legend(row(1) order(1 "Primary sector" 2 "Manufacturing" 3 "Services")) ///
-	   ytitle("Density") xtitle("TFP on sales") 
-*graph export "$out/tfp_sales_sectors.pdf", replace
-restore
-
-* Distributions for different measures of productivity (Figure A4)
-preserve
-kdensity final_log_labor_productivity, bw(1) gen(x1 d1) nograph
-kdensity final_log_productivity_y,     bw(1) gen(x2 d2) nograph
-kdensity final_log_productivity_va,    bw(1) gen(x3 d3) nograph
-twoway line d1 x1, lc(blue) 	 lw(thick)  ||   ///
-	   line d2 x2, lc(green%70)  lw(thick)  ||   ///
-	   line d3 x3, lc(orange%60) lw(thick)  || , ///
-	   $details legend(row(1) order(1 "Labor productivity" 2 "TFP on sales" 3 "TFP on value added")) ///
-	   ytitle("Density") xtitle("Log(Productivity)") 
-graph export "$out/tfp_measures.pdf", replace
-restore   
-
+global graphop "legend(region(lcolor(none))) graphr(color(white))"
 
 * Income percentiles
 preserve
@@ -185,7 +133,7 @@ twoway (area exo percentil, fcolor(dknavy%80) lcolor(dknavy%80)) (rarea exo with
        (rarea withholding pay percentil, fcolor(blue%60) lcolor(blue%60)) (rarea pay surplus percentil, fcolor(blue%20) lcolor(blue%20)) ///
 	   (rarea surplus assignments percentil, fcolor(midblue%60) lcolor(midblue%60)) (rarea assignments compensation percentil, fcolor(ebblue%60) lcolor(ebblue%60))  /// 
 	   (rarea compensation employment percentil, fcolor(eltblue%60)) (rarea employment isran percentil, fcolor(gray%60) lcolor(gray%60)), ///
-	   $details ylab(0(20)100 0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%", nogrid) xtitle("Percentile on Gross Income") xlab(0(10)100) xscale(titlegap(3)) ///
+	   $graphop ylab(0(20)100 0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%", nogrid) xtitle("Percentile on Gross Income") xlab(0(10)100) xscale(titlegap(3)) ///
 	   legend(row(2) lab(1 "Exempt") lab(2 "Withholding") lab(3 "Payments") lab(4 "Surplus") lab(5 "Assignments") lab(6 "Compensation") lab(7 "New jobs") lab(8 "CIT - Net assets") size(small))
 	   graph export "$out\credits_share.pdf", replace
 restore  
@@ -200,10 +148,35 @@ collapse (mean) ratio_exoneration, by(percentil)
 twoway (scatter ratio_exoneration percentil, mcolor(blue%40)) ///
 	   (fpfit ratio_exoneration percentil if percentil > 4, lcolor(blue)), ///
 	   ytitle("Exempt tax credits / Tax liability") xtitle("Percentile on Gross Income") ///
-	   $details legend(off) yscale(titlegap(3)) xscale(titlegap(3)) xlab(0(10)100) ///
+	   $graphop legend(off) yscale(titlegap(3)) xscale(titlegap(3)) xlab(0(10)100) ///
 	   ylabel(.75 "75%" .8 "80%" .85 "85%" .9 "90%" .95 "95%" 1 "100%")
 	   graph export "$out\credits_ratio.pdf", replace
 restore
+
+
+* Distributions for TFP and correlation between alternative measures
+foreach var of varlist tfp_y_LP tfp_y_ACF tfp_va_LP tfp_va_ACF{
+    loc labvar: var label `var'
+    twoway (hist tfp_y_LP if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
+           (hist tfp_y_LP if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
+	       $graphop legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
+	       xtitle("`labvar'") ytitle("Density") ylab(0(0.2)1) xscale(titlegap(3)) yscale(titlegap(3))
+           graph export "$out/`var'.pdf", replace
+}
+
+binscatter tfp_y_LP tfp_y_ACF, nquantiles(100) ytitle("TFP on sales, LP method") $graphop legend(off) ///
+	       yscale(titlegap(3)) mcolors(blue%20) xtitle("TFP on sales, ACF method") xscale(titlegap(3)) yscale(titlegap(3)) 		   
+	       graph export "$out\tfp_bin_sales.pdf", replace
+		   
+binscatter tfp_va_LP tfp_va_ACF, nquantiles(100) ytitle("TFP on value-added, LP method") $graphop legend(off) ///
+	       yscale(titlegap(3)) mcolors(blue%20) xtitle("TFP on value-added, ACF method") xscale(titlegap(3)) yscale(titlegap(3)) 		   
+	       graph export "$out\tfp_bin_va.pdf", replace
+		   
+
+
+
+
+
 	   
 	   
 	   
