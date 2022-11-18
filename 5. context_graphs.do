@@ -21,7 +21,7 @@ else if "`c(username)'" == "jbermudez" {
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 }	
 
-global details "legend(region(lcolor(none))) graphr(color(white))"
+global graphop "legend(region(lcolor(none))) graphr(color(white))"
 
 
 ********************************************************************************
@@ -105,7 +105,7 @@ label val taxes taxes
 
 g trend = _n
 
-graph bar hnd_mean latam_mean ocde_mean if trend <= 4, over(taxes) $details blabel(total, format(%10.1fc) color(blue)) ///
+graph bar hnd_mean latam_mean ocde_mean if trend <= 4, over(taxes) $graphop blabel(total, format(%10.1fc) color(blue)) ///
 	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "OECD")) ///
 	   ytitle("% of GDP") bar(1, color(navy%70)) bar(2, color(midblue%80)) bar(3, color(blue*.5%40)) 
 graph export "$out/taxes.pdf", replace
@@ -117,7 +117,12 @@ graph export "$out/taxes.pdf", replace
 
 *  Dataset was generated manually based on 
 * https://www.ciat.org/Biblioteca/DocumentosdeTrabajo/2019/DT_06_2019_pelaez.pdf
-import excel using "$path\tax_expenditures.xlsx", firstrow clear
+import excel using "$path\GTED_FullDatabase.xlsx", firstrow clear sheet("RevenueForgone")
+rename _all, lower
+drop note
+
+* Getting tax expenditures by country during 2019
+keep if year == 2019
 
 * Merge with tax preassure from the IMF database
 rename country cname
@@ -162,7 +167,7 @@ gen hnd_cit_tax_exp_pc = cit_tax_expend_percap1 if countrycode == "HND"
 twoway (scatter tax_exp_total log_gdp if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
 	   (scatter hnd_tax_exp_total hnd_gdp, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
 	   (lfit tax_exp_total log_gdp, lcolor(blue)), ytitle("Total tax expenditure (% GDP)") ///
-	   $details yscale(titlegap(3)) xscale(titlegap(3)) ///
+	   $graphop yscale(titlegap(3)) xscale(titlegap(3)) ///
 	   ylabel(0(2)10 0 "0%" 2 "2%" 4 "4%" 6 "6%" 8 "8%" 10 "10%") legend(off)
 	   graph export "$out\scatter_tax_exp_total.pdf", replace
 	   
@@ -170,7 +175,7 @@ twoway (scatter cit_tax_expend_percap1 cit_tax_rate if missing(hnd), mlcolor(blu
 	   (scatter hnd_cit_tax_exp_pc cit_tax_rate, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
 	   (lfit cit_tax_expend_percap1 cit_tax_rate  if region == "LCN", lcolor(blue)), xtitle("Corporate tax rate") ///
 	   yscale(titlegap(3)) xscale(titlegap(3)) ytitle("CIT tax expenditures per capita (in USD)") ///
-	   $details legend(off)
+	   $graphop legend(off)
 	   graph export "$out\scatter_tax_exp_percap.pdf", replace	   
 	   
 
@@ -180,13 +185,13 @@ twoway (scatter cit_tax_expend_percap1 cit_tax_rate if missing(hnd), mlcolor(blu
 ********************************************************************************
 use "$path\tax_expenditures.dta", replace
  
-graph bar tax_exp_total, over(country) asyvars $details   ///
+graph bar tax_exp_total, over(country) asyvars $graphop   ///
 	   ytitle("% of GDP") bar(1, color(navy%70)) bar(2, color(midblue%80)) ///
 	   bar(3, color(blue*.5%40)) blabel(total, format(%10.2fc) color(blue)) ///
 	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "North-America & Europe"))
 graph export "$out/taxexp_tot.pdf", replace
 
-graph bar tax_exp_corps, over(country) asyvars $details   ///
+graph bar tax_exp_corps, over(country) asyvars $graphop   ///
 	   ytitle("% of GDP") bar(1, color(navy%70)) bar(2, color(midblue%80)) ///
 	   bar(3, color(blue*.5%40)) blabel(total, format(%10.2fc) color(blue)) ///
 	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "North-America & Europe"))
@@ -198,7 +203,7 @@ g m = 0
 replace m = 119.4 in 1
 replace m = 117.4 in 2
 replace m = 72.2 in 3
-graph bar m, over(final_industry) asyvars $details  ///
+graph bar m, over(final_industry) asyvars $graphop  ///
 	   ytitle("Percentages") bar(1, color(navy%70)) bar(2, color(midblue%80)) ///
 	   bar(3, color(blue*.5%40)) blabel(total, format(%10.1fc) color(blue)) ///
 	   legend(row(1) order(1 "Primary" 2 "Manufacturing" 3 "Services")) bargap(20)  
