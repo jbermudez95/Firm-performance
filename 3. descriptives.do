@@ -64,7 +64,7 @@ esttab panel3 using "$out\summary", append label booktabs nonum f noobs ///
 	   
 * Balance table
 eststo drop *	
-global vars "final_log_fixed_assets final_log_value_added ihss_workers final_log_salary tfp_y_LP tfp_y_ACF final_epm final_roa final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban final_export_share final_import_share"
+global vars "final_log_fixed_assets final_log_value_added ihss_workers final_log_salary tfp_y_LP tfp_y_ACF final_epm final_roa final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban final_export_share final_import_share final_labor_int final_capital_int"
 	   
 eststo: qui estpost summ $vars, detail
 est store pooled  
@@ -86,10 +86,10 @@ est store diff2
 restore	
 
 esttab pooled nonex1 ex1 diff1 exor1 nexor1 diff2 using "$out\balance_table.tex", replace collabels("Mean" "SD" "()-()") label tex f alignment(r) compress nonumbers nonotes ///
-	   mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
-	   cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
-	   mgroups("\textbf{Panel A}" "\textbf{Panel B: Pooled Comparison}" "\textbf{Panel C: Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
-	   refcat(final_log_fixed_assets "\textsc{Primary Outcomes}" final_epm "\textsc{Secondary Outcomes}" final_age "\textsc{Covariates}", nolabel)
+mtitles("Pooled Sample" "Non-Exonerated" "Exonerated" "Mean Diff" "Export-Oriented" "Non Export-Oriented" "Mean Diff") ///
+cells("mean(pattern(1 1 1 0 1 1 0) fmt(2)) sd(pattern(1 1 1 0 1 1 0) fmt(2) par) b(star pattern(0 0 0 1 0 0 1) fmt(2))") ///
+mgroups("\textbf{Panel A}" "\textbf{Panel B: Pooled Comparison}" "\textbf{Panel C: Exonerated Only}", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(0 1 0 0 1 0 0) erepeat(\cmidrule(lr){@span})) ///
+refcat(final_log_fixed_assets "\textsc{Primary Outcomes}" final_epm "\textsc{Secondary Outcomes}" final_age "\textsc{Covariates}", nolabel)
 	   
 
 
