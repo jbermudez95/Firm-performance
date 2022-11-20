@@ -124,7 +124,7 @@ drop note
 * Getting tax expenditures by country during 2019
 keep if year == 2019
 
-* Merge with tax preassure from the IMF database
+* Merge with tax revenue as % of GDP from the IMF database
 rename country cname
 merge 1:1 cname year using "$path\fiscal_data_imf.dta", keepusing(tax)
 drop if _m == 2
