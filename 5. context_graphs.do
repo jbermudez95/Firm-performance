@@ -229,7 +229,7 @@ twoway (scatter cit_tax_rate cit_tax_expend_percap1 if missing(hnd), mlcolor(blu
 	   (lfit cit_tax_rate cit_tax_expend_percap1, lcolor(blue)), ytitle("Corporate tax rate") $graphop legend(off) ///
 	   yscale(titlegap(3)) xscale(titlegap(3)) xtitle("Log(CIT tax expenditures per capita, in USD)") ///
 	   text(12 7.5 "Slope = `b2' (`s2')", color(black) size(small)) ylabel(5(10)35 5 "5%" 15 "15%" 25 "25%" 35 "35%")
-	   graph export "$out\scatter_tax_exp_percap.pdf", replace
+	   *graph export "$out\scatter_tax_exp_percap.pdf", replace
 restore
 
 
