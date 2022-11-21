@@ -197,6 +197,7 @@ gen hnd_tax_exp_total  = tax_exp_total 			if countrycode == "HND"
 gen hnd_tax_exp_cit    = tax_exp_cit   			if countrycode == "HND"
 gen hnd_cit_tax_exp_pc = cit_tax_expend_percap1 if countrycode == "HND"
 
+
 * Raw correlations and scatterplots
 preserve
 qui sum tax_exp_cit, d
@@ -214,28 +215,22 @@ twoway (scatter tax_exp_cit log_gdp if missing(hnd), mlcolor(blue%40) mfcolor(bl
 	   graph export "$out\scatter_tax_exp_cit.pdf", replace   
 restore	   
 
+
 preserve
 qui sum cit_tax_expend_percap1, d
 keep if cit_tax_expend_percap1 > r(p1)
 
-qui reg cit_tax_rate cit_tax_expend_percap1 tax log_gdp, robust
+qui reg cit_tax_rate cit_tax_expend_percap1, robust
 loc b2: di %4.2fc _b[cit_tax_expend_percap1]
 loc s2: di %4.2fc _se[cit_tax_expend_percap1]
-binscatter cit_tax_rate cit_tax_expend_percap1, controls(tax log_gdp) nq(60)
-/*twoway (scatter cit_tax_rate cit_tax_expend_percap1 if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
+
+twoway (scatter cit_tax_rate cit_tax_expend_percap1 if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
 	   (scatter cit_tax_rate hnd_cit_tax_exp_pc, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
 	   (lfit cit_tax_rate cit_tax_expend_percap1, lcolor(blue)), ytitle("Corporate tax rate") $graphop legend(off) ///
 	   yscale(titlegap(3)) xscale(titlegap(3)) xtitle("Log(CIT tax expenditures per capita, in USD)") ///
-	   text(12 7.5 "Slope = `b2' (`s2')", color(black) size(small))
-	   *graph export "$out\scatter_tax_exp_percap.pdf", replace	*/ 
+	   text(12 7.5 "Slope = `b2' (`s2')", color(black) size(small)) ylabel(5(10)35 5 "5%" 15 "15%" 25 "25%" 35 "35%")
+	   graph export "$out\scatter_tax_exp_percap.pdf", replace
 restore
-
-
-
-
-
-
-binscatter cit_tax_rate cit_tax_expend_percap1, controls(tax log_gdp) nq(60)
 
 
 	   
