@@ -23,6 +23,7 @@ ssc install ftools
 ssc install erepost
 ssc install prodest
 ssc install binscatter
+ssc install wbopendata
 */
 
 * Running do files

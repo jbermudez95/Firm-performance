@@ -112,26 +112,20 @@ graph export "$out/taxes.pdf", replace
 
 
 ********************************************************************************
-* Scatter plot between tax expenditures and gdp per capita
+* Scatter plot between tax expenditures and gdp per capita using Pelaez
 ********************************************************************************
 
-*  Dataset was generated manually based on 
+* Dataset was generated manually based on 
 * https://www.ciat.org/Biblioteca/DocumentosdeTrabajo/2019/DT_06_2019_pelaez.pdf
-import excel using "$path\GTED_FullDatabase.xlsx", firstrow clear sheet("RevenueForgone")
-rename _all, lower
-drop note
-
-* Getting tax expenditures by country during 2019
-keep if year == 2019
+import excel using "$path\tax_expenditures.xlsx", firstrow clear
 
 * Merge with tax revenue as % of GDP from the IMF database
-rename country cname
-merge 1:1 cname year using "$path\fiscal_data_imf.dta", keepusing(tax)
+rename country cname 
+merge m:1 cname year using "$path\fiscal_data_imf.dta", keepusing(tax)
 drop if _m == 2
 drop _m
 
 * Merge with GDP Per capita from the World Bank open dataset
-* ssc install wbopendata
 preserve
 wbopendata, indicator(ny.gdp.pcap.pp.kd; ny.gdp.mktp.cd; sp.pop.1564.to; sp.pop.totl) clear long
 rename ny_gdp_pcap_pp_kd gdp_per_capita
@@ -181,30 +175,121 @@ twoway (scatter cit_tax_expend_percap1 cit_tax_rate if missing(hnd), mlcolor(blu
 
 	   
 ********************************************************************************
-* Bar graph for tax expenditures
+* Scatter plot between tax expenditures and gdp per capita using GTED
 ********************************************************************************
-use "$path\tax_expenditures.dta", replace
- 
-graph bar tax_exp_total, over(country) asyvars $graphop   ///
-	   ytitle("% of GDP") bar(1, color(navy%70)) bar(2, color(midblue%80)) ///
-	   bar(3, color(blue*.5%40)) blabel(total, format(%10.2fc) color(blue)) ///
-	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "North-America & Europe"))
-graph export "$out/taxexp_tot.pdf", replace
 
-graph bar tax_exp_corps, over(country) asyvars $graphop   ///
-	   ytitle("% of GDP") bar(1, color(navy%70)) bar(2, color(midblue%80)) ///
-	   bar(3, color(blue*.5%40)) blabel(total, format(%10.2fc) color(blue)) ///
-	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "North-America & Europe"))
-graph export "$out/taxexp_corps.pdf", replace
+* Tax expenditures coming from the Global Tax Expenditures Dataset (https://gted.net/)
 
-* Fiscal sacrifice by sector
-use "$path\fiscal_sacr.dta", replace
-g m = 0
-replace m = 119.4 in 1
-replace m = 117.4 in 2
-replace m = 72.2 in 3
-graph bar m, over(final_industry) asyvars $graphop  ///
-	   ytitle("Percentages") bar(1, color(navy%70)) bar(2, color(midblue%80)) ///
-	   bar(3, color(blue*.5%40)) blabel(total, format(%10.1fc) color(blue)) ///
-	   legend(row(1) order(1 "Primary" 2 "Manufacturing" 3 "Services")) bargap(20)  
-graph export "$out/fiscal_sacr.pdf", replace
+import excel using "$path\GTED_FullDatabase.xlsx", firstrow clear sheet("RevenueForgone")
+rename _all, lower
+drop note
+keep if year == 2019
+
+preserve
+import excel using "$path\GTED_FullDatabase.xlsx", firstrow clear sheet("TEProvisions")
+rename _all, lower
+keep provisionid countrycode taxbaselevel2
+rename countrycode country
+tempfile base
+save `base'
+restore
+
+merge 1:1 country provisionid using `base'
+keep if _merge == 3
+drop _merge
+
+
+* Building total tax expenditure and CIT tax axpenditure (both as % of GDP) by country 
+replace rfofgdp = cond(missing(rfofgdp), 0, rfofgdp)
+replace rfusd   = cond(missing(rfusd), 0, rfusd)
+
+gen tax_exp_cit     = cond(taxbaselevel2 == "Corporate Income Tax (CIT)", rfofgdp, 0)
+gen tax_exp_cit_usd = cond(taxbaselevel2 == "Corporate Income Tax (CIT)", rfusd, 0)
+
+gcollapse (sum) tax_exp_total = rfofgdp (sum) tax_exp_cit (sum) tax_exp_cit_usd, by(country year)
+
+* Merge with Development Indicators
+preserve
+wbopendata, indicator(ny.gdp.pcap.pp.kd; ny.gdp.mktp.cd; sp.pop.1564.to; sp.pop.totl) clear long
+rename ny_gdp_pcap_pp_kd gdp_per_capita
+rename ny_gdp_mktp_cd gdp_current_usd
+rename sp_pop_1564_to population_15_64
+rename sp_pop_totl total_population
+tempfile gdp
+save `gdp'
+restore
+
+rename country countrycode
+merge 1:1 countrycode year using `gdp', keepusing(countryname region gdp_per_capita gdp_current_usd population_15_64 total_population)
+keep if _m == 3
+drop _m
+
+* Merge with 2019 statutory tax rates from KPMG
+preserve
+import excel using "$path\statutory_tax_rates.xlsx", firstrow clear sheet("cit_tax_rate")
+tempfile rate
+save `rate'
+restore
+
+merge 1:1 countryname using `rate'
+drop if _m == 2
+drop _m
+
+* Building variables
+gen cit_tax_expend_percap1 = log(tax_exp_cit_usd / population_15_64)
+gen cit_tax_expend_percap2 = log(tax_exp_cit_usd / total_population)
+gen log_gdp = log(gdp_per_capita)
+
+label var log_gdp 		"Log(GDP Per Capita, PPP)"
+label var tax_exp_total "Total tax expenditure (% GDP)"
+label var tax_exp_cit   "CIT tax expenditure (% GDP)"
+label var cit_tax_rate  "Corporate tax rate"
+
+* Identifying Honduras for highlighting in the scatterplot
+gen hnd 			   = countrycode if strpos(countrycode, "HND")   									
+gen hnd_gdp 		   = log_gdp       			if countrycode == "HND"
+gen hnd_tax_exp_total  = tax_exp_total 			if countrycode == "HND"
+gen hnd_tax_exp_cit    = tax_exp_cit   			if countrycode == "HND"
+gen hnd_cit_tax_exp_pc = cit_tax_expend_percap1 if countrycode == "HND"
+
+* Raw Correlations and Scatterplots
+preserve
+qui sum tax_exp_total, d
+keep if tax_exp_total < r(p99)
+
+qui reg tax_exp_total log_gdp, robust
+loc b1: di %4.2fc _b[log_gdp]
+loc s1: di %4.2fc _se[log_gdp]
+
+twoway (scatter tax_exp_total log_gdp if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
+	   (scatter hnd_tax_exp_total hnd_gdp, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
+	   (lfit tax_exp_total log_gdp, lcolor(blue)), $graphop ytitle("Total tax expenditure (% GDP)") legend(off) ///
+	   yscale(titlegap(3)) xscale(titlegap(3)) ylabel(0(5)15 0 "0%" 5 "5%" 10 "10%" 15 "15%") ///
+	   text(12 7 "Slope = `b1' (`s1')", color(black) size(small))
+	   graph export "$out\scatter_tax_exp_total.pdf", replace   
+restore	   
+
+preserve
+keep if cit_tax_expend_percap1 > 0
+qui reg cit_tax_rate cit_tax_expend_percap1, robust
+loc b2: di %4.2fc _b[cit_tax_expend_percap1]
+loc s2: di %4.2fc _se[cit_tax_expend_percap1]
+
+twoway (scatter cit_tax_rate cit_tax_expend_percap1 if missing(hnd), mlcolor(blue%40) mfcolor(blue%40) msize(medlarge)) ///
+	   (scatter cit_tax_rate hnd_cit_tax_exp_pc, msymbol(triangle) mcolor(red) mlabel(hnd) mlabcolor(red) msize(medlarge)) ///
+	   (lfit cit_tax_rate cit_tax_expend_percap1, lcolor(blue)), ytitle("Corporate tax rate") $graphop legend(off) ///
+	   yscale(titlegap(3)) xscale(titlegap(3)) xtitle("CIT tax expenditures per capita (in USD)") ///
+	   text(12 7 "Slope = `b1' (`s1')", color(black) size(small))
+	   *graph export "$out\scatter_tax_exp_percap.pdf", replace	 
+restore
+
+
+
+
+
+
+
+
+
+	   
+	   
