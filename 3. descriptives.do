@@ -99,17 +99,6 @@ refcat(final_log_fixed_assets "\textsc{Primary Outcomes}" final_epm "\textsc{Sec
 
 global graphop "legend(region(lcolor(none))) graphr(color(white))"
 
-* Income percentiles
-preserve
-keep if !missing(cit_gross_income)
-egen percentil = xtile(cit_gross_income), by(year) p(1(1)99)	
-egen decil     = xtile(cit_gross_income), by(year) p(1(1)10)	 
-tempfile perct
-save `perct'
-restore
-merge 1:1 id year using `perct'
-drop _m
-
 
 * Credits distribution by firm size
 preserve
@@ -137,7 +126,8 @@ twoway (area exo percentil, fcolor(dknavy%80) lcolor(dknavy%80)) (rarea exo with
 	   legend(row(2) lab(1 "Exempt") lab(2 "Withholding") lab(3 "Payments") lab(4 "Surplus") lab(5 "Assignments") lab(6 "Compensation") lab(7 "New jobs") lab(8 "CIT - Net assets") size(small))
 	   graph export "$out\credits_share.pdf", replace
 restore  
-	   
+	
+	
 * Ratio between tax exempt credits and total credits
 preserve
 keep if !missing(percentil)
@@ -152,6 +142,7 @@ twoway (scatter ratio_exoneration percentil, mcolor(blue%40)) ///
 	   ylabel(.75 "75%" .8 "80%" .85 "85%" .9 "90%" .95 "95%" 1 "100%")
 	   graph export "$out\credits_ratio.pdf", replace
 restore
+
 
 * Cumulative distribution function for exemption credits
 qui ksmirnov final_log_credits, by(cit_exonerated)
@@ -176,14 +167,7 @@ binscatter tfp_y_LP tfp_y_ACF, nquantiles(100) ytitle("TFP on sales, LP method")
 		   
 binscatter tfp_va_LP tfp_va_ACF, nquantiles(100) ytitle("TFP on value-added, LP method") $graphop legend(off) ///
 	       yscale(titlegap(3)) mcolors(blue%20) xtitle("TFP on value-added, ACF method") xscale(titlegap(3)) yscale(titlegap(3)) 		   
-	       graph export "$out\tfp_bin_va.pdf", replace
-		   
-
-
-
-
-
-	   
+	       graph export "$out\tfp_bin_va.pdf", replace  
 	   
 	   
 	   
