@@ -153,6 +153,12 @@ twoway (scatter ratio_exoneration percentil, mcolor(blue%40)) ///
 	   graph export "$out\credits_ratio.pdf", replace
 restore
 
+* Cumulative distribution function for exemption credits
+qui ksmirnov final_log_credits, by(cit_exonerated)
+cdfplot final_log_credits, by(cit_exonerated) legend(order(1 "Non-Exonerated" 2 "Exonerated")) $graphop ///
+		opt1(lw(medthick medthick) lc(blue%70 orange%60)) text(0.3 4 "KS test p-value = `: di %3.2f `=r(p)''", place(e))
+graph export "$out/cdf_exemption_credits.pdf", replace
+
 
 * Distributions for TFP and correlation between alternative measures
 foreach var of varlist tfp_y_LP tfp_y_ACF tfp_va_LP tfp_va_ACF{
