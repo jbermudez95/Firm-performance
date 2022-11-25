@@ -296,8 +296,14 @@ g m  = final_log_input_costs
 eststo drop *
 local output y va
 foreach var of local output {
+	if "`var'" == "y" {
 	eststo model_LP_`var':  qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) reps(100) id(id) t(year) fsresidual(tfp_`var'_LP) 
-	eststo model_ACF_`var': qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) acf reps(100) id(id) t(year) fsresidual(tfp_`var'_ACF)
+	eststo model_ACF_`var': qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) reps(100) id(id) t(year) acf fsresidual(tfp_`var'_ACF)
+	}
+	else if "`var'" == "va" {
+	eststo model_LP_`var':  qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) reps(100) id(id) t(year) valueadded fsresidual(tfp_`var'_LP) 
+	eststo model_ACF_`var': qui prodest `var', free(l) state(k) proxy(m) met(lp) opt(dfp) reps(100) id(id) t(year) valueadded acf fsresidual(tfp_`var'_ACF)
+	}
 }
 
 drop y va k l m
