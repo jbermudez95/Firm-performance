@@ -163,6 +163,16 @@ gen urban = cond(municipio == "SAN PEDRO SULA" | municipio == "DISTRITO CENTRAL"
 lab def urban 0 "Not main urban" 1 "Main urban cities"
 
 
+* Income percentiles
+preserve
+keep if !missing(cit_gross_income)
+egen percentil = xtile(cit_gross_income), by(year) p(1(1)99)	
+egen decil     = xtile(cit_gross_income), by(year) p(1(1)10)	 
+tempfile perct
+save `perct'
+restore
+merge 1:1 id year using `perct'
+
 
 
 *************************************************************************
@@ -355,4 +365,7 @@ label var legal_attorneys 			   "Lobbying ability"
 label var legal_proxy				   "Lobbying ability"
 label var ever_audited_times 		   "Number of times audited"
 label var ever_audited				   "Audited at least once"
+label var percentil					   "Percentile on gross income"
+label var decil 					   "Decil on gross income"
+
 
