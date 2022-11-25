@@ -4,7 +4,7 @@ Description: 	This do file uses secondary datasets to make the figures number
 1, 2, and 4 that are included in the Appendix of the paper "Firm
 performance and tax incentives: Evidence from Honduras".
 Date:			November, 2021
-Modified:		November, 2021
+Modified:		November, 2022
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -48,65 +48,47 @@ g ocde = 1 if (cname == "Canada"   | cname == "United States"   | cname == "Unit
 replace ocde = 0 if missing(ocde)
 
 keep if (latam == 1 | ocde == 1 | cname == "Honduras")
-keep if year == 2018
+keep if year == 2019
 
-qui sum tax if cname == "Honduras"
-loc hnd_tax: di %5.1f r(mean)
-qui sum indv if cname == "Honduras"
-loc hnd_indv: di %5.1f r(mean)
-qui sum corp if cname == "Honduras"
-loc hnd_corp: di %5.1f r(mean)
-qui sum goods if cname == "Honduras"
-loc hnd_goods: di %5.1f r(mean)
-
-qui sum tax if latam == 1
-loc latam_tax: di %5.1f r(mean)
-qui sum indv if latam == 1
-loc latam_indv: di %5.1f r(mean)
-qui sum corp if latam == 1
-loc latam_corp: di %5.1f r(mean)
-qui sum goods if latam == 1
-loc latam_goods: di %5.1f r(mean)
-
-qui sum tax if ocde == 1
-loc ocde_tax: di %5.1f r(mean)
-qui sum indv if ocde == 1
-loc ocde_indv: di %5.1f r(mean)
-qui sum corp if ocde == 1
-loc ocde_corp: di %5.1f r(mean)
-qui sum goods if ocde == 1
-loc ocde_goods: di %5.1f r(mean)
+foreach var of varlist tax indv corp vat {
+	qui sum `var' if cname == "Honduras"
+	loc hnd_`var': di %5.1f r(mean)
+	qui sum `var' if latam == 1
+	loc latam_`var': di %5.1f r(mean)
+	qui sum `var' if ocde == 1
+	loc ocde_`var': di %5.1f r(mean)
+}
 
 g hnd_mean = .
-replace hnd_mean = `hnd_tax'   in 1
-replace hnd_mean = `hnd_indv'  in 2
-replace hnd_mean = `hnd_corp'  in 3
-replace hnd_mean = `hnd_goods' in 4
+replace hnd_mean = `hnd_tax'  in 1
+replace hnd_mean = `hnd_indv' in 2
+replace hnd_mean = `hnd_corp' in 3
+replace hnd_mean = `hnd_vat'  in 4
 
 g latam_mean = .
-replace latam_mean = `latam_tax'   in 1
-replace latam_mean = `latam_indv'  in 2
-replace latam_mean = `latam_corp'  in 3
-replace latam_mean = `latam_goods' in 4
+replace latam_mean = `latam_tax'  in 1
+replace latam_mean = `latam_indv' in 2
+replace latam_mean = `latam_corp' in 3
+replace latam_mean = `latam_vat'  in 4
 
 g ocde_mean = .
-replace ocde_mean = `ocde_tax'   in 1
-replace ocde_mean = `ocde_indv'	 in 2
-replace ocde_mean = `ocde_corp'  in 3
-replace ocde_mean = `ocde_goods' in 4
+replace ocde_mean = `ocde_tax'  in 1
+replace ocde_mean = `ocde_indv'	in 2
+replace ocde_mean = `ocde_corp' in 3
+replace ocde_mean = `ocde_vat'  in 4
 
 g taxes = .
 replace taxes = 1 in 1
 replace taxes = 2 in 2
 replace taxes = 3 in 3
 replace taxes = 4 in 4
-label def taxes 1 "Tax Revenue" 2 "Individual" 3 "Corporations" 4 "Goods & Services"
+label def taxes 1 "Total Tax Revenue" 2 "Individual" 3 "Corporations" 4 "VAT"
 label val taxes taxes
 
 g trend = _n
 
 graph bar hnd_mean latam_mean ocde_mean if trend <= 4, over(taxes) $graphop blabel(total, format(%10.1fc) color(blue)) ///
-	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "OECD")) ///
+	   legend(row(1) order(1 "Honduras" 2 "Latin America" 3 "OECD")) ylabel(, nogrid) ///
 	   ytitle("% of GDP") bar(1, color(navy%70)) bar(2, color(midblue%80)) bar(3, color(blue*.5%40)) 
 graph export "$out/taxes.pdf", replace
 
@@ -229,7 +211,7 @@ twoway (scatter cit_tax_rate cit_tax_expend_percap1 if missing(hnd), mlcolor(blu
 	   (lfit cit_tax_rate cit_tax_expend_percap1, lcolor(blue)), ytitle("Corporate tax rate") $graphop legend(off) ///
 	   yscale(titlegap(3)) xscale(titlegap(3)) xtitle("Log(CIT tax expenditures per capita, in USD)") ///
 	   text(12 7.5 "Slope = `b2' (`s2')", color(black) size(small)) ylabel(5(10)35 5 "5%" 15 "15%" 25 "25%" 35 "35%")
-	   *graph export "$out\scatter_tax_exp_percap.pdf", replace
+	   graph export "$out\scatter_tax_exp_percap.pdf", replace
 restore
 
 
