@@ -180,7 +180,7 @@ gen hnd_tax_exp_cit    = tax_exp_cit   			if countrycode == "HND"
 gen hnd_cit_tax_exp_pc = cit_tax_expend_percap1 if countrycode == "HND"
 
 
-* Raw correlations and scatterplots
+* Scatterplot for the corporate tax expenditure and GDP per capita
 preserve
 qui sum tax_exp_cit, d
 keep if tax_exp_cit < r(p99)
@@ -198,6 +198,7 @@ twoway (scatter tax_exp_cit log_gdp if missing(hnd), mlcolor(blue%40) mfcolor(bl
 restore	   
 
 
+* Scatterplot for the corporate tax rate and corporate tax expenditure per capita
 preserve
 qui sum cit_tax_expend_percap1, d
 keep if cit_tax_expend_percap1 > r(p1)
