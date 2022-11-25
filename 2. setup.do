@@ -318,6 +318,7 @@ esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l)  /
 	   se(2) b(3) star nonumbers booktabs
 eststo drop *
 
+
 * Defining labels for all variables
 order id, first
 label var final_mnc  				   "Multinational (MNC)"
