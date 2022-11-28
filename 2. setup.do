@@ -106,7 +106,7 @@ replace activity_sector = 8  if activity_sector == 11 & inlist(codigoseccion, "M
 replace activity_sector = 9  if activity_sector == 11 & inlist(codigoseccion, "Q","R")
 replace activity_sector = 10 if activity_sector == 11 & inlist(codigoseccion, "S","T")
 lab def activity_sector 1 "Agriculture and extraction" 2 "Manufacturing" 3 "Utilities and construction" ///
-						4 "Automotive" 5 "Wholesale and retail" 6 "Transportation, housing and toruism" 7 "Comunications and technology" ///
+						4 "Automotive" 5 "Wholesale and retail" 6 "Transportation, housing and tourism" 7 "Comunications and technology" ///
 						8 "Professional and technical services" 9 "Health and arts" 10 "Other services", replace
 lab val activity_sector activity_sector
 	
