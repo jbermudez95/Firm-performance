@@ -374,10 +374,36 @@ esttab eq2e_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel E: Services}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")		
 
+
 	   
+*************************************************************************
+******* ROHBUSTNES: ALTERNATIVE SPECIFICATIONS
+*************************************************************************
+
+eststo drop *
+
+* Primary outcomes
+foreach var of local outcomes1 {
+	eststo eq1a_`var': qui reghdfe `var' final_log_credits ${controls}, a(${fixed_ef}) vce(cluster id)
+}	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 *************************************************************************
-******* ESTIMATES USING TAX CREDITS INSTEAD OF DUMMIES
+******* ROHBUSTNES: TAX CREDITS INSTEAD OF DUMMIES
 *************************************************************************
 
 eststo drop *
@@ -414,7 +440,7 @@ esttab eq2a_* using "$out\reg_credits_secondary.tex", replace ${tab_details} ///
 	   
 
 
-*************************************************************************
+/*************************************************************************
 *******                    APPENDIX ESTIMATES                     ******* 
 *************************************************************************
 
