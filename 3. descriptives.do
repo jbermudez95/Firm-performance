@@ -180,7 +180,6 @@ twoway (hist final_log_salary if cit_exonerated == 0, lcolor(blue%30) fcolor(blu
 	   ytitle("Density") xscale(titlegap(3)) yscale(titlegap(3))
 	   graph export "$out\histogram_salary.pdf", replace
 restore
-
 	   
 	   
 	   
