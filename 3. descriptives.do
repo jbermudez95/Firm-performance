@@ -170,6 +170,17 @@ binscatter tfp_va_LP tfp_va_ACF, nquantiles(100) ytitle("TFP on value-added, LP 
 	       graph export "$out\tfp_bin_va.pdf", replace  
 	   
 	   
+* Distribution for salary	   
+preserve
+qui sum final_log_salary, d
+keep if final_log_salary < r(p95)
+twoway (hist final_log_salary if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
+	   (hist final_log_salary if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
+	   $graphop legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
+	   ytitle("Density") xscale(titlegap(3)) yscale(titlegap(3))
+	   graph export "$out\histogram_salary.pdf", replace
+restore
+
 	   
 	   
 	   
