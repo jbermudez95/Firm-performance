@@ -24,6 +24,8 @@ else if "`c(username)'" == "jbermudez" {
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 }	
 
+
+
 * Global settings for tables and graphs aesthetic
 global tab_details "f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01)"
 global graphop     "legend(region(lcolor(none))) graphr(color(white))"
@@ -35,11 +37,9 @@ local outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final_
 global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int ib3.tamaño_ot"
 global fixed_ef "ib(freq).codigo year municipality" 
 
-
-/* Run the do file that prepare all variables before estimations
+* Run the do file that prepare all variables before estimations
 run "$path\2. setup.do" 
 xtset id year, yearly
-*/
 	
 
 *************************************************************************
@@ -286,22 +286,22 @@ esttab eq1a_* using "$out\reg_hetero_primary.tex", replace ${tab_details} ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
 	   
 esttab eq1b_* using "$out\reg_hetero_primary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel B: Non Exporters}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	 
 	   
 esttab eq1c_* using "$out\reg_hetero_primary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel C: Agricultural, extraction}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
 	   
 esttab eq1d_* using "$out\reg_hetero_primary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel D: Industry}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	   
 	   
 esttab eq1e_* using "$out\reg_hetero_primary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel E: Services}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")		
 	   
@@ -356,34 +356,34 @@ esttab eq2a_* using "$out\reg_hetero_secondary.tex", replace ${tab_details} ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
 	   
 esttab eq2b_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel B: Non Exporters}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
 	   
 esttab eq2c_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel C: Agricultural, extraction}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	
 	   
 esttab eq2d_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel D: Industry}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")		   
 	   
 esttab eq2e_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
-	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel E: Services}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")		
 
 
 	   
-*************************************************************************
+/*************************************************************************
 ******* ROHBUSTNES: ALTERNATIVE SPECIFICATIONS
 *************************************************************************
 
 eststo drop *
 
-/* Primary outcomes
+* Primary outcomes
 foreach var of local outcomes1 {
 	eststo eq1a_`var': qui reghdfe `var' final_log_credits ${controls}, a(${fixed_ef}) vce(cluster id)
 }	
