@@ -32,13 +32,14 @@ global graphop     "legend(region(lcolor(none))) graphr(color(white))"
 global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
 local outcomes1 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
 local outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final_liquidity"
-global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int final_log_total_sales"
+global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int ib3.tamaño_ot"
 global fixed_ef "ib(freq).codigo year municipality" 
 
-* Run the do file that prepare all variables before estimations
+
+/* Run the do file that prepare all variables before estimations
 run "$path\2. setup.do" 
 xtset id year, yearly
-
+*/
 	
 
 *************************************************************************
@@ -382,12 +383,12 @@ esttab eq2e_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
 
 eststo drop *
 
-* Primary outcomes
+/* Primary outcomes
 foreach var of local outcomes1 {
 	eststo eq1a_`var': qui reghdfe `var' final_log_credits ${controls}, a(${fixed_ef}) vce(cluster id)
 }	
 
-
+*/
 
 
 
@@ -438,31 +439,3 @@ esttab eq2a_* using "$out\reg_credits_secondary.tex", replace ${tab_details} ///
 	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits) coeflabels(final_log_credits "Exemption credits (logs)") ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
 	   
-
-
-/*************************************************************************
-*******                    APPENDIX ESTIMATES                     ******* 
-*************************************************************************
-
-* Hausman test for random vs fixed effects on baseline estimates
-xtset id year
-foreach var of varlist final_gpm final_npm 									///
-					   final_epm final_roa final_roce                       ///
-					   final_eta final_gfsal final_turnover final_liquidity ///
-					   final_lproductivity final_tfp_y final_tfp_va {
-					   
-	qui xtreg `var' cit_exonerated, fe
-	estimates store fe_`var'
-	qui xtreg `var' cit_exonerated, re
-	estimates store re_`var'
-	
-	qui hausman fe_`var' re_`var'
-	loc chi = r(chi2)
-	loc p   = r(p)
-	
-	mat haus = nullmat(haus) \ (`chi', `p')
-}
-
-frmttable using "$out/haus.tex", replace statmat(hausman_table) tex vline(001) /// 
-ctitle("Variable","$\chi^2$","p-value") fr basefont(tiny) sd(3,3)                         ///
-rtitles(GPM\NPM\EPM\ROA\ROCE\ETA\GFSAL\Turnover\Liquidity\Labor Productivity\TFP on sales\TFP on Value Added) 
