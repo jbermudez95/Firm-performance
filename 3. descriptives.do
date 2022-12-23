@@ -19,10 +19,12 @@ set more off
 if "`c(username)'" == "Owner" {
 	global path "C:\Users\Owner\Desktop\Firm-performance"		
 	global out  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
+	global graphop "legend(region(lcolor(none))) graphr(color(white))"
 }
 else if "`c(username)'" == "jbermudez" {
 	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
+	global graphop "legend(region(lcolor(none))) graphr(color(white))"
 }
 
 *Run the do file preparing every variable for descriptive statistics
@@ -97,10 +99,7 @@ refcat(final_log_fixed_assets "\textsc{Primary Outcomes}" final_epm "\textsc{Sec
 *******       			        ILUSTRATIONS   		    	      ******* 
 *************************************************************************
 
-global graphop "legend(region(lcolor(none))) graphr(color(white))"
-
-
-* Credits distribution by firm size
+* STYLIZED FACT 1: Credits distribution by firm size
 preserve
 keep if !missing(percentil)
 bys percentil: egen exo_max = max(cit_cre_exo)
@@ -128,24 +127,56 @@ twoway (area exo percentil, fcolor(dknavy%80) lcolor(dknavy%80)) (rarea exo with
 restore  
 	
 	
-* Ratio between tax exempt credits and total credits
+* STYLIZED FACT 2: Ratio between tax exempt credits and total credits
 preserve
 keep if !missing(percentil)
-gen ratio_exoneration = (final_credits / cit_tax_liability) *100
+gen ratio_exoneration = (cit_cre_exo / cit_tax_liability) * 100
 replace ratio_exoneration = cond(ratio_exoneration > 1, 1, ratio_exoneration)
 replace ratio_exoneration = cond(missing(ratio_exoneration), 0, ratio_exoneration)
-collapse (mean) ratio_exoneration, by(percentil)
-twoway (scatter ratio_exoneration percentil, mcolor(blue%40)) ///
-	   (fpfit ratio_exoneration percentil if percentil > 4, lcolor(blue)), ///
+winsor ratio_exoneration, p(0.05) gen(ratio)
+collapse (mean) ratio, by(percentil)
+
+twoway (scatter ratio percentil, mcolor(blue%40)) ///
+	   (fpfit ratio percentil if percentil > 4, lcolor(blue)), ///
 	   ytitle("Exempt tax credits / Tax liability") xtitle("Percentile on Gross Income") ///
 	   $graphop legend(off) yscale(titlegap(3)) xscale(titlegap(3)) xlab(0(10)100) ///
-	   ylabel(.75 "75%" .8 "80%" .85 "85%" .9 "90%" .95 "95%" 1 "100%")
+	   ylabel(.2 "20%" .4 "40%" .6 "60%")
 	   graph export "$out\credits_ratio.pdf", replace
 restore
 
 
+* STYLIZED FACT 3: Revenue as % of tax exemption credits by industry 
+preserve
+collapse (sum) cit_tax_liability, by(activity_sector year)
+tempfile liability
+save `liability'
+restore
+
+*preserve
+drop if final_regime == 0
+collapse (sum) cit_cre_exo, by(activity_sector final_regime year)
+reshape wide cit_cre_exo, i(activity_sector year) j(final_regime)
+merge 1:1 activity_sector year using `liability'
+drop _merge
+gen ratio_export     = (cit_cre_exo1 / cit_tax_liability) * 100
+gen ratio_non_export = (cit_cre_exo2 / cit_tax_liability) * 100
+
+graph hbar ratio_export if year == 2018 & activity_sector != 9, ///
+      over(activity_sector, sort(ratio_export) descending label(labsize(vsmall))) ///
+	  ytitle(Percentage) blabel(bar, format(%4.1fc) gap(0.5) size(2) color(blue)) $graphop ///
+	  ylab(0(20)60 0 "0%" 20 "20%" 40 "40%" 60 "60%") bar(1, color(blue%40) lw(thick) lc(blue)) 
+	  graph export "$out\credits_ratio_sector_export.pdf", replace
+	  
+graph hbar ratio_non_export if year == 2018 & activity_sector != 4, ///
+      over(activity_sector, sort(ratio_non_export) descending label(labsize(vsmall))) ///
+	  ytitle(Percentage) blabel(bar, format(%4.1fc) gap(0.5) size(2) color(blue)) $graphop ///
+	  ylab(0(20)60 0 "0%" 20 "20%" 40 "40%" 60 "60%") bar(1, color(blue%40) lwidth(thick) lcolor(blue))
+	  graph export "$out\credits_ratio_sector_nonexport.pdf", replace
+restore
+
+
 * Cumulative distribution function for exemption credits
-qui ksmirnov final_log_credits, by(cit_exonerated)
+qui ksmirnov final_log_credits_exo, by(cit_exonerated)
 cdfplot final_log_credits, by(cit_exonerated) legend(order(1 "Non-Exonerated" 2 "Exonerated")) $graphop ///
 		opt1(lw(medthick medthick) lc(blue%70 orange%60)) text(0.3 4 "KS test p-value = `: di %3.2f `=r(p)''", place(e))
 graph export "$out/cdf_exemption_credits.pdf", replace

@@ -226,6 +226,7 @@ foreach k of local v {
 g final_log_total_assets		 = log(1 + cit_total_assets)
 g final_log_employment   		 = log(ihss_workers)
 g final_log_labor_productivity   = log(final_labor_productivity)
+g final_log_credits_exo			 = log(1 + cit_cre_exo)
 
 g final_export_share = final_exports / final_total_sales
 g final_import_share = final_imports / final_total_purch
