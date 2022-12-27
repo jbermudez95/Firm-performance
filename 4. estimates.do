@@ -15,16 +15,18 @@ clear matrix
 set more off
 
 * Insert personal directories
-if "`c(username)'" == "Owner" {
-	global path "C:\Users\Owner\Desktop\Firm-performance"		
-	global out  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
+if "`c(username)'" == "Jose Carlo Bermúdez" {
+	global path "C:\Users\bermu\Desktop\Firm-performance"		
+	global out  "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
 	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
 	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
 }	
 
-
+* Run the do file that prepare all variables before estimations
+run "$path\2. setup.do" 
+xtset id year, yearly
 
 * Global settings for tables and graphs aesthetic
 global tab_details "f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01)"
@@ -32,14 +34,10 @@ global graphop     "legend(region(lcolor(none))) graphr(color(white))"
 
 * Global settings for regressions
 global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
-local outcomes1 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
-local outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final_liquidity"
+global outcomes1 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
+global outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final_liquidity"
 global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int ib3.tamaño_ot"
 global fixed_ef "ib(freq).codigo year municipality" 
-
-* Run the do file that prepare all variables before estimations
-run "$path\2. setup.do" 
-xtset id year, yearly
 	
 
 *************************************************************************
@@ -72,7 +70,7 @@ coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%
 eststo drop *
 
 * Primary outcomes
-foreach var of local outcomes1 {
+foreach var of global outcomes1 {
 	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
@@ -87,7 +85,7 @@ esttab eq1a_* using "$out\reg_baseline_primary.tex", replace ${tab_details} ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
 
 * Secondary outcomes
-foreach var of local outcomes2 {
+foreach var of global outcomes2 {
 	eststo eq2a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
@@ -115,8 +113,8 @@ gen interaction2 = cit_exonerated * final_roa
 preserve
 qui sum final_epm, d
 drop if final_epm > r(p95)
-foreach var of local outcomes1 {	
-	eststo eq1_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm ${controls}, a(${fixed_ef}) vce(cluster id)
+foreach var of global outcomes1 {	
+	eststo eq1_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
 	estadd loc sector_fe "\cmark": eq1_`var'
@@ -129,7 +127,7 @@ restore
 preserve
 qui sum final_roa, d
 drop if final_roa > r(p95)
-foreach var of local outcomes1 {	
+foreach var of global outcomes1 {	
 	eststo eq2_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
@@ -160,7 +158,7 @@ preserve
 qui sum `var_ind', d
 drop if `var_ind' > r(p95)
 
-foreach var of local outcomes1 {
+foreach var of global outcomes1 {
 	
 	if "`var_ind'" == "final_epm" & "`var'" == "final_log_fixed_assets" {
 	    local yx "-2 0.18"
@@ -238,7 +236,7 @@ restore
 
 * Primary outcomes
 eststo drop *
-foreach var of local outcomes1 {
+foreach var of global outcomes1 {
 	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls} if exporter == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
@@ -308,7 +306,7 @@ esttab eq1e_* using "$out\reg_hetero_primary.tex", append ${tab_details} ///
 	   
 * Secondary outcomes
 eststo drop *	   
-foreach var of local outcomes2 {	
+foreach var of global outcomes2 {	
 	eststo eq2a_`var': qui reghdfe `var' cit_exonerated ${controls} if exporter == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
@@ -376,32 +374,6 @@ esttab eq2e_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")		
 
 
-	   
-/*************************************************************************
-******* ROHBUSTNES: ALTERNATIVE SPECIFICATIONS
-*************************************************************************
-
-eststo drop *
-
-* Primary outcomes
-foreach var of local outcomes1 {
-	eststo eq1a_`var': qui reghdfe `var' final_log_credits ${controls}, a(${fixed_ef}) vce(cluster id)
-}	
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 *************************************************************************
 ******* ROHBUSTNES: TAX CREDITS INSTEAD OF DUMMIES
@@ -410,8 +382,8 @@ foreach var of local outcomes1 {
 eststo drop *
 
 * Primary outcomes
-foreach var of local outcomes1 {
-	eststo eq1a_`var': qui reghdfe `var' final_log_credits ${controls}, a(${fixed_ef}) vce(cluster id)
+foreach var of global outcomes1 {
+	eststo eq1a_`var': qui reghdfe `var' final_log_credits_exo ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
 	estadd loc sector_fe "\cmark": eq1a_`var'
@@ -421,12 +393,12 @@ foreach var of local outcomes1 {
 }
 
 esttab eq1a_* using "$out\reg_credits_primary.tex", replace ${tab_details} ///
-	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits) coeflabels(final_log_credits "Exemption credits (logs)") ///
+	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) coeflabels(final_log_credits_exo "Exemption credits (logs)") ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
 
 * Secondary outcomes
-foreach var of local outcomes2 {
-	eststo eq2a_`var': qui reghdfe `var' final_log_credits ${controls}, a(${fixed_ef}) vce(cluster id)
+foreach var of global outcomes2 {
+	eststo eq2a_`var': qui reghdfe `var' final_log_credits_exo ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
 	estadd loc sector_fe "\cmark": eq2a_`var'
@@ -436,6 +408,36 @@ foreach var of local outcomes2 {
 }
 
 esttab eq2a_* using "$out\reg_credits_secondary.tex", replace ${tab_details} ///
-	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits) coeflabels(final_log_credits "Exemption credits (logs)") ///
+	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) coeflabels(final_log_credits_exo "Exemption credits (logs)") ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
+	   
+	   
+	   
+*************************************************************************
+******* ROHBUSTNES: ALTERNATIVE SPECIFICATIONS
+*************************************************************************
+
+eststo drop *
+
+global fixed_ef1 "ib(freq).codigo year municipality" 
+
+* Primary outcomes
+foreach var of local outcomes1 {
+	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+}	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	   

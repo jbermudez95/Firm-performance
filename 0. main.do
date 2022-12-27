@@ -7,7 +7,7 @@ Description: This do file replicates all tables and figures reported troughout t
 clear all
 
 * Set up directories
-if "`c(username)'" == "Owner" {
+if "`c(username)'" == "Jose Carlo Bermúdez" {
 	global codes "C:\Users\Owner\Desktop\Firm-performance"
 }
 else if "`c(username)'" == "jbermudez" {
@@ -24,6 +24,8 @@ ssc install erepost
 ssc install prodest
 ssc install binscatter
 ssc install wbopendata
+ssc install egenmore
+ssc install cdfplot
 */
 
 * Running do files

@@ -15,9 +15,9 @@ clear matrix
 set more off
 
 * Directories
-if "`c(username)'" == "Owner" {
-	global path "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
-	global out "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
+if "`c(username)'" == "Jose Carlo Bermúdez" {
+	global path "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
+	global out "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
 }
 else if "`c(username)'" == "jbermudez" {
 	global path "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		

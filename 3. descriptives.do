@@ -16,9 +16,9 @@ clear matrix
 set more off
 
 * Insert personal directories
-if "`c(username)'" == "Owner" {
-	global path "C:\Users\Owner\Desktop\Firm-performance"		
-	global out  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
+if "`c(username)'" == "Jose Carlo Bermúdez" {
+	global path "C:\Users\bermu\Desktop\Firm-performance"		
+	global out  "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
 	global graphop "legend(region(lcolor(none))) graphr(color(white))"
 }
 else if "`c(username)'" == "jbermudez" {
@@ -126,33 +126,26 @@ twoway (area exo percentil, fcolor(dknavy%80) lcolor(dknavy%80)) (rarea exo with
 	   graph export "$out\credits_share.pdf", replace
 restore  
 	
-	
-* STYLIZED FACT 2: Ratio between tax exempt credits and total credits
-preserve
-keep if !missing(percentil)
-gen ratio_exoneration = (cit_cre_exo / cit_tax_liability) * 100
-replace ratio_exoneration = cond(ratio_exoneration > 1, 1, ratio_exoneration)
-replace ratio_exoneration = cond(missing(ratio_exoneration), 0, ratio_exoneration)
-winsor ratio_exoneration, p(0.05) gen(ratio)
-collapse (mean) ratio, by(percentil)
-
-twoway (scatter ratio percentil, mcolor(blue%40)) ///
-	   (fpfit ratio percentil if percentil > 4, lcolor(blue)), ///
-	   ytitle("Exempt tax credits / Tax liability") xtitle("Percentile on Gross Income") ///
-	   $graphop legend(off) yscale(titlegap(3)) xscale(titlegap(3)) xlab(0(10)100) ///
-	   ylabel(.2 "20%" .4 "40%" .6 "60%")
-	   graph export "$out\credits_ratio.pdf", replace
-restore
+preserve	 
+qui sum final_log_total_sales, d
+keep if final_log_total_sales > `r(p1)' & final_log_total_sales < `r(p99)'
+qui sum final_log_credits_exo
+loc max = r(max)
+twoway lpolyci final_log_credits_exo final_log_total_sales, clcolor(blue) acolor(blue%50) ///
+	   $graphop xtitle(Log(Sales)) ytitle(Log(Exoneration Credits)) legend(off) xlab(0(2)`max') ///
+	   xscale(titlegap(3)) yscale(titlegap(3))
+	   graph export "$out\polynomial_credits.pdf", replace
+restore	
 
 
-* STYLIZED FACT 3: Revenue as % of tax exemption credits by industry 
+* STYLIZED FACT 2: Revenue as % of tax exemption credits by industry 
 preserve
 collapse (sum) cit_tax_liability, by(activity_sector year)
 tempfile liability
 save `liability'
 restore
 
-*preserve
+preserve
 drop if final_regime == 0
 collapse (sum) cit_cre_exo, by(activity_sector final_regime year)
 reshape wide cit_cre_exo, i(activity_sector year) j(final_regime)
@@ -173,13 +166,6 @@ graph hbar ratio_non_export if year == 2018 & activity_sector != 4, ///
 	  ylab(0(20)60 0 "0%" 20 "20%" 40 "40%" 60 "60%") bar(1, color(blue%40) lwidth(thick) lcolor(blue))
 	  graph export "$out\credits_ratio_sector_nonexport.pdf", replace
 restore
-
-
-* Cumulative distribution function for exemption credits
-qui ksmirnov final_log_credits_exo, by(cit_exonerated)
-cdfplot final_log_credits, by(cit_exonerated) legend(order(1 "Non-Exonerated" 2 "Exonerated")) $graphop ///
-		opt1(lw(medthick medthick) lc(blue%70 orange%60)) text(0.3 4 "KS test p-value = `: di %3.2f `=r(p)''", place(e))
-graph export "$out/cdf_exemption_credits.pdf", replace
 
 
 * Distributions for TFP and correlation between alternative measures
@@ -212,7 +198,8 @@ twoway (hist final_log_salary if cit_exonerated == 0, lcolor(blue%30) fcolor(blu
 	   graph export "$out\histogram_salary.pdf", replace
 restore
 	   
-	   
-	   
-	   
+   
+		  
+		  
+		  
 	   
