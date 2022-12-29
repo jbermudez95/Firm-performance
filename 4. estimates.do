@@ -1,11 +1,10 @@
 /*
 Name:			estimates.do
 Description: 	This do file uses the panel data "final_dataset" built from data_prep.do 
-				and generates fixed-effects estimates presented in tables 6, 7, 8, 
-				9, 10, 11, 12, 13, and 14 included in the Appendix of the paper the paper 
+				and generates fixed-effects estimates presented in the paper 
 				"Firm performance and tax incentives: evidence from Honduras". 
 Date:			November, 2021
-Modified:		November, 2022
+Modified:		January, 2023
 Author:			Jose Carlo Bermúdez
 Contact: 		jbermudez@sar.gob.hn
 */
@@ -26,6 +25,7 @@ else if "`c(username)'" == "jbermudez" {
 
 * Run the do file that prepare all variables before estimations
 run "$path\2. setup.do" 
+drop _merge
 xtset id year, yearly
 
 * Global settings for tables and graphs aesthetic
@@ -40,11 +40,12 @@ global controls "final_log_age final_export_share final_import_share final_capit
 global fixed_ef "ib(freq).codigo year municipality" 
 	
 
+	
 *************************************************************************
 *******  PROBIT ESTIMATES 
 *************************************************************************
 
-* This section conducts regressions to identify the covariates determining becoming an exonerated firm
+* This section conducts non-linear regressions on covariates to be an exonerated firm
 eststo drop *
 
 qui probit exempt_export ${probit_covariates}, vce(robust)
@@ -62,7 +63,54 @@ coefplot (m_export, label("Export Oriented") mcolor(blue%70) ciopts(lcolor(blue%
 		 graph export "$out/probit_both.pdf", replace
 		 graph close _all	
 		
-		
+
+	
+*************************************************************************
+*******  TRIMMING VARIABLES 
+*************************************************************************
+
+global outcomes ${outcomes1} ${outcomes2}
+foreach var of global outcomes {
+	preserve
+	qui sum `var', d
+	drop if `var' < r(p5)
+	gen `var'_p5 = 1
+	keep id year `var'_p5
+	tempfile p5
+	save `p5'
+	restore
+	
+	merge 1:1 id year using `p5', keepusing(`var'_p5)
+	drop _merge
+	
+	preserve
+	qui sum `var', d
+	drop if `var' > r(p95)
+	gen `var'_p95 = 1
+	keep id year `var'_p95
+	tempfile p95
+	save `p95'
+	restore
+	
+	merge 1:1 id year using `p95', keepusing(`var'_p95)
+	drop _merge
+	
+	preserve
+	qui sum `var', d
+	drop if `var' < r(p5) | `var' > r(p95)
+	gen `var'_p = 1
+	keep id year `var'_p
+	tempfile p
+	save `p'
+	restore
+	
+	merge 1:1 id year using `p', keepusing(`var'_p)
+	drop _merge
+}
+
+
+
+	
 *************************************************************************
 ******* BASELINE ESTIMATES
 *************************************************************************	
@@ -71,34 +119,96 @@ eststo drop *
 
 * Primary outcomes
 foreach var of global outcomes1 {
+	
 	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1a_`var'
-	estadd loc muni_fe   "\cmark": eq1a_`var'
-	estadd loc year_fe   "\cmark": eq1a_`var'
-	estadd loc controls  "\cmark": eq1a_`var'
+	
+	eststo eq1b_`var': qui reghdfe `var' cit_exonerated ${controls} if `var'_p5 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq1c_`var': qui reghdfe `var' cit_exonerated ${controls} if `var'_p95 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq1d_`var': qui reghdfe `var' cit_exonerated ${controls} if `var'_p == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	estadd loc sector_fe "\cmark": eq1d_`var'
+	estadd loc muni_fe   "\cmark": eq1d_`var'
+	estadd loc year_fe   "\cmark": eq1d_`var'
+	estadd loc controls  "\cmark": eq1d_`var'
 }
 
 esttab eq1a_* using "$out\reg_baseline_primary.tex", replace ${tab_details} ///
-	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated") ///
-	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
+	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel A: Full Sample}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
+	   
+esttab eq1b_* using "$out\reg_baseline_primary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel B: Dropping Bottom 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
+	   
+esttab eq1c_* using "$out\reg_baseline_primary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel C: Dropping Top 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	 
+	   
+esttab eq1d_* using "$out\reg_baseline_primary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel D: Dropping Bottom 5\% and Top 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")	
 
+	   
 * Secondary outcomes
 foreach var of global outcomes2 {
+	
 	eststo eq2a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2a_`var'
-	estadd loc muni_fe   "\cmark": eq2a_`var'
-	estadd loc year_fe   "\cmark": eq2a_`var'
-	estadd loc controls  "\cmark": eq2a_`var'
+	
+	eststo eq2b_`var': qui reghdfe `var' cit_exonerated ${controls} if `var'_p5 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq2c_`var': qui reghdfe `var' cit_exonerated ${controls} if `var'_p95 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq2d_`var': qui reghdfe `var' cit_exonerated ${controls} if `var'_p == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	estadd loc sector_fe "\cmark": eq2d_`var'
+	estadd loc muni_fe   "\cmark": eq2d_`var'
+	estadd loc year_fe   "\cmark": eq2d_`var'
+	estadd loc controls  "\cmark": eq2d_`var'
 }
 
+
 esttab eq2a_* using "$out\reg_baseline_secondary.tex", replace ${tab_details} ///
-	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) coeflabels(cit_exonerated "Exonerated") ///
+	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel A: Full Sample}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
+	   
+esttab eq2b_* using "$out\reg_baseline_secondary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel B: Dropping Bottom 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
+	   
+esttab eq2c_* using "$out\reg_baseline_secondary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel C: Dropping Top 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	 
+	   
+esttab eq2d_* using "$out\reg_baseline_secondary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel D: Dropping Bottom 5\% and Top 5\%}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
-	  
+	   
 
 	  
 *************************************************************************
@@ -240,38 +350,23 @@ foreach var of global outcomes1 {
 	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls} if exporter == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1a_`var'
-	estadd loc muni_fe   "\cmark": eq1a_`var'
-	estadd loc year_fe   "\cmark": eq1a_`var'
-	estadd loc controls  "\cmark": eq1a_`var'
 	
 	eststo eq1b_`var': qui reghdfe `var' cit_exonerated ${controls} if non_exporter == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
-	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1b_`var'
-	estadd loc muni_fe   "\cmark": eq1b_`var'
-	estadd loc year_fe   "\cmark": eq1b_`var'
-	estadd loc controls  "\cmark": eq1b_`var'	
+	estadd scalar mean = r(mean)	
 	
 	eststo eq1c_`var': qui reghdfe `var' cit_exonerated ${controls} if final_industry == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1c_`var'
-	estadd loc muni_fe   "\cmark": eq1c_`var'
-	estadd loc year_fe   "\cmark": eq1c_`var'
-	estadd loc controls  "\cmark": eq1c_`var'
 	
 	eststo eq1d_`var': qui reghdfe `var' cit_exonerated ${controls} if final_industry == 2, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1d_`var'
-	estadd loc muni_fe   "\cmark": eq1d_`var'
-	estadd loc year_fe   "\cmark": eq1d_`var'
-	estadd loc controls  "\cmark": eq1d_`var'
 	
 	eststo eq1e_`var': qui reghdfe `var' cit_exonerated ${controls} if final_industry == 3, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
+	
 	estadd loc sector_fe "\cmark": eq1e_`var'
 	estadd loc muni_fe   "\cmark": eq1e_`var'
 	estadd loc year_fe   "\cmark": eq1e_`var'
@@ -310,38 +405,23 @@ foreach var of global outcomes2 {
 	eststo eq2a_`var': qui reghdfe `var' cit_exonerated ${controls} if exporter == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2a_`var'
-	estadd loc muni_fe   "\cmark": eq2a_`var'
-	estadd loc year_fe   "\cmark": eq2a_`var'
-	estadd loc controls  "\cmark": eq2a_`var'
 	
 	eststo eq2b_`var': qui reghdfe `var' cit_exonerated ${controls} if non_exporter == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2b_`var'
-	estadd loc muni_fe   "\cmark": eq2b_`var'
-	estadd loc year_fe   "\cmark": eq2b_`var'
-	estadd loc controls  "\cmark": eq2b_`var'
 	
 	eststo eq2c_`var': qui reghdfe `var' cit_exonerated ${controls} if final_industry == 1, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2c_`var'
-	estadd loc muni_fe   "\cmark": eq2c_`var'
-	estadd loc year_fe   "\cmark": eq2c_`var'
-	estadd loc controls  "\cmark": eq2c_`var'
 	
 	eststo eq2d_`var': qui reghdfe `var' cit_exonerated ${controls} if final_industry == 2, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2d_`var'
-	estadd loc muni_fe   "\cmark": eq2d_`var'
-	estadd loc year_fe   "\cmark": eq2d_`var'
-	estadd loc controls  "\cmark": eq2d_`var'
 	
 	eststo eq2e_`var': qui reghdfe `var' cit_exonerated ${controls} if final_industry == 3, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1
 	estadd scalar mean = r(mean)
+	
 	estadd loc sector_fe "\cmark": eq2e_`var'
 	estadd loc muni_fe   "\cmark": eq2e_`var'
 	estadd loc year_fe   "\cmark": eq2e_`var'
@@ -372,72 +452,107 @@ esttab eq2e_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
 	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel E: Services}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")		
-
-
-
+ 
+   
+	   
+	   
 *************************************************************************
-******* ROHBUSTNES: TAX CREDITS INSTEAD OF DUMMIES
+******* ROBUSTNESS: TAX CREDITS INSTEAD OF DUMMIES
 *************************************************************************
+
+* The second robustness test is using exoneration credits instead of a dummy, but also removing firms at the bottom 5% and the top 5% of the sample
 
 eststo drop *
 
 * Primary outcomes
 foreach var of global outcomes1 {
+	
 	eststo eq1a_`var': qui reghdfe `var' final_log_credits_exo ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1a_`var'
-	estadd loc muni_fe   "\cmark": eq1a_`var'
-	estadd loc year_fe   "\cmark": eq1a_`var'
-	estadd loc controls  "\cmark": eq1a_`var'
+	
+	eststo eq1b_`var': qui reghdfe `var' final_log_credits_exo ${controls} if `var'_p5 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq1c_`var': qui reghdfe `var' final_log_credits_exo ${controls} if `var'_p95 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq1d_`var': qui reghdfe `var' final_log_credits_exo ${controls} if `var'_p == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	estadd loc sector_fe "\cmark": eq1d_`var'
+	estadd loc muni_fe   "\cmark": eq1d_`var'
+	estadd loc year_fe   "\cmark": eq1d_`var'
+	estadd loc controls  "\cmark": eq1d_`var'
 }
 
-esttab eq1a_* using "$out\reg_credits_primary.tex", replace ${tab_details} ///
-	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) coeflabels(final_log_credits_exo "Exemption credits (logs)") ///
-	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
+esttab eq1a_* using "$out\robustness_credits_primary.tex", replace ${tab_details} ///
+	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel A: Full Sample}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
+	   
+esttab eq1b_* using "$out\robustness_credits_primary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel B: Dropping Bottom 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	
+	   
+esttab eq1c_* using "$out\robustness_credits_primary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel C: Dropping Top 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	   
+	   
+esttab eq1d_* using "$out\robustness_credits_primary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel D: Dropping Bottom 5\% and Top 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")	
 
+	   
 * Secondary outcomes
 foreach var of global outcomes2 {
+	
 	eststo eq2a_`var': qui reghdfe `var' final_log_credits_exo ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2a_`var'
-	estadd loc muni_fe   "\cmark": eq2a_`var'
-	estadd loc year_fe   "\cmark": eq2a_`var'
-	estadd loc controls  "\cmark": eq2a_`var'
+	
+	eststo eq2b_`var': qui reghdfe `var' final_log_credits_exo ${controls} if `var'_p5 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq2c_`var': qui reghdfe `var' final_log_credits_exo ${controls} if `var'_p95 == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	eststo eq2d_`var': qui reghdfe `var' final_log_credits_exo ${controls} if `var'_p == 1, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	
+	estadd loc sector_fe "\cmark": eq2d_`var'
+	estadd loc muni_fe   "\cmark": eq2d_`var'
+	estadd loc year_fe   "\cmark": eq2d_`var'
+	estadd loc controls  "\cmark": eq2d_`var'
 }
 
-esttab eq2a_* using "$out\reg_credits_secondary.tex", replace ${tab_details} ///
-	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) coeflabels(final_log_credits_exo "Exemption credits (logs)") ///
+esttab eq2a_* using "$out\robustness_credits_secondary.tex", replace ${tab_details} ///
+	   mtitle("EPM" "ROA" "ETA" "GFSAL" "Turnover" "Liquidity") sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel A: Full Sample}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")
+	   
+esttab eq2b_* using "$out\robustness_credits_secondary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel B: Dropping Bottom 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	
+	   
+esttab eq2c_* using "$out\robustness_credits_secondary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel C: Dropping Top 5\%}}", nolabel) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var.")	   
+	   
+esttab eq2d_* using "$out\robustness_credits_secondary.tex", append ${tab_details} ///
+	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
+	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel D: Dropping Bottom 5\% and Top 5\%}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
-	   
-	   
-	   
-*************************************************************************
-******* ROHBUSTNES: ALTERNATIVE SPECIFICATIONS
-*************************************************************************
-
-eststo drop *
-
-global fixed_ef1 "ib(freq).codigo year municipality" 
-
-* Primary outcomes
-foreach var of local outcomes1 {
-	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
-}	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	   
