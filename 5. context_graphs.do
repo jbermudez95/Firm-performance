@@ -158,7 +158,7 @@ drop _m
 
 * Merge with tax revenue as % of GDP from the IMF database
 rename countryname cname 
-merge m:1 cname year using "$path\fiscal_data_imf.dta", keepusing(tax)
+merge m:1 cname year using "$path\fiscal_data_imf.dta", keepusing(tax corp)
 drop if _m == 2
 drop _m
 
