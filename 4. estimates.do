@@ -35,8 +35,9 @@ global graphop     "legend(region(lcolor(none))) graphr(color(white))"
 global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
 global outcomes1 "final_log_fixed_assets final_log_value_added final_log_employment final_log_salary tfp_y_LP tfp_y_ACF"	
 global outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final_liquidity"
-global controls "final_log_age final_export_share final_import_share final_capital_int final_labor_int ib3.tamaño_ot"
-global fixed_ef "ib(freq).codigo year municipality" 
+global controls  "final_log_age final_export_share final_import_share final_capital_int final_labor_int ib3.tamaño_ot"
+global controls1 "final_log_age ib3.tamaño_ot final_liquidity final_log_dividends_relations"
+global fixed_ef  "ib(freq).codigo i.year ib(freq).municipality" 
 	
 
 	
@@ -121,7 +122,7 @@ eststo drop *
 * Primary outcomes
 foreach var of global outcomes1 {
 	
-	eststo eq1a_`var': qui reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
+	eststo eq1a_`var': reghdfe `var' cit_exonerated ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
 	
@@ -559,56 +560,116 @@ esttab eq2d_* using "$out\robustness_credits_secondary.tex", append ${tab_detail
 	   
 	   
 *************************************************************************
-******* PROFITABILITY AND PERFORMANCE
+******* PROFITABILITY AND PERFORMANCE / DIVIDENDS
 *************************************************************************
 
-****** Parametric ******
-eststo drop *
 gen interaction1 = cit_exonerated * final_epm
 gen interaction2 = cit_exonerated * final_roa
 
-global controls1 "final_log_age ib0.tamaño_ot final_liquidity"
+****** Performance outcomes ******
+eststo drop *
 
-preserve
-*qui sum final_epm, d
-*drop if final_epm > r(p95)
 foreach var of global outcomes1 {	
-	eststo eq1_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm ${controls}, a(${fixed_ef}) vce(cluster id)
+	eststo eq1a_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq1_`var'
-	estadd loc muni_fe   "\cmark": eq1_`var'
-	estadd loc year_fe   "\cmark": eq1_`var'
-	estadd loc controls  "\xmark": eq1_`var'
-}
-restore
-
-esttab eq1_* using "$out\reg_profitability.tex", replace ${tab_details} refcat(interaction1 "\textsc{\textbf{Panel A}}", nolabel) ///
-	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") keep(interaction1 cit_exonerated final_epm) ///
-	   coeflabels(interaction1 "Exonerated $\times$ EPM" cit_exonerated "Exonerated" final_epm "EPM") sfmt(%9.0fc %9.3fc %9.3fc) ///
-	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
-
-preserve
-*qui sum final_roa, d
-*drop if final_roa > r(p95)
-foreach var of global outcomes1 {	
-	eststo eq2_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa ${controls}, a(${fixed_ef}) vce(cluster id)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\cmark"
+	
+	eststo eq1b_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
 	estadd scalar mean = r(mean)
-	estadd loc sector_fe "\cmark": eq2_`var'
-	estadd loc muni_fe   "\cmark": eq2_`var'
-	estadd loc year_fe   "\cmark": eq2_`var'
-	estadd loc controls  "\xmark": eq2_`var'	
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\xmark"
+	
+	eststo eq2a_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa ${controls}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\cmark"
+	
+	eststo eq2b_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\xmark"	
 }
-restore
+
+esttab eq1a_final_log_fixed_assets eq1b_final_log_fixed_assets eq1a_final_log_value_added eq1b_final_log_value_added eq1a_final_log_employment eq1b_final_log_employment ///
+	   eq1a_final_log_salary eq1b_final_log_salary eq1a_tfp_y_LP eq1b_tfp_y_LP eq1a_tfp_y_ACF eq1b_tfp_y_ACF ///
+       using "$out\reg_profitability.tex", replace ${tab_details} refcat(interaction1 "\textsc{\textbf{Panel A: Economic Profit Margins}}", nolabel) nomtitles ///
+	   keep(interaction1 cit_exonerated final_epm) coeflabels(interaction1 "Exonerated $\times$ EPM" cit_exonerated "Exonerated" final_epm "EPM") sfmt(%9.0fc %9.3fc %9.3fc) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?") ///
+	   mgroups("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(1 0 1 0 1 0 1 0 1 0 1 0) erepeat(\cmidrule(lr){@span}))
 	   
-esttab eq2_* using "$out\reg_profitability.tex", append ${tab_details} refcat(interaction2 "\textsc{\textbf{Panel B}}", nolabel) ///
-	   eqlabels(none) nomtitles nonumber keep(interaction2 cit_exonerated final_roa) ///
-	   coeflabels(interaction2 "Exonerated $\times$ ROA" cit_exonerated "Exonerated" final_roa "ROA") sfmt(%9.0fc %9.3fc %9.3fc) ///
+esttab eq2a_final_log_fixed_assets eq2b_final_log_fixed_assets eq2a_final_log_value_added eq2b_final_log_value_added eq2a_final_log_employment eq2b_final_log_employment ///
+	   eq2a_final_log_salary eq2b_final_log_salary eq2a_tfp_y_LP eq2b_tfp_y_LP eq2a_tfp_y_ACF eq2b_tfp_y_ACF ///
+	   using "$out\reg_profitability.tex", append ${tab_details} refcat(interaction2 "\textsc{\textbf{Panel B: Return on Assets}}", nolabel) nomtitles nonumber ///
+	   eqlabels(none) keep(interaction2 cit_exonerated final_roa) coeflabels(interaction2 "Exonerated $\times$ ROA" cit_exonerated "Exonerated" final_roa "ROA") sfmt(%9.0fc %9.3fc %9.3fc) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")	   
 
+	
+	
+****** Payment of dividends ******
+eststo drop *
+
+foreach var of varlist final_dividends final_divid_hold {	
+	eststo eq1a_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm ${controls1}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\cmark"
+	
+	eststo eq1b_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\xmark"
+	
+	eststo eq2a_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa ${controls1}, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\cmark"
+	
+	eststo eq2b_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa, a(${fixed_ef}) vce(cluster id)
+	qui sum `var' if e(sample) == 1 
+	estadd scalar mean = r(mean)
+	estadd loc sector_fe "\cmark"
+	estadd loc muni_fe   "\cmark"
+	estadd loc year_fe   "\cmark"
+	estadd loc controls  "\xmark"	
+}
+
+esttab eq1a_final_dividends eq1b_final_dividends eq1a_final_divid_hold eq1b_final_divid_hold ///
+       using "$out\reg_dividends.tex", replace ${tab_details} refcat(interaction1 "\textsc{\textbf{Panel A: Economic Profit Margins}}", nolabel) nomtitles ///
+	   keep(interaction1 cit_exonerated final_epm) coeflabels(interaction1 "Exonerated $\times$ EPM" cit_exonerated "Exonerated" final_epm "EPM") sfmt(%9.0fc %9.3fc %9.3fc) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?") ///
+	   mgroups("Dividends Payment" "Dividends per Shareholder", span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(1 0 1 0) erepeat(\cmidrule(lr){@span}))
 	   
-****** Non parametric ******
+esttab eq2a_final_dividends eq2b_final_dividends eq2a_final_divid_hold eq2b_final_divid_hold ///
+	   using "$out\reg_dividends.tex", append ${tab_details} refcat(interaction2 "\textsc{\textbf{Panel B: Return on Assets}}", nolabel) nomtitles nonumber ///
+	   eqlabels(none) keep(interaction2 cit_exonerated final_roa) coeflabels(interaction2 "Exonerated $\times$ ROA" cit_exonerated "Exonerated" final_roa "ROA") sfmt(%9.0fc %9.3fc %9.3fc) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")	   
+
+
+	 
+	 
+/****** Non parametric ******
 eststo drop *
 foreach var_ind of varlist final_epm final_roa {
 	

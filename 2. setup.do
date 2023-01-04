@@ -228,8 +228,9 @@ g final_log_total_assets		 = log(1 + cit_total_assets)
 g final_log_employment   		 = log(ihss_workers)
 g final_log_labor_productivity   = log(final_labor_productivity)
 g final_log_credits_exo			 = log(1 + cit_cre_exo)
-g final_log_dividends_value		 = log(1 + dividends_value)
 g final_log_dividends_relations  = log(dividends_relations)
+g final_dividends			 	 = asinh(dividends_value)
+g final_divid_hold			     = asinh(dividends_value / dividends_relations)
 
 g final_export_share = final_exports / final_total_sales
 g final_import_share = final_imports / final_total_purch
@@ -381,6 +382,7 @@ label var decil 					    "Decil on gross income"
 label var dividends_relations		    "Number of shareholders"
 label var final_log_dividends_relations "Number of shareholders (logs)"
 label var dividends_value			    "Payment of dividends"
-label var final_log_dividends_value	    "Payment of dividends (logs)"
+label var final_dividends		    	"Payment of dividends (asinh)"
+label var final_divid_hold 		    	"Payment of dividends per shareholder (asinh)"
 
 

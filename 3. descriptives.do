@@ -131,7 +131,7 @@ qui sum final_log_total_sales, d
 keep if final_log_total_sales > `r(p1)' & final_log_total_sales < `r(p99)'
 qui sum final_log_credits_exo
 loc max = r(max)
-twoway lpolyci final_log_credits_exo final_log_total_sales, clcolor(blue) acolor(blue%50) ///
+twoway lpolyci final_log_credits_exo final_log_total_sales, clcolor(blue) acolor(blue%40) ///
 	   $graphop xtitle(Log(Sales)) ytitle(Log(Exoneration Credits)) legend(off) xlab(0(2)`max') ///
 	   xscale(titlegap(3)) yscale(titlegap(3))
 	   graph export "$out\polynomial_credits.pdf", replace
