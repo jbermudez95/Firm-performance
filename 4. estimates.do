@@ -607,7 +607,6 @@ esttab eq2_* using "$out\reg_profitability.tex", append ${tab_details} refcat(in
 	   coeflabels(interaction2 "Exonerated $\times$ ROA" cit_exonerated "Exonerated" final_roa "ROA") sfmt(%9.0fc %9.3fc %9.3fc) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")	   
 
-
 	   
 ****** Non parametric ******
 eststo drop *

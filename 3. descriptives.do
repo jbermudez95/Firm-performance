@@ -36,7 +36,7 @@ run "$path\2. setup.do"
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
 
-* Summary statistics on main characteristics (Table 2)
+* Summary statistics on main features (Table 2)
 global var1 "size_small size_medium size_large final_primary final_secondary final_tertiary exporter non_exporter"
 global var2 "final_none final_zoli final_rit final_zade final_zolitur final_zolt final_lit final_energy final_others"
 global var3 "vat_sales_exempted vat_sales_taxed vat_purch_exempted vat_purch_taxed cit_total_taxed_inc cit_total_exempt_inc cit_total_costs_ded cit_total_costs_non_ded"
@@ -64,7 +64,7 @@ esttab panel3 using "$out\summary", append label booktabs nonum f noobs ///
 	   
 	   
 	   
-* Balance table
+* Balance table (Table 3)
 eststo drop *	
 global vars "final_log_fixed_assets final_log_value_added ihss_workers final_log_salary tfp_y_LP tfp_y_ACF final_epm final_roa final_eta final_gfsal final_turnover final_liquidity final_age final_mnc legal_proxy urban final_export_share final_import_share final_labor_int final_capital_int"
 	   
