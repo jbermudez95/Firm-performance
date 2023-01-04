@@ -25,7 +25,6 @@ else if "`c(username)'" == "jbermudez" {
 
 * Run the do file that prepare all variables before estimations
 run "$path\2. setup.do" 
-drop _merge
 xtset id year, yearly
 
 * Global settings for tables and graphs aesthetic
@@ -568,9 +567,11 @@ eststo drop *
 gen interaction1 = cit_exonerated * final_epm
 gen interaction2 = cit_exonerated * final_roa
 
+global controls1 "final_log_age ib0.tamaño_ot final_liquidity"
+
 preserve
-qui sum final_epm, d
-drop if final_epm > r(p95)
+*qui sum final_epm, d
+*drop if final_epm > r(p95)
 foreach var of global outcomes1 {	
 	eststo eq1_`var': qui reghdfe `var' interaction1 cit_exonerated final_epm ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
@@ -582,9 +583,14 @@ foreach var of global outcomes1 {
 }
 restore
 
+esttab eq1_* using "$out\reg_profitability.tex", replace ${tab_details} refcat(interaction1 "\textsc{\textbf{Panel A}}", nolabel) ///
+	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") keep(interaction1 cit_exonerated final_epm) ///
+	   coeflabels(interaction1 "Exonerated $\times$ EPM" cit_exonerated "Exonerated" final_epm "EPM") sfmt(%9.0fc %9.3fc %9.3fc) ///
+	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
+
 preserve
-qui sum final_roa, d
-drop if final_roa > r(p95)
+*qui sum final_roa, d
+*drop if final_roa > r(p95)
 foreach var of global outcomes1 {	
 	eststo eq2_`var': qui reghdfe `var' interaction2 cit_exonerated final_roa ${controls}, a(${fixed_ef}) vce(cluster id)
 	qui sum `var' if e(sample) == 1 
@@ -595,11 +601,6 @@ foreach var of global outcomes1 {
 	estadd loc controls  "\xmark": eq2_`var'	
 }
 restore
-
-esttab eq1_* using "$out\reg_profitability.tex", replace ${tab_details} refcat(interaction1 "\textsc{\textbf{Panel A}}", nolabel) ///
-	   mtitle("Fixed Assets" "Value Added" "Employment" "Salary" "TFP LP" "TFP ACF") keep(interaction1 cit_exonerated final_epm) ///
-	   coeflabels(interaction1 "Exonerated $\times$ EPM" cit_exonerated "Exonerated" final_epm "EPM") sfmt(%9.0fc %9.3fc %9.3fc) ///
-	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
 	   
 esttab eq2_* using "$out\reg_profitability.tex", append ${tab_details} refcat(interaction2 "\textsc{\textbf{Panel B}}", nolabel) ///
 	   eqlabels(none) nomtitles nonumber keep(interaction2 cit_exonerated final_roa) ///

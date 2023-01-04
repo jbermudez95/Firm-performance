@@ -573,12 +573,30 @@ restore
 
 
 **********************************************************************************
-**********                  NINETH STEP: FINAL DATASET                   *********
+**********     			      NINETH STEP: EVER AUDITED    			     *********
+**********************************************************************************
+
+dis "Setting for payments of dividens"
+qui{
+preserve
+use "$input\dividendos_2017-2021.dta", replace
+rename dividendos dividends_value
+rename relaciones dividends_relations
+keep rtn year dividends_*
+tempfile dividends
+save "`dividends'"
+restore	
+}
+
+
+
+**********************************************************************************
+**********                  	TENTH STEP: FINAL DATASET                *********
 **********************************************************************************
 
 * Merge datasets
 use "`cit_records'", replace
-loc records1 "vat_records custom_records social_security"
+loc records1 "vat_records custom_records social_security dividends"
 foreach r of loc records1 {
 	merge 1:1 rtn year using "``r''"
 	drop if _m == 2
@@ -614,14 +632,14 @@ egen final_total_sales = rowtotal(final_sales_local final_exports)
 egen final_total_purch = rowtotal(vat_purch_local final_imports)
 
 
-* Encode as missing all values equal to zero
+* Encode as missing all values (from continuous variables) equal to zero
 	mvdecode vat_* custom_* final_* cit_cre_* cit_current_assets cit_fixed_assets cit_total_assets cit_current_liabilities cit_gross_income ///
 			 cit_deductions cit_fixed_assets_depr cit_sales_local cit_sales_exports cit_turnover_exempt cit_turnover_taxed ///
 			 cit_other_inc_taxed cit_other_inc_exempt cit_total_exempt_inc cit_total_taxed_inc cit_total_inc ///
 			 cit_goods_materials_non_ded cit_com_costs cit_prod_costs cit_goods_materials_ded cit_labor_non_ded ///
 			 cit_labor_ded cit_financial_non_ded cit_financial_ded cit_operations_non_ded cit_operations_ded ///
 			 cit_losses_other_non_ded cit_losses_other_ded cit_precio_trans_ded cit_total_costs_ded cit_total_costs_non_ded ///
-			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as, mv(0)
+			 cit_total_costs cit_total_credits_r cit_total_credits_an cit_total_credits_as dividends_value, mv(0)
 			 
 replace vat_filler = cond(missing(vat_filler), 0, vat_filler)
 label def vat_filler 0 "Not filling VAT" 1 "Filling VAT", replace
@@ -644,8 +662,8 @@ drop _merge
 egen id = group(rtn)
 duplicates tag id year, gen(isdup)
 keep if isdup == 0
-keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_*
-order id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_*
+keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_* dividends_*
+order id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_* dividends_*
 compress
 save "$out\final_dataset1", replace
 								  								  
