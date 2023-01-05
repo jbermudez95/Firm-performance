@@ -1,37 +1,9 @@
-/*
-Name:			descriptives.do
-Description: 	This do file uses the panel data "final_dataset" built from data_prep.do 
-				and generates Tables number 2, 3, and 4 and also the figures number 3, and 5 that 
-				are included in the Appendix of the paper "Firm performance and tax incentives: 
-				evidence from Honduras". Also this do file generates figures A2, A3, and A4 that 
-				are then included in the online appendix of the paper.
-Date:			November, 2021
-Modified:		November, 2022
-Author:			Jose Carlo Bermúdez
-Contact: 		jbermudez@sar.gob.hn
-*/
+		
+		*==========================================================================
+		* DO FILE RUNING DESCRIPTIVE STATISTICS AND ILLUSTRATIONS FROM FINAL SAMPLE
+		*==========================================================================
 
-clear all
-clear matrix
-set more off
-
-* Insert personal directories
-if "`c(username)'" == "Jose Carlo Bermúdez" {
-	global path "C:\Users\bermu\Desktop\Firm-performance"		
-	global out  "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
-	global graphop "legend(region(lcolor(none))) graphr(color(white))"
-}
-else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
-	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
-	global graphop "legend(region(lcolor(none))) graphr(color(white))"
-}
-
-*Run the do file preparing every variable for descriptive statistics
-run "$path\2. setup.do" 	
-
-
-
+		
 *************************************************************************
 *******               BUILDING SUMMARY STATISTICS                 ******* 
 *************************************************************************
@@ -184,21 +156,9 @@ binscatter tfp_y_LP tfp_y_ACF, nquantiles(100) ytitle("TFP on sales, LP method")
 		   
 binscatter tfp_va_LP tfp_va_ACF, nquantiles(100) ytitle("TFP on value-added, LP method") $graphop legend(off) ///
 	       yscale(titlegap(3)) mcolors(blue%20) xtitle("TFP on value-added, ACF method") xscale(titlegap(3)) yscale(titlegap(3)) 		   
-	       graph export "$out\tfp_bin_va.pdf", replace  
-	   
-	   
-* Distribution for salary	   
-preserve
-qui sum final_log_salary, d
-keep if final_log_salary < r(p95)
-twoway (hist final_log_salary if cit_exonerated == 0, lcolor(blue%30) fcolor(blue%30)) ///
-	   (hist final_log_salary if cit_exonerated == 1, lcolor(blue) fcolor(none)), ///
-	   $graphop legend(row(1) order(1 "Non-Exonerated" 2 "Exonerated")) ///
-	   ytitle("Density") xscale(titlegap(3)) yscale(titlegap(3))
-	   graph export "$out\histogram_salary.pdf", replace
-restore
-	   
-   
+	       graph export "$out\tfp_bin_va.pdf", replace  	   
+		   
+		   graph close _all	
 		  
 		  
 		  

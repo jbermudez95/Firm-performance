@@ -1,33 +1,11 @@
-/*
-Name:			raw_data_prep.do
-Description: 	This do file cleans and prepares different administrative sources
-                which are merged to build an unbalanced panel for the descriptive 
-				and empirical estimations of the paper 
-				"Firms' performance and tax incentives: evidence from Honduras". 
-Date:			July, 2021
-Modified:       October, 2022
-Author:			Jose Carlo Bermúdez
-Contact: 		jbermudez@sar.gob.hn
-*/
 
-clear all
-set more off
-cap prog drop _all
+	*============================================================================================
+	* DO FILE CLEANING RAW DATA AND BUILDING A CLEAN DATASET INCLUDING ALL ADMINISTRATIVE RECORDS
+	*============================================================================================
 
-*Set up directories
-if "`c(username)'" == "Owner" {
-	global path  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\preparacion inicial\base profit margins"
-	global input "C:\Users\Owner\OneDrive - SAR\Bases del repositorio"
-	global out	 "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"	
-}
-else if "`c(username)'" == "jbermudez" {
-	global path  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\preparacion inicial\base profit margins"
-	global input "C:\Users\jbermudez\OneDrive - SAR\Bases del repositorio"
-	global out	 "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"
-} 
 
+* Global for replications
 global traits "tipo_ot tamaño_ot codigo clase codigoseccion seccion departamento municipio"
-
 
 
 **********************************************************************************
@@ -281,7 +259,7 @@ qui{
 * Data on Exports/Imports (already in local currency - Lempiras)
 preserve
 * Exports
-use "$path\export.dta", replace
+use "$datawork\export.dta", replace
 destring year, replace
 keep if (year == 2017 | year == 2018)
 bys rtn year: egen suma_export = sum(custom_export)
@@ -292,7 +270,7 @@ tempfile exports
 save "`exports'"
 
 * Imports
-use "$path\import.dta", replace
+use "$datawork\import.dta", replace
 keep if regimen == "4000"
 drop regimen
 destring year, replace
@@ -379,7 +357,7 @@ qui {
 /* In order to identify the age, we define the beginning of the firm as the
  minimum value between the registration year and the start-up year of operations */
 preserve 
-import excel "$path\EDAD_PJ.xlsx", firstrow clear
+import excel "$datawork\EDAD_PJ.xlsx", firstrow clear
 rename RTN 					  rtn
 rename FECHA_CONSTITUCION     date_begin_aux
 rename FECHA_INICIO_ACTIVIDAD date_start_aux
@@ -549,7 +527,7 @@ restore
 dis "Setting for firms that have been audited at least once"
 qui{
 preserve
-import excel using "$path\ORDENES DE FISCALIZACION.xlsx", firstrow clear 
+import excel using "$datawork\ORDENES DE FISCALIZACION.xlsx", firstrow clear 
 drop K-Q
 rename _all, lower
 drop if (estado_proceso == "INTERRUMPIDO" | estado_proceso == "PENDIENTE")
@@ -665,5 +643,5 @@ keep if isdup == 0
 keep  id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_* dividends_*
 order id year ${traits} ihss_workers cit_* vat_* custom_* final_* date_start legal_* ever_* dividends_*
 compress
-save "$out\final_dataset1", replace
+save "$final_data\final_dataset.dta", replace
 								  								  

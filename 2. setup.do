@@ -1,35 +1,13 @@
-/*
-Name:			setup.do
-Description: 	This do file uses the panel data "final_dataset" built from data_prep.do 
-				and generates the variables that are later used for the paper "Firm performance 
-				and tax incentives: evidence from Honduras". It also generates table A3
-				for TFP estimations that are inlcuded in the online appendix of the paper.
-Date:			November, 2021
-Modified:		October, 2022
-Author:			Jose Carlo Bermúdez
-Contact: 		jbermudez@sar.gob.hn
-*/
 
-clear all
-clear matrix
-set more off
 
-* Directories
-if "`c(username)'" == "Jose Carlo Bermúdez" {
-	global path "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
-	global out "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
-}
-else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
-	global out "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
-} 
-
+		*=======================================================================
+		* DO FILE PREPARING FINAL SAMPLE
+		*=======================================================================
+		
 
 *************************************************************************
 *******                           SET UP                          ******* 
 *************************************************************************
-
-use "$path\final_dataset1.dta", replace
 
 * Drop firms in the financial sector, real state, education, public administration, diplomatics or without economic activity. 
 * Drop cooperatives, non-profit organizations, public-private partnerships, and simplified regimes.
@@ -314,7 +292,7 @@ foreach var of local output {
 drop y va k l m
 
 * Table A3 for online Appendix
-esttab model_LP_* model_ACF_* using "$out\tfp_estimatesv2", replace keep(k l)  ///
+esttab model_LP_* model_ACF_* using "$out\tfp_estimates", replace keep(k l)  ///
 	   mgroups("\cite{levinsohn03} Method" "\cite{ackerberg15} Method", ///
 	   span prefix(\multicolumn{@span}{c}{) suffix(}) pattern(1 0 1 0) erepeat(\cmidrule(lr){@span})) ///
 	   mtitles("Sales" "Value-Added" "Sales" "Value-Added") ///

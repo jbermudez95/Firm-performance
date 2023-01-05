@@ -1,34 +1,15 @@
-/*
-Name:			context_graphs.do
-Description: 	This do file uses secondary datasets to make the figures number 
-1, 2, and 4 that are included in the Appendix of the paper "Firm
-performance and tax incentives: Evidence from Honduras".
-Date:			November, 2021
-Modified:		November, 2022
-Author:			Jose Carlo Bermúdez
-Contact: 		jbermudez@sar.gob.hn
-*/
 
-clear all
+		*=========================================================================
+		* DO FILE RUNING ILLUSTRATIONS FROM PUBLIC DATA SOURCES
+		*=========================================================================
 
-* Insert personal directories
-if "`c(username)'" == "Owner" {
-	global path "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
-	global out  "C:\Users\Owner\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
-}
-else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\database and codes"		
-	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
-}	
-
-global graphop "legend(region(lcolor(none))) graphr(color(white))"
 
 
 ********************************************************************************
 * Bar graph for taxes as % of GDP
 ********************************************************************************
 
-use "$path\fiscal_data_imf.dta", replace
+use "$final_data\fiscal_data_imf.dta", replace
 drop *_src ccode
 
 g latam = 1 if (cname == "Argentina" | cname == "Brazil" | cname == "Chile" | cname == "Costa Rica" | /// 
@@ -95,18 +76,18 @@ graph export "$out/taxes.pdf", replace
 	   
 	   
 ********************************************************************************
-* Scatter plot between tax expenditures and gdp per capita using GTED
+* Scatter plots for tax expenditures using GTED
 ********************************************************************************
 
 * Tax expenditures coming from the Global Tax Expenditures Dataset (https://gted.net/)
 
-import excel using "$path\GTED_FullDatabase.xlsx", firstrow clear sheet("RevenueForgone")
+import excel using "$final_data\GTED_FullDatabase.xlsx", firstrow clear sheet("RevenueForgone")
 rename _all, lower
 drop note
 keep if year == 2019
 
 preserve
-import excel using "$path\GTED_FullDatabase.xlsx", firstrow clear sheet("TEProvisions")
+import excel using "$final_data\GTED_FullDatabase.xlsx", firstrow clear sheet("TEProvisions")
 rename _all, lower
 keep provisionid countrycode taxbaselevel2
 rename countrycode country
@@ -147,7 +128,7 @@ drop _m
 
 * Merge with 2019 statutory tax rates from KPMG
 preserve
-import excel using "$path\statutory_tax_rates.xlsx", firstrow clear sheet("cit_tax_rate")
+import excel using "$final_data\statutory_tax_rates.xlsx", firstrow clear sheet("cit_tax_rate")
 tempfile rate
 save `rate'
 restore
@@ -158,7 +139,7 @@ drop _m
 
 * Merge with tax revenue as % of GDP from the IMF database
 rename countryname cname 
-merge m:1 cname year using "$path\fiscal_data_imf.dta", keepusing(tax corp)
+merge m:1 cname year using "$final_data\fiscal_data_imf.dta", keepusing(tax corp)
 drop if _m == 2
 drop _m
 
@@ -213,6 +194,8 @@ twoway (scatter cit_tax_rate cit_tax_expend_percap1 if missing(hnd), mlcolor(blu
 	   yscale(titlegap(3)) xscale(titlegap(3)) xtitle("Log(CIT tax expenditures per capita, in USD)") ///
 	   text(12 7.5 "Slope = `b2' (`s2')", color(black) size(small)) ylabel(5(10)35 5 "5%" 15 "15%" 25 "25%" 35 "35%")
 	   graph export "$out\scatter_tax_exp_percap.pdf", replace
+	   
+	   graph close _all	
 restore
 
 

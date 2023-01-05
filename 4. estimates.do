@@ -1,35 +1,13 @@
-/*
-Name:			estimates.do
-Description: 	This do file uses the panel data "final_dataset" built from data_prep.do 
-				and generates fixed-effects estimates presented in the paper 
-				"Firm performance and tax incentives: evidence from Honduras". 
-Date:			November, 2021
-Modified:		January, 2023
-Author:			Jose Carlo Bermúdez
-Contact: 		jbermudez@sar.gob.hn
-*/
 
-clear all
-clear matrix
-set more off
+		*=========================================================================
+		* DO FILE RUNING ECONOMETRIC MODELS FROM FINAL SAMPLE
+		*=========================================================================
 
-* Insert personal directories
-if "`c(username)'" == "Jose Carlo Bermúdez" {
-	global path "C:\Users\bermu\Desktop\Firm-performance"		
-	global out  "C:\Users\bermu\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"	
-}
-else if "`c(username)'" == "jbermudez" {
-	global path "C:\Users\jbermudez\OneDrive - SAR\Firm-performance"		
-	global out  "C:\Users\jbermudez\OneDrive - SAR\Notas técnicas y papers\Profit Margins\out"
-}	
-
-* Run the do file that prepare all variables before estimations
-run "$path\2. setup.do" 
+* Declaring sample as data panel		
 xtset id year, yearly
 
 * Global settings for tables and graphs aesthetic
 global tab_details "f booktabs se(2) b(3) star(* 0.10 ** 0.05 *** 0.01)"
-global graphop     "legend(region(lcolor(none))) graphr(color(white))"
 
 * Global settings for regressions
 global probit_covariates "final_log_age i.final_mnc i.trader legal_attorneys ever_audited_times i.urban ib3.tamaño_ot i.activity_sector"
@@ -38,9 +16,11 @@ global outcomes2 "final_epm final_roa final_eta final_gfsal final_turnover final
 global controls  "final_log_age final_export_share final_import_share final_capital_int final_labor_int ib3.tamaño_ot"
 global controls1 "final_log_age ib3.tamaño_ot final_liquidity final_log_dividends_relations"
 global fixed_ef  "ib(freq).codigo i.year ib(freq).municipality" 
-	
+	   
 
-	
+
+
+
 *************************************************************************
 *******  PROBIT ESTIMATES 
 *************************************************************************
@@ -338,9 +318,11 @@ esttab eq2d_* using "$out\reg_regimes_secondary.tex", append ${tab_details} ///
 	   refcat(1.final_regime "\textsc{\textbf{Panel D: Dropping Bottom 5\% and Top 5\%}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean2 Mean Dep. Var." "test2 $\beta1 = \beta2$" ///
 	   "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
+	   
 
 
-	
+
+
 *************************************************************************
 ******* HETEROGENEITY
 *************************************************************************
@@ -453,10 +435,11 @@ esttab eq2e_* using "$out\reg_hetero_secondary.tex", append ${tab_details} ///
 	   sfmt(%9.0fc %9.3fc %9.3fc) keep(cit_exonerated) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(cit_exonerated "Exonerated") refcat(cit_exonerated "\textsc{\textbf{Panel E: Services}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")		
- 
-   
 	   
-	   
+
+
+
+
 *************************************************************************
 ******* ROBUSTNESS: TAX CREDITS INSTEAD OF DUMMIES
 *************************************************************************
@@ -555,10 +538,11 @@ esttab eq2d_* using "$out\robustness_credits_secondary.tex", append ${tab_detail
 	   sfmt(%9.0fc %9.3fc %9.3fc) keep(final_log_credits_exo) eqlabels(none) nomtitles nonumbers ///
 	   coeflabels(final_log_credits_exo "Exemption credits (logs)") refcat(final_log_credits_exo "\textsc{\textbf{Panel D: Dropping Bottom 5\% and Top 5\%}}", nolabel) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")
+	   
 
 
-	   
-	   
+
+
 *************************************************************************
 ******* PROFITABILITY AND PERFORMANCE / DIVIDENDS
 *************************************************************************
@@ -666,83 +650,3 @@ esttab eq2a_final_dividends eq2b_final_dividends eq2a_final_divid_hold eq2b_fina
 	   eqlabels(none) keep(interaction2 cit_exonerated final_roa) coeflabels(interaction2 "Exonerated $\times$ ROA" cit_exonerated "Exonerated" final_roa "ROA") sfmt(%9.0fc %9.3fc %9.3fc) ///
 	   scalars("N Observations" "r2 R-Squared" "mean Mean Dep. Var." "sector_fe Sector FE?" "muni_fe Municipality FE?" "year_fe Year FE?" "controls Controls?")	   
 
-
-	 
-	 
-/****** Non parametric ******
-eststo drop *
-foreach var_ind of varlist final_epm final_roa {
-	
-preserve
-qui sum `var_ind', d
-drop if `var_ind' > r(p95)
-
-foreach var of global outcomes1 {
-	
-	if "`var_ind'" == "final_epm" & "`var'" == "final_log_fixed_assets" {
-	    local yx "-2 0.18"
-		local title "epm_assets"
-	} 
-	else if "`var_ind'" == "final_roa" & "`var'" == "final_log_fixed_assets" {
-	    local yx "0.7 0.25"
-		local title "roa_assets"
-	}
-	else if "`var_ind'" == "final_epm" & "`var'" == "final_log_value_added" {
-	    local yx "1 0.18"
-		local title "epm_value_added"
-	} 
-	else if "`var_ind'" == "final_roa" & "`var'" == "final_log_value_added" {
-	    local yx "-1.5 0.25"
-		local title "roa_value_added"
-	} 
-	else if "`var_ind'" == "final_epm" & "`var'" == "final_log_employment" {
-	    local yx "1.5 0.18"
-		local title "epm_employment"
-	} 
-	else if "`var_ind'" == "final_roa" & "`var'" == "final_log_employment" {
-	    local yx "1.5 0.25"
-		local title "roa_employment"
-	} 
-	else if "`var_ind'" == "final_epm" & "`var'" == "final_log_salary" {
-	    local yx  "-0.05 0.18"
-		local title "epm_salary"
-	} 
-	else if "`var_ind'" == "final_roa" & "`var'" == "final_log_salary" {
-	    local yx  "-0.05 0.25"
-		local title "roa_salary"
-	} 
-	else if "`var_ind'" == "final_epm" & "`var'" == "tfp_y_LP" {
-	    local yx "0.8 0.18"
-		local title "epm_tfp_LP"
-	} 
-	else if "`var_ind'" == "final_roa" & "`var'" == "tfp_y_LP" {
-	    local yx "-1.2 0.25"
-		local title "roa_tfp_LP"
-	}
-	else if "`var_ind'" == "final_epm" & "`var'" == "tfp_y_ACF" {
-	    local yx "0.8 0.18"
-		local title "epm_tfp_ACF"
-	} 
-	else if "`var_ind'" == "final_roa" & "`var'" == "tfp_y_ACF" {
-	    local yx "-1.2 0.25"
-		local title "roa_tfp_ACF"
-	} 
-	
-	loc labvar1: var label `var_ind'
-	loc labvar2: var label `var'
-		
-	qui reghdfe `var' cit_exonerated, a(${fixed_ef}) vce(cluster id) residuals(r_`var')
-	
-	qui reg r_`var' `var_ind' if cit_exonerated == 1, robust
-	loc b1: di %3.2f _b[`var_ind']
-	loc s1: di %3.2f _se[`var_ind']  
-	   
-	binscatter r_`var' `var_ind' if cit_exonerated == 1, nquantiles(100) $graphop ///
-	text(`yx' "Slope = `b1'(`s1')", color(black)) yscale(titlegap(3)) mcolors(blue%20) lcolors(blue) ///
-	xtitle(`"`labvar1'"') ytitle(`"Residuals for `labvar2'"') xscale(titlegap(3)) legend(off) 
-	graph export "$out\resid_`title'.pdf", replace
-	graph close _all
-	
-}
-restore
-}
