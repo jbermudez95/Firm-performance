@@ -551,10 +551,10 @@ restore
 
 
 **********************************************************************************
-**********     			      NINETH STEP: EVER AUDITED    			     *********
+**********     			      NINETH STEP: DIVIDENS     			     *********
 **********************************************************************************
 
-dis "Setting for payments of dividens"
+dis "Setting for payments of dividends"
 qui{
 preserve
 use "$input\dividendos_2017-2021.dta", replace
