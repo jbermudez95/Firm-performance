@@ -41,7 +41,7 @@ else if "`c(username)'" == "Jose Carlo Bermúdez" {
 	global out 		  "$path\Notas técnicas y papers\Profit Margins\out"
 }
 
-* Globals for standard graphs visualization
+* Globals for graphs visualization
 global graphop "legend(region(lcolor(none))) graphr(color(white))"
 
 
