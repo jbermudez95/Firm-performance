@@ -77,7 +77,7 @@ keep if !missing(percentil)
 bys percentil: egen exo_max = max(cit_cre_exo)
 drop if cit_cre_exo == exo_max
 drop exo_max
-collapse (sum) cit_cre_*, by(percentil)
+collapse (sum) cit_cre_*, by(decil)
 
 egen cit_cre_total = rowtotal(cit_cre_*)
 gen exo 		 = (cit_cre_exo / cit_cre_total) * 100
