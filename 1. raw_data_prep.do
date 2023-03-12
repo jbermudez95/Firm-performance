@@ -221,10 +221,9 @@ restore
 dis "Setting Value Added Tax Records"
 qui{
 preserve
-use "$input\ISV_anual_2004_2021.dta", replace
+use "$input\ISV_anual_2004_2022.dta", replace
 keep if (year == 2017 | year == 2018)
 duplicates drop rtn year, force
-drop ${traits}
 * Variables on Sales 
 egen vat_sales_exempted   = rowtotal(ventasexoneradasoce15 ventasexoneradasoce18 ventasexoneradaspn15 ///
                                      vtas_exentas_mcdo_interno12 vtas_exentas_mcdo_interno15 ventas_exentas_mcdo_interno18), missing

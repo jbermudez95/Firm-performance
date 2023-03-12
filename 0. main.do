@@ -3,8 +3,7 @@ Description:   This do file replicates every result in the working paper
 			   "Firms' performance and tax incentives. Evidence from Honduras".
 			   Data for replication is only available upon request to SAR.
 Author: 	   Jose Carlo Bermúdez
-Affilitation:  Servicio de Administración de Rentas (SAR), Honduras
-Contact: 	   jbermudez@sar.gob.hn / bermudezjosecarlo@gmail.com
+Contact: 	   bermudezjosecarlo@gmail.com
 Final Version: Janurary, 2023
 */
 
@@ -17,23 +16,15 @@ timer clear 1
 timer on 1
 
 * Packages required for estimations
-global packs "winsor eststo estout reghdfe ftools erepost prodest binscatter wbopendata egenmore cdfplot"
+global packs "winsor eststo estout reghdfe ftools erepost prodest binscatter wbopendata egenmore cdfplot coefplot"
 foreach p of global packs {
 	cap which `p'
 	if (_rc) ssc install `p'
 }
 
 * Set up directories
-if "`c(username)'" == "jbermudez" {
-	global path		  "C:\Users\jbermudez\OneDrive - SAR"
-	global datawork   "$path\Notas técnicas y papers\Profit Margins\preparacion inicial\base profit margins"
-	global input 	  "$path\Bases del repositorio"
-	global final_data "$path\Notas técnicas y papers\Profit Margins\database and codes"
-	global codes 	  "$path\Firm-performance"
-	global out 		  "$path\Notas técnicas y papers\Profit Margins\out"
-}
 else if "`c(username)'" == "Jose Carlo Bermúdez" {	
-	global path		  "C:\Users\bermu\OneDrive - SAR"
+	global path		  "C:\Users\bermu\Desktop"
 	global datawork   "$path\Notas técnicas y papers\Profit Margins\preparacion inicial\base profit margins"
 	global input 	  "$path\Bases del repositorio"
 	global final_data "$path\Notas técnicas y papers\Profit Margins\database and codes"
